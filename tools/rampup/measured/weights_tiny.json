@@ -1,0 +1,641 @@
+{
+ "total": 50959,
+ "params": [
+  {
+   "name": "gemma_network/gemma_model/embedder/input_embedding",
+   "shape": [
+    64,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/embedder"
+  },
+  {
+   "name": "gemma_network/gemma_model/final_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/final_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/attn/attn_vec_einsum/w",
+   "shape": [
+    4,
+    8,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_0/attn/attn_vec_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/attn/key_norm/scale",
+   "shape": [
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 8,
+   "parent": "gemma_network/gemma_model/layer_0/attn/key_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/attn/kv_einsum/w",
+   "shape": [
+    2,
+    2,
+    32,
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_0/attn/kv_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/attn/q_einsum/w",
+   "shape": [
+    4,
+    32,
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_0/attn/q_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/attn/query_norm/scale",
+   "shape": [
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 8,
+   "parent": "gemma_network/gemma_model/layer_0/attn/query_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp/gating_einsum/w",
+   "shape": [
+    4,
+    2,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 4096,
+   "parent": "gemma_network/gemma_model/layer_0/mlp/gating_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp/linear/w",
+   "shape": [
+    4,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/layer_0/mlp/linear"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp/per_expert_scale",
+   "shape": [
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 4,
+   "parent": "gemma_network/gemma_model/layer_0/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp/router_logits/w",
+   "shape": [
+    32,
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "gemma_network/gemma_model/layer_0/mlp/router_logits"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp/router_scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp2/gating_einsum",
+   "shape": [
+    2,
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 3072,
+   "parent": "gemma_network/gemma_model/layer_0/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/mlp2/linear",
+   "shape": [
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1536,
+   "parent": "gemma_network/gemma_model/layer_0/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/post_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/post_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/post_ffw1_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/post_ffw1_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/post_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/post_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/post_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/post_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/pre_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/pre_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/pre_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/pre_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/pre_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_0/pre_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_0/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "gemma_network/gemma_model/layer_0"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/attn/attn_vec_einsum/w",
+   "shape": [
+    4,
+    8,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_1/attn/attn_vec_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/attn/key_norm/scale",
+   "shape": [
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 8,
+   "parent": "gemma_network/gemma_model/layer_1/attn/key_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/attn/kv_einsum/w",
+   "shape": [
+    2,
+    2,
+    32,
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_1/attn/kv_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/attn/q_einsum/w",
+   "shape": [
+    4,
+    32,
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 1024,
+   "parent": "gemma_network/gemma_model/layer_1/attn/q_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/attn/query_norm/scale",
+   "shape": [
+    8
+   ],
+   "dtype": "bfloat16",
+   "count": 8,
+   "parent": "gemma_network/gemma_model/layer_1/attn/query_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp/gating_einsum/w",
+   "shape": [
+    4,
+    2,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 4096,
+   "parent": "gemma_network/gemma_model/layer_1/mlp/gating_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp/linear/w",
+   "shape": [
+    4,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/layer_1/mlp/linear"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp/per_expert_scale",
+   "shape": [
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 4,
+   "parent": "gemma_network/gemma_model/layer_1/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp/router_logits/w",
+   "shape": [
+    32,
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "gemma_network/gemma_model/layer_1/mlp/router_logits"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp/router_scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp2/gating_einsum",
+   "shape": [
+    2,
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 3072,
+   "parent": "gemma_network/gemma_model/layer_1/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/mlp2/linear",
+   "shape": [
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1536,
+   "parent": "gemma_network/gemma_model/layer_1/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/post_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/post_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/post_ffw1_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/post_ffw1_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/post_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/post_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/post_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/post_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/pre_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/pre_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/pre_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/pre_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/pre_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_1/pre_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_1/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "gemma_network/gemma_model/layer_1"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/attn/attn_vec_einsum/w",
+   "shape": [
+    4,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/layer_2/attn/attn_vec_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/attn/k_einsum/w",
+   "shape": [
+    1,
+    32,
+    16
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "gemma_network/gemma_model/layer_2/attn/k_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/attn/key_norm/scale",
+   "shape": [
+    16
+   ],
+   "dtype": "bfloat16",
+   "count": 16,
+   "parent": "gemma_network/gemma_model/layer_2/attn/key_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/attn/q_einsum/w",
+   "shape": [
+    4,
+    32,
+    16
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/layer_2/attn/q_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/attn/query_norm/scale",
+   "shape": [
+    16
+   ],
+   "dtype": "bfloat16",
+   "count": 16,
+   "parent": "gemma_network/gemma_model/layer_2/attn/query_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp/gating_einsum/w",
+   "shape": [
+    4,
+    2,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 4096,
+   "parent": "gemma_network/gemma_model/layer_2/mlp/gating_einsum"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp/linear/w",
+   "shape": [
+    4,
+    16,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 2048,
+   "parent": "gemma_network/gemma_model/layer_2/mlp/linear"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp/per_expert_scale",
+   "shape": [
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 4,
+   "parent": "gemma_network/gemma_model/layer_2/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp/router_logits/w",
+   "shape": [
+    32,
+    4
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "gemma_network/gemma_model/layer_2/mlp/router_logits"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp/router_scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/mlp"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp2/gating_einsum",
+   "shape": [
+    2,
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 3072,
+   "parent": "gemma_network/gemma_model/layer_2/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/mlp2/linear",
+   "shape": [
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1536,
+   "parent": "gemma_network/gemma_model/layer_2/mlp2"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/post_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/post_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/post_ffw1_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/post_ffw1_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/post_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/post_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/post_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/post_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/pre_attention_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/pre_attention_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/pre_ffw2_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/pre_ffw2_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/pre_ffw_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/layer_2/pre_ffw_norm"
+  },
+  {
+   "name": "gemma_network/gemma_model/layer_2/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "gemma_network/gemma_model/layer_2"
+  },
+  {
+   "name": "gemma_network/gemma_model/self_conditioner/ffw/gating_einsum",
+   "shape": [
+    2,
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 3072,
+   "parent": "gemma_network/gemma_model/self_conditioner/ffw"
+  },
+  {
+   "name": "gemma_network/gemma_model/self_conditioner/ffw/linear",
+   "shape": [
+    48,
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 1536,
+   "parent": "gemma_network/gemma_model/self_conditioner/ffw"
+  },
+  {
+   "name": "gemma_network/gemma_model/self_conditioner/pre_norm/scale",
+   "shape": [
+    32
+   ],
+   "dtype": "bfloat16",
+   "count": 32,
+   "parent": "gemma_network/gemma_model/self_conditioner/pre_norm"
+  }
+ ]
+}

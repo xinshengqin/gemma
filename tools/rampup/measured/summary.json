@@ -1,0 +1,102 @@
+{
+ "tiny_dims": {
+  "V": 64,
+  "D": 32,
+  "NH": 4,
+  "NKV": 2,
+  "HD": 8,
+  "NGKV": 1,
+  "KG": 16,
+  "HF": 48,
+  "E": 4,
+  "TOPK": 2,
+  "ED": 16
+ },
+ "run_dims": {
+  "B": 2,
+  "prompt_len": 8,
+  "canvas_size": 8,
+  "num_canvases": 2,
+  "total_canvas_len": 16,
+  "full_seq_len": 24,
+  "num_denoise_steps": 4
+ },
+ "batch": {
+  "prompt": "int32[2, 8]",
+  "canvas": "int32[2, 16, 1]",
+  "canvas_id": "int32[2, 16]",
+  "canvas_mask": "bool[2, 16]",
+  "encoder_target": "int32[2, 24]",
+  "encoder_target_mask": "bool[2, 24]"
+ },
+ "preds": {
+  "encoder_logits": "bfloat16[2, 24, 64]",
+  "encoder_target": "int32[2, 24]",
+  "encoder_target_mask": "bool[2, 24]",
+  "noise_info": {
+   "alpha": "float32[2, 1, 1]",
+   "logsnr": "float32[2, 1, 1]",
+   "sigma": "float32[2, 1, 1]",
+   "time": "float32[2, 1, 1]"
+  },
+  "output": {
+   "logits": "bfloat16[2, 16, 64]",
+   "x0": "int32[2, 16, 1]"
+  },
+  "target": {
+   "is_corrupted": "bool[2, 16, 1]",
+   "is_unused": "bool[2, 16, 1]",
+   "logits": "float32[2, 16, 64]",
+   "target_mask": "bool[2, 16, 1]",
+   "x0": "int32[2, 16, 1]"
+  },
+  "xt": "int32[2, 16, 1]"
+ },
+ "losses": {
+  "total": 8.25,
+  "diffusion_per_example": [
+   4.09375,
+   4.09375
+  ],
+  "encoder_per_example": [
+   4.1875,
+   4.15625
+  ]
+ },
+ "samples_shape": "int32[2, 16]",
+ "final_state": {
+  "attention_mask": "bool[2, 8, 24]",
+  "done": "bool[2]",
+  "full_attention_mask": "bool[2, 24]",
+  "kv_cache": {
+   "layer_0": {
+    "end_index": "int32[2]",
+    "k": "bfloat16[2, 24, 2, 8]",
+    "positions": "int32[2, 24]",
+    "v": "bfloat16[2, 24, 2, 8]"
+   },
+   "layer_1": {
+    "end_index": "int32[2]",
+    "k": "bfloat16[2, 24, 2, 8]",
+    "positions": "int32[2, 24]",
+    "v": "bfloat16[2, 24, 2, 8]"
+   },
+   "layer_2": {
+    "end_index": "int32[2]",
+    "k": "bfloat16[2, 24, 1, 16]",
+    "positions": "int32[2, 24]",
+    "v": "bfloat16[2, 24, 1, 16]"
+   }
+  },
+  "positions": "int32[2, 8]",
+  "predicted_tokens": "int32[2, 24]",
+  "processed_denoising_steps": "int32[]",
+  "processed_num_canvases": "int32[]",
+  "prompt_lengths": "int32[2]",
+  "prompt_mask": "bool[2, 8]",
+  "prompt_tokens": "int32[2, 8]",
+  "step": "int32[]"
+ },
+ "tiny_param_total": 50959,
+ "full_param_total": 25250986782
+}

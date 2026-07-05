@@ -1,0 +1,27 @@
+total 50959
+gemma_network/gemma_model/embedder/input_embedding                     x1 shapes=[(64, 32)] total=2048
+gemma_network/gemma_model/final_norm/scale                             x1 shapes=[(32,)] total=32
+gemma_network/gemma_model/layer_i/attn/attn_vec_einsum/w               x3 shapes=[(4, 8, 32), (4, 16, 32)] total=4096
+gemma_network/gemma_model/layer_i/attn/k_einsum/w                      x1 shapes=[(1, 32, 16)] total=512
+gemma_network/gemma_model/layer_i/attn/key_norm/scale                  x3 shapes=[(8,), (16,)] total=32
+gemma_network/gemma_model/layer_i/attn/kv_einsum/w                     x2 shapes=[(2, 2, 32, 8)] total=2048
+gemma_network/gemma_model/layer_i/attn/q_einsum/w                      x3 shapes=[(4, 32, 8), (4, 32, 16)] total=4096
+gemma_network/gemma_model/layer_i/attn/query_norm/scale                x3 shapes=[(8,), (16,)] total=32
+gemma_network/gemma_model/layer_i/mlp/gating_einsum/w                  x3 shapes=[(4, 2, 16, 32)] total=12288
+gemma_network/gemma_model/layer_i/mlp/linear/w                         x3 shapes=[(4, 16, 32)] total=6144
+gemma_network/gemma_model/layer_i/mlp/per_expert_scale                 x3 shapes=[(4,)] total=12
+gemma_network/gemma_model/layer_i/mlp/router_logits/w                  x3 shapes=[(32, 4)] total=384
+gemma_network/gemma_model/layer_i/mlp/router_scale                     x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/mlp2/gating_einsum                   x3 shapes=[(2, 48, 32)] total=9216
+gemma_network/gemma_model/layer_i/mlp2/linear                          x3 shapes=[(48, 32)] total=4608
+gemma_network/gemma_model/layer_i/post_attention_norm/scale            x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/post_ffw1_norm/scale                 x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/post_ffw2_norm/scale                 x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/post_ffw_norm/scale                  x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/pre_attention_norm/scale             x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/pre_ffw2_norm/scale                  x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/pre_ffw_norm/scale                   x3 shapes=[(32,)] total=96
+gemma_network/gemma_model/layer_i/skip_scale                           x3 shapes=[(1,)] total=3
+gemma_network/gemma_model/self_conditioner/ffw/gating_einsum           x1 shapes=[(2, 48, 32)] total=3072
+gemma_network/gemma_model/self_conditioner/ffw/linear                  x1 shapes=[(48, 32)] total=1536
+gemma_network/gemma_model/self_conditioner/pre_norm/scale              x1 shapes=[(32,)] total=32

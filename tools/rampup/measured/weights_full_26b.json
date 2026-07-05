@@ -1,0 +1,5929 @@
+{
+ "total": 25250986782,
+ "params": [
+  {
+   "name": "embedder/input_embedding",
+   "shape": [
+    262144,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 738197504,
+   "parent": "embedder"
+  },
+  {
+   "name": "final_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "final_norm"
+  },
+  {
+   "name": "layer_0/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_0/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_0/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_0/attn/key_norm"
+  },
+  {
+   "name": "layer_0/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_0/attn/kv_einsum"
+  },
+  {
+   "name": "layer_0/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_0/attn/q_einsum"
+  },
+  {
+   "name": "layer_0/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_0/attn/query_norm"
+  },
+  {
+   "name": "layer_0/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_0/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_0/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_0/mlp/linear"
+  },
+  {
+   "name": "layer_0/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_0/mlp"
+  },
+  {
+   "name": "layer_0/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_0/mlp/router_logits"
+  },
+  {
+   "name": "layer_0/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/mlp"
+  },
+  {
+   "name": "layer_0/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_0/mlp2"
+  },
+  {
+   "name": "layer_0/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_0/mlp2"
+  },
+  {
+   "name": "layer_0/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/post_attention_norm"
+  },
+  {
+   "name": "layer_0/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/post_ffw1_norm"
+  },
+  {
+   "name": "layer_0/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/post_ffw2_norm"
+  },
+  {
+   "name": "layer_0/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/post_ffw_norm"
+  },
+  {
+   "name": "layer_0/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/pre_attention_norm"
+  },
+  {
+   "name": "layer_0/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_0/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_0/pre_ffw_norm"
+  },
+  {
+   "name": "layer_0/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_0"
+  },
+  {
+   "name": "layer_1/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_1/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_1/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_1/attn/key_norm"
+  },
+  {
+   "name": "layer_1/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_1/attn/kv_einsum"
+  },
+  {
+   "name": "layer_1/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_1/attn/q_einsum"
+  },
+  {
+   "name": "layer_1/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_1/attn/query_norm"
+  },
+  {
+   "name": "layer_1/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_1/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_1/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_1/mlp/linear"
+  },
+  {
+   "name": "layer_1/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_1/mlp"
+  },
+  {
+   "name": "layer_1/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_1/mlp/router_logits"
+  },
+  {
+   "name": "layer_1/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/mlp"
+  },
+  {
+   "name": "layer_1/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_1/mlp2"
+  },
+  {
+   "name": "layer_1/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_1/mlp2"
+  },
+  {
+   "name": "layer_1/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/post_attention_norm"
+  },
+  {
+   "name": "layer_1/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/post_ffw1_norm"
+  },
+  {
+   "name": "layer_1/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/post_ffw2_norm"
+  },
+  {
+   "name": "layer_1/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/post_ffw_norm"
+  },
+  {
+   "name": "layer_1/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/pre_attention_norm"
+  },
+  {
+   "name": "layer_1/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_1/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_1/pre_ffw_norm"
+  },
+  {
+   "name": "layer_1/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_1"
+  },
+  {
+   "name": "layer_10/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_10/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_10/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_10/attn/key_norm"
+  },
+  {
+   "name": "layer_10/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_10/attn/kv_einsum"
+  },
+  {
+   "name": "layer_10/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_10/attn/q_einsum"
+  },
+  {
+   "name": "layer_10/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_10/attn/query_norm"
+  },
+  {
+   "name": "layer_10/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_10/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_10/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_10/mlp/linear"
+  },
+  {
+   "name": "layer_10/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_10/mlp"
+  },
+  {
+   "name": "layer_10/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_10/mlp/router_logits"
+  },
+  {
+   "name": "layer_10/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/mlp"
+  },
+  {
+   "name": "layer_10/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_10/mlp2"
+  },
+  {
+   "name": "layer_10/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_10/mlp2"
+  },
+  {
+   "name": "layer_10/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/post_attention_norm"
+  },
+  {
+   "name": "layer_10/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/post_ffw1_norm"
+  },
+  {
+   "name": "layer_10/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/post_ffw2_norm"
+  },
+  {
+   "name": "layer_10/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/post_ffw_norm"
+  },
+  {
+   "name": "layer_10/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/pre_attention_norm"
+  },
+  {
+   "name": "layer_10/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_10/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_10/pre_ffw_norm"
+  },
+  {
+   "name": "layer_10/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_10"
+  },
+  {
+   "name": "layer_11/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    512,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_11/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_11/attn/k_einsum/w",
+   "shape": [
+    2,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 2883584,
+   "parent": "layer_11/attn/k_einsum"
+  },
+  {
+   "name": "layer_11/attn/key_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_11/attn/key_norm"
+  },
+  {
+   "name": "layer_11/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_11/attn/q_einsum"
+  },
+  {
+   "name": "layer_11/attn/query_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_11/attn/query_norm"
+  },
+  {
+   "name": "layer_11/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_11/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_11/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_11/mlp/linear"
+  },
+  {
+   "name": "layer_11/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_11/mlp"
+  },
+  {
+   "name": "layer_11/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_11/mlp/router_logits"
+  },
+  {
+   "name": "layer_11/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/mlp"
+  },
+  {
+   "name": "layer_11/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_11/mlp2"
+  },
+  {
+   "name": "layer_11/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_11/mlp2"
+  },
+  {
+   "name": "layer_11/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/post_attention_norm"
+  },
+  {
+   "name": "layer_11/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/post_ffw1_norm"
+  },
+  {
+   "name": "layer_11/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/post_ffw2_norm"
+  },
+  {
+   "name": "layer_11/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/post_ffw_norm"
+  },
+  {
+   "name": "layer_11/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/pre_attention_norm"
+  },
+  {
+   "name": "layer_11/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_11/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_11/pre_ffw_norm"
+  },
+  {
+   "name": "layer_11/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_11"
+  },
+  {
+   "name": "layer_12/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_12/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_12/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_12/attn/key_norm"
+  },
+  {
+   "name": "layer_12/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_12/attn/kv_einsum"
+  },
+  {
+   "name": "layer_12/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_12/attn/q_einsum"
+  },
+  {
+   "name": "layer_12/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_12/attn/query_norm"
+  },
+  {
+   "name": "layer_12/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_12/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_12/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_12/mlp/linear"
+  },
+  {
+   "name": "layer_12/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_12/mlp"
+  },
+  {
+   "name": "layer_12/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_12/mlp/router_logits"
+  },
+  {
+   "name": "layer_12/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/mlp"
+  },
+  {
+   "name": "layer_12/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_12/mlp2"
+  },
+  {
+   "name": "layer_12/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_12/mlp2"
+  },
+  {
+   "name": "layer_12/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/post_attention_norm"
+  },
+  {
+   "name": "layer_12/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/post_ffw1_norm"
+  },
+  {
+   "name": "layer_12/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/post_ffw2_norm"
+  },
+  {
+   "name": "layer_12/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/post_ffw_norm"
+  },
+  {
+   "name": "layer_12/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/pre_attention_norm"
+  },
+  {
+   "name": "layer_12/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_12/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_12/pre_ffw_norm"
+  },
+  {
+   "name": "layer_12/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_12"
+  },
+  {
+   "name": "layer_13/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_13/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_13/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_13/attn/key_norm"
+  },
+  {
+   "name": "layer_13/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_13/attn/kv_einsum"
+  },
+  {
+   "name": "layer_13/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_13/attn/q_einsum"
+  },
+  {
+   "name": "layer_13/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_13/attn/query_norm"
+  },
+  {
+   "name": "layer_13/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_13/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_13/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_13/mlp/linear"
+  },
+  {
+   "name": "layer_13/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_13/mlp"
+  },
+  {
+   "name": "layer_13/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_13/mlp/router_logits"
+  },
+  {
+   "name": "layer_13/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/mlp"
+  },
+  {
+   "name": "layer_13/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_13/mlp2"
+  },
+  {
+   "name": "layer_13/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_13/mlp2"
+  },
+  {
+   "name": "layer_13/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/post_attention_norm"
+  },
+  {
+   "name": "layer_13/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/post_ffw1_norm"
+  },
+  {
+   "name": "layer_13/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/post_ffw2_norm"
+  },
+  {
+   "name": "layer_13/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/post_ffw_norm"
+  },
+  {
+   "name": "layer_13/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/pre_attention_norm"
+  },
+  {
+   "name": "layer_13/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_13/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_13/pre_ffw_norm"
+  },
+  {
+   "name": "layer_13/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_13"
+  },
+  {
+   "name": "layer_14/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_14/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_14/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_14/attn/key_norm"
+  },
+  {
+   "name": "layer_14/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_14/attn/kv_einsum"
+  },
+  {
+   "name": "layer_14/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_14/attn/q_einsum"
+  },
+  {
+   "name": "layer_14/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_14/attn/query_norm"
+  },
+  {
+   "name": "layer_14/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_14/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_14/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_14/mlp/linear"
+  },
+  {
+   "name": "layer_14/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_14/mlp"
+  },
+  {
+   "name": "layer_14/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_14/mlp/router_logits"
+  },
+  {
+   "name": "layer_14/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/mlp"
+  },
+  {
+   "name": "layer_14/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_14/mlp2"
+  },
+  {
+   "name": "layer_14/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_14/mlp2"
+  },
+  {
+   "name": "layer_14/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/post_attention_norm"
+  },
+  {
+   "name": "layer_14/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/post_ffw1_norm"
+  },
+  {
+   "name": "layer_14/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/post_ffw2_norm"
+  },
+  {
+   "name": "layer_14/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/post_ffw_norm"
+  },
+  {
+   "name": "layer_14/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/pre_attention_norm"
+  },
+  {
+   "name": "layer_14/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_14/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_14/pre_ffw_norm"
+  },
+  {
+   "name": "layer_14/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_14"
+  },
+  {
+   "name": "layer_15/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_15/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_15/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_15/attn/key_norm"
+  },
+  {
+   "name": "layer_15/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_15/attn/kv_einsum"
+  },
+  {
+   "name": "layer_15/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_15/attn/q_einsum"
+  },
+  {
+   "name": "layer_15/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_15/attn/query_norm"
+  },
+  {
+   "name": "layer_15/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_15/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_15/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_15/mlp/linear"
+  },
+  {
+   "name": "layer_15/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_15/mlp"
+  },
+  {
+   "name": "layer_15/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_15/mlp/router_logits"
+  },
+  {
+   "name": "layer_15/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/mlp"
+  },
+  {
+   "name": "layer_15/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_15/mlp2"
+  },
+  {
+   "name": "layer_15/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_15/mlp2"
+  },
+  {
+   "name": "layer_15/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/post_attention_norm"
+  },
+  {
+   "name": "layer_15/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/post_ffw1_norm"
+  },
+  {
+   "name": "layer_15/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/post_ffw2_norm"
+  },
+  {
+   "name": "layer_15/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/post_ffw_norm"
+  },
+  {
+   "name": "layer_15/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/pre_attention_norm"
+  },
+  {
+   "name": "layer_15/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_15/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_15/pre_ffw_norm"
+  },
+  {
+   "name": "layer_15/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_15"
+  },
+  {
+   "name": "layer_16/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_16/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_16/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_16/attn/key_norm"
+  },
+  {
+   "name": "layer_16/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_16/attn/kv_einsum"
+  },
+  {
+   "name": "layer_16/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_16/attn/q_einsum"
+  },
+  {
+   "name": "layer_16/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_16/attn/query_norm"
+  },
+  {
+   "name": "layer_16/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_16/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_16/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_16/mlp/linear"
+  },
+  {
+   "name": "layer_16/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_16/mlp"
+  },
+  {
+   "name": "layer_16/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_16/mlp/router_logits"
+  },
+  {
+   "name": "layer_16/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/mlp"
+  },
+  {
+   "name": "layer_16/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_16/mlp2"
+  },
+  {
+   "name": "layer_16/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_16/mlp2"
+  },
+  {
+   "name": "layer_16/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/post_attention_norm"
+  },
+  {
+   "name": "layer_16/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/post_ffw1_norm"
+  },
+  {
+   "name": "layer_16/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/post_ffw2_norm"
+  },
+  {
+   "name": "layer_16/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/post_ffw_norm"
+  },
+  {
+   "name": "layer_16/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/pre_attention_norm"
+  },
+  {
+   "name": "layer_16/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_16/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_16/pre_ffw_norm"
+  },
+  {
+   "name": "layer_16/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_16"
+  },
+  {
+   "name": "layer_17/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    512,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_17/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_17/attn/k_einsum/w",
+   "shape": [
+    2,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 2883584,
+   "parent": "layer_17/attn/k_einsum"
+  },
+  {
+   "name": "layer_17/attn/key_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_17/attn/key_norm"
+  },
+  {
+   "name": "layer_17/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_17/attn/q_einsum"
+  },
+  {
+   "name": "layer_17/attn/query_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_17/attn/query_norm"
+  },
+  {
+   "name": "layer_17/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_17/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_17/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_17/mlp/linear"
+  },
+  {
+   "name": "layer_17/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_17/mlp"
+  },
+  {
+   "name": "layer_17/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_17/mlp/router_logits"
+  },
+  {
+   "name": "layer_17/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/mlp"
+  },
+  {
+   "name": "layer_17/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_17/mlp2"
+  },
+  {
+   "name": "layer_17/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_17/mlp2"
+  },
+  {
+   "name": "layer_17/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/post_attention_norm"
+  },
+  {
+   "name": "layer_17/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/post_ffw1_norm"
+  },
+  {
+   "name": "layer_17/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/post_ffw2_norm"
+  },
+  {
+   "name": "layer_17/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/post_ffw_norm"
+  },
+  {
+   "name": "layer_17/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/pre_attention_norm"
+  },
+  {
+   "name": "layer_17/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_17/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_17/pre_ffw_norm"
+  },
+  {
+   "name": "layer_17/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_17"
+  },
+  {
+   "name": "layer_18/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_18/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_18/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_18/attn/key_norm"
+  },
+  {
+   "name": "layer_18/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_18/attn/kv_einsum"
+  },
+  {
+   "name": "layer_18/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_18/attn/q_einsum"
+  },
+  {
+   "name": "layer_18/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_18/attn/query_norm"
+  },
+  {
+   "name": "layer_18/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_18/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_18/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_18/mlp/linear"
+  },
+  {
+   "name": "layer_18/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_18/mlp"
+  },
+  {
+   "name": "layer_18/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_18/mlp/router_logits"
+  },
+  {
+   "name": "layer_18/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/mlp"
+  },
+  {
+   "name": "layer_18/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_18/mlp2"
+  },
+  {
+   "name": "layer_18/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_18/mlp2"
+  },
+  {
+   "name": "layer_18/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/post_attention_norm"
+  },
+  {
+   "name": "layer_18/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/post_ffw1_norm"
+  },
+  {
+   "name": "layer_18/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/post_ffw2_norm"
+  },
+  {
+   "name": "layer_18/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/post_ffw_norm"
+  },
+  {
+   "name": "layer_18/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/pre_attention_norm"
+  },
+  {
+   "name": "layer_18/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_18/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_18/pre_ffw_norm"
+  },
+  {
+   "name": "layer_18/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_18"
+  },
+  {
+   "name": "layer_19/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_19/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_19/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_19/attn/key_norm"
+  },
+  {
+   "name": "layer_19/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_19/attn/kv_einsum"
+  },
+  {
+   "name": "layer_19/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_19/attn/q_einsum"
+  },
+  {
+   "name": "layer_19/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_19/attn/query_norm"
+  },
+  {
+   "name": "layer_19/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_19/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_19/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_19/mlp/linear"
+  },
+  {
+   "name": "layer_19/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_19/mlp"
+  },
+  {
+   "name": "layer_19/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_19/mlp/router_logits"
+  },
+  {
+   "name": "layer_19/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/mlp"
+  },
+  {
+   "name": "layer_19/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_19/mlp2"
+  },
+  {
+   "name": "layer_19/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_19/mlp2"
+  },
+  {
+   "name": "layer_19/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/post_attention_norm"
+  },
+  {
+   "name": "layer_19/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/post_ffw1_norm"
+  },
+  {
+   "name": "layer_19/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/post_ffw2_norm"
+  },
+  {
+   "name": "layer_19/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/post_ffw_norm"
+  },
+  {
+   "name": "layer_19/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/pre_attention_norm"
+  },
+  {
+   "name": "layer_19/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_19/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_19/pre_ffw_norm"
+  },
+  {
+   "name": "layer_19/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_19"
+  },
+  {
+   "name": "layer_2/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_2/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_2/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_2/attn/key_norm"
+  },
+  {
+   "name": "layer_2/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_2/attn/kv_einsum"
+  },
+  {
+   "name": "layer_2/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_2/attn/q_einsum"
+  },
+  {
+   "name": "layer_2/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_2/attn/query_norm"
+  },
+  {
+   "name": "layer_2/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_2/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_2/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_2/mlp/linear"
+  },
+  {
+   "name": "layer_2/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_2/mlp"
+  },
+  {
+   "name": "layer_2/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_2/mlp/router_logits"
+  },
+  {
+   "name": "layer_2/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/mlp"
+  },
+  {
+   "name": "layer_2/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_2/mlp2"
+  },
+  {
+   "name": "layer_2/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_2/mlp2"
+  },
+  {
+   "name": "layer_2/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/post_attention_norm"
+  },
+  {
+   "name": "layer_2/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/post_ffw1_norm"
+  },
+  {
+   "name": "layer_2/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/post_ffw2_norm"
+  },
+  {
+   "name": "layer_2/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/post_ffw_norm"
+  },
+  {
+   "name": "layer_2/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/pre_attention_norm"
+  },
+  {
+   "name": "layer_2/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_2/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_2/pre_ffw_norm"
+  },
+  {
+   "name": "layer_2/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_2"
+  },
+  {
+   "name": "layer_20/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_20/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_20/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_20/attn/key_norm"
+  },
+  {
+   "name": "layer_20/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_20/attn/kv_einsum"
+  },
+  {
+   "name": "layer_20/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_20/attn/q_einsum"
+  },
+  {
+   "name": "layer_20/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_20/attn/query_norm"
+  },
+  {
+   "name": "layer_20/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_20/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_20/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_20/mlp/linear"
+  },
+  {
+   "name": "layer_20/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_20/mlp"
+  },
+  {
+   "name": "layer_20/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_20/mlp/router_logits"
+  },
+  {
+   "name": "layer_20/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/mlp"
+  },
+  {
+   "name": "layer_20/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_20/mlp2"
+  },
+  {
+   "name": "layer_20/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_20/mlp2"
+  },
+  {
+   "name": "layer_20/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/post_attention_norm"
+  },
+  {
+   "name": "layer_20/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/post_ffw1_norm"
+  },
+  {
+   "name": "layer_20/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/post_ffw2_norm"
+  },
+  {
+   "name": "layer_20/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/post_ffw_norm"
+  },
+  {
+   "name": "layer_20/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/pre_attention_norm"
+  },
+  {
+   "name": "layer_20/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_20/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_20/pre_ffw_norm"
+  },
+  {
+   "name": "layer_20/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_20"
+  },
+  {
+   "name": "layer_21/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_21/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_21/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_21/attn/key_norm"
+  },
+  {
+   "name": "layer_21/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_21/attn/kv_einsum"
+  },
+  {
+   "name": "layer_21/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_21/attn/q_einsum"
+  },
+  {
+   "name": "layer_21/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_21/attn/query_norm"
+  },
+  {
+   "name": "layer_21/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_21/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_21/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_21/mlp/linear"
+  },
+  {
+   "name": "layer_21/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_21/mlp"
+  },
+  {
+   "name": "layer_21/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_21/mlp/router_logits"
+  },
+  {
+   "name": "layer_21/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/mlp"
+  },
+  {
+   "name": "layer_21/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_21/mlp2"
+  },
+  {
+   "name": "layer_21/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_21/mlp2"
+  },
+  {
+   "name": "layer_21/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/post_attention_norm"
+  },
+  {
+   "name": "layer_21/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/post_ffw1_norm"
+  },
+  {
+   "name": "layer_21/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/post_ffw2_norm"
+  },
+  {
+   "name": "layer_21/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/post_ffw_norm"
+  },
+  {
+   "name": "layer_21/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/pre_attention_norm"
+  },
+  {
+   "name": "layer_21/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_21/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_21/pre_ffw_norm"
+  },
+  {
+   "name": "layer_21/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_21"
+  },
+  {
+   "name": "layer_22/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_22/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_22/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_22/attn/key_norm"
+  },
+  {
+   "name": "layer_22/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_22/attn/kv_einsum"
+  },
+  {
+   "name": "layer_22/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_22/attn/q_einsum"
+  },
+  {
+   "name": "layer_22/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_22/attn/query_norm"
+  },
+  {
+   "name": "layer_22/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_22/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_22/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_22/mlp/linear"
+  },
+  {
+   "name": "layer_22/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_22/mlp"
+  },
+  {
+   "name": "layer_22/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_22/mlp/router_logits"
+  },
+  {
+   "name": "layer_22/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/mlp"
+  },
+  {
+   "name": "layer_22/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_22/mlp2"
+  },
+  {
+   "name": "layer_22/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_22/mlp2"
+  },
+  {
+   "name": "layer_22/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/post_attention_norm"
+  },
+  {
+   "name": "layer_22/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/post_ffw1_norm"
+  },
+  {
+   "name": "layer_22/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/post_ffw2_norm"
+  },
+  {
+   "name": "layer_22/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/post_ffw_norm"
+  },
+  {
+   "name": "layer_22/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/pre_attention_norm"
+  },
+  {
+   "name": "layer_22/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_22/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_22/pre_ffw_norm"
+  },
+  {
+   "name": "layer_22/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_22"
+  },
+  {
+   "name": "layer_23/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    512,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_23/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_23/attn/k_einsum/w",
+   "shape": [
+    2,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 2883584,
+   "parent": "layer_23/attn/k_einsum"
+  },
+  {
+   "name": "layer_23/attn/key_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_23/attn/key_norm"
+  },
+  {
+   "name": "layer_23/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_23/attn/q_einsum"
+  },
+  {
+   "name": "layer_23/attn/query_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_23/attn/query_norm"
+  },
+  {
+   "name": "layer_23/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_23/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_23/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_23/mlp/linear"
+  },
+  {
+   "name": "layer_23/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_23/mlp"
+  },
+  {
+   "name": "layer_23/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_23/mlp/router_logits"
+  },
+  {
+   "name": "layer_23/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/mlp"
+  },
+  {
+   "name": "layer_23/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_23/mlp2"
+  },
+  {
+   "name": "layer_23/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_23/mlp2"
+  },
+  {
+   "name": "layer_23/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/post_attention_norm"
+  },
+  {
+   "name": "layer_23/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/post_ffw1_norm"
+  },
+  {
+   "name": "layer_23/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/post_ffw2_norm"
+  },
+  {
+   "name": "layer_23/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/post_ffw_norm"
+  },
+  {
+   "name": "layer_23/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/pre_attention_norm"
+  },
+  {
+   "name": "layer_23/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_23/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_23/pre_ffw_norm"
+  },
+  {
+   "name": "layer_23/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_23"
+  },
+  {
+   "name": "layer_24/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_24/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_24/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_24/attn/key_norm"
+  },
+  {
+   "name": "layer_24/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_24/attn/kv_einsum"
+  },
+  {
+   "name": "layer_24/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_24/attn/q_einsum"
+  },
+  {
+   "name": "layer_24/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_24/attn/query_norm"
+  },
+  {
+   "name": "layer_24/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_24/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_24/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_24/mlp/linear"
+  },
+  {
+   "name": "layer_24/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_24/mlp"
+  },
+  {
+   "name": "layer_24/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_24/mlp/router_logits"
+  },
+  {
+   "name": "layer_24/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/mlp"
+  },
+  {
+   "name": "layer_24/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_24/mlp2"
+  },
+  {
+   "name": "layer_24/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_24/mlp2"
+  },
+  {
+   "name": "layer_24/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/post_attention_norm"
+  },
+  {
+   "name": "layer_24/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/post_ffw1_norm"
+  },
+  {
+   "name": "layer_24/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/post_ffw2_norm"
+  },
+  {
+   "name": "layer_24/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/post_ffw_norm"
+  },
+  {
+   "name": "layer_24/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/pre_attention_norm"
+  },
+  {
+   "name": "layer_24/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_24/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_24/pre_ffw_norm"
+  },
+  {
+   "name": "layer_24/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_24"
+  },
+  {
+   "name": "layer_25/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_25/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_25/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_25/attn/key_norm"
+  },
+  {
+   "name": "layer_25/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_25/attn/kv_einsum"
+  },
+  {
+   "name": "layer_25/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_25/attn/q_einsum"
+  },
+  {
+   "name": "layer_25/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_25/attn/query_norm"
+  },
+  {
+   "name": "layer_25/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_25/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_25/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_25/mlp/linear"
+  },
+  {
+   "name": "layer_25/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_25/mlp"
+  },
+  {
+   "name": "layer_25/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_25/mlp/router_logits"
+  },
+  {
+   "name": "layer_25/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/mlp"
+  },
+  {
+   "name": "layer_25/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_25/mlp2"
+  },
+  {
+   "name": "layer_25/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_25/mlp2"
+  },
+  {
+   "name": "layer_25/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/post_attention_norm"
+  },
+  {
+   "name": "layer_25/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/post_ffw1_norm"
+  },
+  {
+   "name": "layer_25/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/post_ffw2_norm"
+  },
+  {
+   "name": "layer_25/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/post_ffw_norm"
+  },
+  {
+   "name": "layer_25/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/pre_attention_norm"
+  },
+  {
+   "name": "layer_25/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_25/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_25/pre_ffw_norm"
+  },
+  {
+   "name": "layer_25/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_25"
+  },
+  {
+   "name": "layer_26/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_26/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_26/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_26/attn/key_norm"
+  },
+  {
+   "name": "layer_26/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_26/attn/kv_einsum"
+  },
+  {
+   "name": "layer_26/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_26/attn/q_einsum"
+  },
+  {
+   "name": "layer_26/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_26/attn/query_norm"
+  },
+  {
+   "name": "layer_26/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_26/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_26/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_26/mlp/linear"
+  },
+  {
+   "name": "layer_26/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_26/mlp"
+  },
+  {
+   "name": "layer_26/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_26/mlp/router_logits"
+  },
+  {
+   "name": "layer_26/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/mlp"
+  },
+  {
+   "name": "layer_26/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_26/mlp2"
+  },
+  {
+   "name": "layer_26/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_26/mlp2"
+  },
+  {
+   "name": "layer_26/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/post_attention_norm"
+  },
+  {
+   "name": "layer_26/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/post_ffw1_norm"
+  },
+  {
+   "name": "layer_26/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/post_ffw2_norm"
+  },
+  {
+   "name": "layer_26/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/post_ffw_norm"
+  },
+  {
+   "name": "layer_26/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/pre_attention_norm"
+  },
+  {
+   "name": "layer_26/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_26/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_26/pre_ffw_norm"
+  },
+  {
+   "name": "layer_26/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_26"
+  },
+  {
+   "name": "layer_27/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_27/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_27/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_27/attn/key_norm"
+  },
+  {
+   "name": "layer_27/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_27/attn/kv_einsum"
+  },
+  {
+   "name": "layer_27/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_27/attn/q_einsum"
+  },
+  {
+   "name": "layer_27/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_27/attn/query_norm"
+  },
+  {
+   "name": "layer_27/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_27/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_27/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_27/mlp/linear"
+  },
+  {
+   "name": "layer_27/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_27/mlp"
+  },
+  {
+   "name": "layer_27/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_27/mlp/router_logits"
+  },
+  {
+   "name": "layer_27/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/mlp"
+  },
+  {
+   "name": "layer_27/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_27/mlp2"
+  },
+  {
+   "name": "layer_27/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_27/mlp2"
+  },
+  {
+   "name": "layer_27/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/post_attention_norm"
+  },
+  {
+   "name": "layer_27/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/post_ffw1_norm"
+  },
+  {
+   "name": "layer_27/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/post_ffw2_norm"
+  },
+  {
+   "name": "layer_27/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/post_ffw_norm"
+  },
+  {
+   "name": "layer_27/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/pre_attention_norm"
+  },
+  {
+   "name": "layer_27/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_27/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_27/pre_ffw_norm"
+  },
+  {
+   "name": "layer_27/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_27"
+  },
+  {
+   "name": "layer_28/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_28/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_28/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_28/attn/key_norm"
+  },
+  {
+   "name": "layer_28/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_28/attn/kv_einsum"
+  },
+  {
+   "name": "layer_28/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_28/attn/q_einsum"
+  },
+  {
+   "name": "layer_28/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_28/attn/query_norm"
+  },
+  {
+   "name": "layer_28/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_28/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_28/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_28/mlp/linear"
+  },
+  {
+   "name": "layer_28/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_28/mlp"
+  },
+  {
+   "name": "layer_28/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_28/mlp/router_logits"
+  },
+  {
+   "name": "layer_28/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/mlp"
+  },
+  {
+   "name": "layer_28/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_28/mlp2"
+  },
+  {
+   "name": "layer_28/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_28/mlp2"
+  },
+  {
+   "name": "layer_28/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/post_attention_norm"
+  },
+  {
+   "name": "layer_28/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/post_ffw1_norm"
+  },
+  {
+   "name": "layer_28/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/post_ffw2_norm"
+  },
+  {
+   "name": "layer_28/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/post_ffw_norm"
+  },
+  {
+   "name": "layer_28/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/pre_attention_norm"
+  },
+  {
+   "name": "layer_28/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_28/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_28/pre_ffw_norm"
+  },
+  {
+   "name": "layer_28/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_28"
+  },
+  {
+   "name": "layer_29/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    512,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_29/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_29/attn/k_einsum/w",
+   "shape": [
+    2,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 2883584,
+   "parent": "layer_29/attn/k_einsum"
+  },
+  {
+   "name": "layer_29/attn/key_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_29/attn/key_norm"
+  },
+  {
+   "name": "layer_29/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_29/attn/q_einsum"
+  },
+  {
+   "name": "layer_29/attn/query_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_29/attn/query_norm"
+  },
+  {
+   "name": "layer_29/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_29/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_29/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_29/mlp/linear"
+  },
+  {
+   "name": "layer_29/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_29/mlp"
+  },
+  {
+   "name": "layer_29/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_29/mlp/router_logits"
+  },
+  {
+   "name": "layer_29/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/mlp"
+  },
+  {
+   "name": "layer_29/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_29/mlp2"
+  },
+  {
+   "name": "layer_29/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_29/mlp2"
+  },
+  {
+   "name": "layer_29/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/post_attention_norm"
+  },
+  {
+   "name": "layer_29/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/post_ffw1_norm"
+  },
+  {
+   "name": "layer_29/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/post_ffw2_norm"
+  },
+  {
+   "name": "layer_29/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/post_ffw_norm"
+  },
+  {
+   "name": "layer_29/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/pre_attention_norm"
+  },
+  {
+   "name": "layer_29/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_29/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_29/pre_ffw_norm"
+  },
+  {
+   "name": "layer_29/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_29"
+  },
+  {
+   "name": "layer_3/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_3/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_3/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_3/attn/key_norm"
+  },
+  {
+   "name": "layer_3/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_3/attn/kv_einsum"
+  },
+  {
+   "name": "layer_3/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_3/attn/q_einsum"
+  },
+  {
+   "name": "layer_3/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_3/attn/query_norm"
+  },
+  {
+   "name": "layer_3/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_3/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_3/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_3/mlp/linear"
+  },
+  {
+   "name": "layer_3/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_3/mlp"
+  },
+  {
+   "name": "layer_3/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_3/mlp/router_logits"
+  },
+  {
+   "name": "layer_3/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/mlp"
+  },
+  {
+   "name": "layer_3/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_3/mlp2"
+  },
+  {
+   "name": "layer_3/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_3/mlp2"
+  },
+  {
+   "name": "layer_3/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/post_attention_norm"
+  },
+  {
+   "name": "layer_3/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/post_ffw1_norm"
+  },
+  {
+   "name": "layer_3/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/post_ffw2_norm"
+  },
+  {
+   "name": "layer_3/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/post_ffw_norm"
+  },
+  {
+   "name": "layer_3/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/pre_attention_norm"
+  },
+  {
+   "name": "layer_3/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_3/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_3/pre_ffw_norm"
+  },
+  {
+   "name": "layer_3/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_3"
+  },
+  {
+   "name": "layer_4/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_4/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_4/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_4/attn/key_norm"
+  },
+  {
+   "name": "layer_4/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_4/attn/kv_einsum"
+  },
+  {
+   "name": "layer_4/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_4/attn/q_einsum"
+  },
+  {
+   "name": "layer_4/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_4/attn/query_norm"
+  },
+  {
+   "name": "layer_4/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_4/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_4/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_4/mlp/linear"
+  },
+  {
+   "name": "layer_4/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_4/mlp"
+  },
+  {
+   "name": "layer_4/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_4/mlp/router_logits"
+  },
+  {
+   "name": "layer_4/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/mlp"
+  },
+  {
+   "name": "layer_4/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_4/mlp2"
+  },
+  {
+   "name": "layer_4/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_4/mlp2"
+  },
+  {
+   "name": "layer_4/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/post_attention_norm"
+  },
+  {
+   "name": "layer_4/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/post_ffw1_norm"
+  },
+  {
+   "name": "layer_4/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/post_ffw2_norm"
+  },
+  {
+   "name": "layer_4/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/post_ffw_norm"
+  },
+  {
+   "name": "layer_4/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/pre_attention_norm"
+  },
+  {
+   "name": "layer_4/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_4/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_4/pre_ffw_norm"
+  },
+  {
+   "name": "layer_4/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_4"
+  },
+  {
+   "name": "layer_5/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    512,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_5/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_5/attn/k_einsum/w",
+   "shape": [
+    2,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 2883584,
+   "parent": "layer_5/attn/k_einsum"
+  },
+  {
+   "name": "layer_5/attn/key_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_5/attn/key_norm"
+  },
+  {
+   "name": "layer_5/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 23068672,
+   "parent": "layer_5/attn/q_einsum"
+  },
+  {
+   "name": "layer_5/attn/query_norm/scale",
+   "shape": [
+    512
+   ],
+   "dtype": "bfloat16",
+   "count": 512,
+   "parent": "layer_5/attn/query_norm"
+  },
+  {
+   "name": "layer_5/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_5/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_5/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_5/mlp/linear"
+  },
+  {
+   "name": "layer_5/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_5/mlp"
+  },
+  {
+   "name": "layer_5/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_5/mlp/router_logits"
+  },
+  {
+   "name": "layer_5/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/mlp"
+  },
+  {
+   "name": "layer_5/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_5/mlp2"
+  },
+  {
+   "name": "layer_5/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_5/mlp2"
+  },
+  {
+   "name": "layer_5/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/post_attention_norm"
+  },
+  {
+   "name": "layer_5/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/post_ffw1_norm"
+  },
+  {
+   "name": "layer_5/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/post_ffw2_norm"
+  },
+  {
+   "name": "layer_5/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/post_ffw_norm"
+  },
+  {
+   "name": "layer_5/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/pre_attention_norm"
+  },
+  {
+   "name": "layer_5/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_5/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_5/pre_ffw_norm"
+  },
+  {
+   "name": "layer_5/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_5"
+  },
+  {
+   "name": "layer_6/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_6/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_6/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_6/attn/key_norm"
+  },
+  {
+   "name": "layer_6/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_6/attn/kv_einsum"
+  },
+  {
+   "name": "layer_6/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_6/attn/q_einsum"
+  },
+  {
+   "name": "layer_6/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_6/attn/query_norm"
+  },
+  {
+   "name": "layer_6/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_6/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_6/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_6/mlp/linear"
+  },
+  {
+   "name": "layer_6/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_6/mlp"
+  },
+  {
+   "name": "layer_6/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_6/mlp/router_logits"
+  },
+  {
+   "name": "layer_6/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/mlp"
+  },
+  {
+   "name": "layer_6/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_6/mlp2"
+  },
+  {
+   "name": "layer_6/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_6/mlp2"
+  },
+  {
+   "name": "layer_6/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/post_attention_norm"
+  },
+  {
+   "name": "layer_6/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/post_ffw1_norm"
+  },
+  {
+   "name": "layer_6/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/post_ffw2_norm"
+  },
+  {
+   "name": "layer_6/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/post_ffw_norm"
+  },
+  {
+   "name": "layer_6/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/pre_attention_norm"
+  },
+  {
+   "name": "layer_6/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_6/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_6/pre_ffw_norm"
+  },
+  {
+   "name": "layer_6/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_6"
+  },
+  {
+   "name": "layer_7/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_7/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_7/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_7/attn/key_norm"
+  },
+  {
+   "name": "layer_7/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_7/attn/kv_einsum"
+  },
+  {
+   "name": "layer_7/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_7/attn/q_einsum"
+  },
+  {
+   "name": "layer_7/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_7/attn/query_norm"
+  },
+  {
+   "name": "layer_7/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_7/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_7/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_7/mlp/linear"
+  },
+  {
+   "name": "layer_7/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_7/mlp"
+  },
+  {
+   "name": "layer_7/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_7/mlp/router_logits"
+  },
+  {
+   "name": "layer_7/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/mlp"
+  },
+  {
+   "name": "layer_7/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_7/mlp2"
+  },
+  {
+   "name": "layer_7/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_7/mlp2"
+  },
+  {
+   "name": "layer_7/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/post_attention_norm"
+  },
+  {
+   "name": "layer_7/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/post_ffw1_norm"
+  },
+  {
+   "name": "layer_7/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/post_ffw2_norm"
+  },
+  {
+   "name": "layer_7/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/post_ffw_norm"
+  },
+  {
+   "name": "layer_7/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/pre_attention_norm"
+  },
+  {
+   "name": "layer_7/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_7/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_7/pre_ffw_norm"
+  },
+  {
+   "name": "layer_7/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_7"
+  },
+  {
+   "name": "layer_8/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_8/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_8/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_8/attn/key_norm"
+  },
+  {
+   "name": "layer_8/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_8/attn/kv_einsum"
+  },
+  {
+   "name": "layer_8/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_8/attn/q_einsum"
+  },
+  {
+   "name": "layer_8/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_8/attn/query_norm"
+  },
+  {
+   "name": "layer_8/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_8/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_8/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_8/mlp/linear"
+  },
+  {
+   "name": "layer_8/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_8/mlp"
+  },
+  {
+   "name": "layer_8/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_8/mlp/router_logits"
+  },
+  {
+   "name": "layer_8/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/mlp"
+  },
+  {
+   "name": "layer_8/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_8/mlp2"
+  },
+  {
+   "name": "layer_8/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_8/mlp2"
+  },
+  {
+   "name": "layer_8/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/post_attention_norm"
+  },
+  {
+   "name": "layer_8/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/post_ffw1_norm"
+  },
+  {
+   "name": "layer_8/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/post_ffw2_norm"
+  },
+  {
+   "name": "layer_8/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/post_ffw_norm"
+  },
+  {
+   "name": "layer_8/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/pre_attention_norm"
+  },
+  {
+   "name": "layer_8/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_8/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_8/pre_ffw_norm"
+  },
+  {
+   "name": "layer_8/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_8"
+  },
+  {
+   "name": "layer_9/attn/attn_vec_einsum/w",
+   "shape": [
+    16,
+    256,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_9/attn/attn_vec_einsum"
+  },
+  {
+   "name": "layer_9/attn/key_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_9/attn/key_norm"
+  },
+  {
+   "name": "layer_9/attn/kv_einsum/w",
+   "shape": [
+    2,
+    8,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_9/attn/kv_einsum"
+  },
+  {
+   "name": "layer_9/attn/q_einsum/w",
+   "shape": [
+    16,
+    2816,
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 11534336,
+   "parent": "layer_9/attn/q_einsum"
+  },
+  {
+   "name": "layer_9/attn/query_norm/scale",
+   "shape": [
+    256
+   ],
+   "dtype": "bfloat16",
+   "count": 256,
+   "parent": "layer_9/attn/query_norm"
+  },
+  {
+   "name": "layer_9/mlp/gating_einsum/w",
+   "shape": [
+    128,
+    2,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 507510784,
+   "parent": "layer_9/mlp/gating_einsum"
+  },
+  {
+   "name": "layer_9/mlp/linear/w",
+   "shape": [
+    128,
+    704,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 253755392,
+   "parent": "layer_9/mlp/linear"
+  },
+  {
+   "name": "layer_9/mlp/per_expert_scale",
+   "shape": [
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 128,
+   "parent": "layer_9/mlp"
+  },
+  {
+   "name": "layer_9/mlp/router_logits/w",
+   "shape": [
+    2816,
+    128
+   ],
+   "dtype": "bfloat16",
+   "count": 360448,
+   "parent": "layer_9/mlp/router_logits"
+  },
+  {
+   "name": "layer_9/mlp/router_scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/mlp"
+  },
+  {
+   "name": "layer_9/mlp2/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "layer_9/mlp2"
+  },
+  {
+   "name": "layer_9/mlp2/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "layer_9/mlp2"
+  },
+  {
+   "name": "layer_9/post_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/post_attention_norm"
+  },
+  {
+   "name": "layer_9/post_ffw1_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/post_ffw1_norm"
+  },
+  {
+   "name": "layer_9/post_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/post_ffw2_norm"
+  },
+  {
+   "name": "layer_9/post_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/post_ffw_norm"
+  },
+  {
+   "name": "layer_9/pre_attention_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/pre_attention_norm"
+  },
+  {
+   "name": "layer_9/pre_ffw2_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/pre_ffw2_norm"
+  },
+  {
+   "name": "layer_9/pre_ffw_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "layer_9/pre_ffw_norm"
+  },
+  {
+   "name": "layer_9/skip_scale",
+   "shape": [
+    1
+   ],
+   "dtype": "bfloat16",
+   "count": 1,
+   "parent": "layer_9"
+  },
+  {
+   "name": "self_conditioner/ffw/gating_einsum",
+   "shape": [
+    2,
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 11894784,
+   "parent": "self_conditioner/ffw"
+  },
+  {
+   "name": "self_conditioner/ffw/linear",
+   "shape": [
+    2112,
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 5947392,
+   "parent": "self_conditioner/ffw"
+  },
+  {
+   "name": "self_conditioner/pre_norm/scale",
+   "shape": [
+    2816
+   ],
+   "dtype": "bfloat16",
+   "count": 2816,
+   "parent": "self_conditioner/pre_norm"
+  }
+ ]
+}

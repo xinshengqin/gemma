@@ -1,0 +1,37 @@
+%% L1 — Attention (gemma4/_modules.py:201). Shown for a LOCAL_SLIDING layer:
+%% K = head_dim = 256. For GLOBAL layers: K = global_key_size = 512,
+%% kv heads = num_global_kv_heads = 2, and k == v (k_eq_v_global).
+flowchart TB
+    xn(["x_normed<br/>[B, L, D]"]):::tensor
+    QE["q_einsum<br/>BTD,NDH->BTNH"]:::module
+    KVE["kv_einsum<br/>BSD,CKDH->CBSKH"]:::module
+    QN["query_norm (RMS) + RoPE"]:::module
+    KN["key_norm (RMS) + RoPE"]:::module
+    VN["value_norm (RMS, no scale)"]:::module
+    kv[("KV cache layer_i<br/>k,v: [B, C, N_kv, K]<br/>end_index: [B]")]:::tensor
+    UPD["cache update<br/>dynamic_update_slice @ end_index"]:::op
+    DOT["GQA dot product<br/>BTNH,BSKH->BTNS (grouped)"]:::op
+    MASK["mask + softmax<br/>(sliding window ∩ attn_mask)"]:::op
+    WV["weighted sum<br/>BTNS,BSKH->BTNH"]:::op
+    OE["attn_vec_einsum<br/>BTNH,NHD->BTD"]:::module
+    out(["attn_output<br/>[B, L, D]"]):::tensor
+
+    xn -- "[B, L, D]" --> QE
+    xn -- "[B, L, D]" --> KVE
+    QE -- "q [B, L, N_h, K]" --> QN
+    KVE -- "k [B, L, N_kv, K]" --> KN
+    KVE -- "v [B, L, N_kv, K]" --> VN
+    KN -- "[B, L, N_kv, K]" --> UPD
+    VN -- "[B, L, N_kv, K]" --> UPD
+    kv -- "old k,v [B, C, N_kv, K]" --> UPD
+    UPD -- "k,v [B, C, N_kv, K]" --> DOT
+    QN -- "q [B, L, N_h, K]" --> DOT
+    DOT -- "logits [B, L, N_h, C]" --> MASK
+    MASK -- "probs [B, L, N_h, C]" --> WV
+    UPD -- "v [B, C, N_kv, K]" --> WV
+    WV -- "[B, L, N_h, K]" --> OE
+    OE -- "[B, L, D]" --> out
+
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12

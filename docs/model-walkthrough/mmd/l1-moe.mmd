@@ -1,0 +1,32 @@
+%% L1 — MoERagged (gemma4/_moe.py:261). E = num_experts, k = top_k_experts,
+%% E_d = expert_dim. Tokens flattened to B*L for ragged dispatch.
+flowchart TB
+    xn(["x (pre_ffw_normed)<br/>[B, L, D]"]):::tensor
+    xu(["unnormalized_x<br/>[B, L, D]"]):::tensor
+    RN["router_norm (RMS, no scale)<br/>x router_scale / sqrt(D)"]:::module
+    RL["router_logits<br/>Einsum D,E"]:::module
+    TOPK["softmax + approx_max_k(k)<br/>renormalize weights"]:::op
+    DISP["expert dispatch<br/>sort tokens by expert"]:::op
+    GATE["gating_einsum (ragged_dot)<br/>[E, 2, E_d, D]"]:::module
+    ACT["gelu(x1) * x2"]:::op
+    LIN["linear (ragged_dot)<br/>[E, E_d, D]"]:::module
+    SCALE["x per_expert_scale[e]"]:::op
+    COMB["collect + combine<br/>sum_k w_k * out_k"]:::op
+    out(["moe_out<br/>[B, L, D]"]):::tensor
+
+    xu -- "[B, L, D]" --> RN
+    RN -- "[B, L, D]" --> RL
+    RL -- "router logits [B, L, E]" --> TOPK
+    TOPK -- "weights, choices [B, L, k]" --> DISP
+    xn -- "[B, L, D]" --> DISP
+    DISP -- "sorted tokens [B*L*k, D]" --> GATE
+    GATE -- "[B*L*k, 2*E_d]" --> ACT
+    ACT -- "[B*L*k, E_d]" --> LIN
+    LIN -- "[B*L*k, D]" --> SCALE
+    SCALE -- "[B*L*k, D]" --> COMB
+    TOPK -- "combine weights [B, L, k]" --> COMB
+    COMB -- "[B, L, D]" --> out
+
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
