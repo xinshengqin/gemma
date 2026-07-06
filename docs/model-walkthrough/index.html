@@ -90,6 +90,7 @@
   <a class="sub" href="#architecture">L0 → Block → Attention → MoE …</a>
   <a href="#training-seq">3. Training-step sequence</a>
   <a href="#training-flow">4. Training forward graph</a>
+  <a class="sub" href="#encode-detail">4.1 Inside sft_encode</a>
   <a href="#inference-seq">5. Inference sequence</a>
   <a href="#weights">6. Weight table</a>
   <a href="#config-map">7. Config → architecture map</a>
@@ -210,6 +211,20 @@ backbone <b>three times</b> per step: one causal encoder pass and two denoiser p
 <p>Operator view of <span class="fileref">sft_model.py:276-431</span>. This is also reachable
 from the explorer above (node "SFT training wrapper" — here shown flat).</p>
 <div class="mermaid-static" data-diagram="trainForward"></div>
+
+<h3 id="encode-detail">4.1 Inside sft_encode (encoder prefill)</h3>
+<p>Expansion of the "sft_encode" node above
+(<span class="fileref">sft_model.py:159-217</span>;
+<span class="fileref">hd_gemma_network.py:52-107</span>). One <b>standard causal</b>
+Gemma forward over <code>prompt ++ x0 [B, FS]</code> — the same <code>layer_i/*</code>,
+<code>embedder</code> and <code>final_norm</code> weights as the denoiser passes, but via
+<code>Transformer.__call__</code>, so the <code>self_conditioner</code> module is not run.
+It produces both training signals at once: <code>encoder_logits [B, FS, V]</code> for the AR
+loss, and the prefilled KV cache whose per-example write cursor is then rewound to
+<code>P + selected_idx·CS</code> so the denoiser reads only prompt + prior canvases as
+context. In the explorer, this diagram is a drill-down of the sft_encode node
+(Training forward → sft_encode).</p>
+<div class="mermaid-static" data-diagram="encode"></div>
 
 <h2 id="inference-seq">5. Inference sequence (AR diffusion sampling)</h2>
 <p>Both loops are explicit: the outer autoregressive canvas loop
@@ -672,6 +687,34 @@ SRC.trainForward = `flowchart TB
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
     classDef loss fill:#fee2e2,stroke:#dc2626,color:#7f1d1d`;
 
+SRC.encode = `flowchart TB
+    pr(["prompt<br/>[B, P]"]):::tensor
+    x0t(["x0 tokens<br/>[B, TC]"]):::tensor
+    CAT["concat<br/>full_seq = prompt ++ x0"]:::op
+    MASKS["validity masks<br/>prompt_mask = prompt != PAD<br/>full_seq_mask = prompt_mask ++ canvas_mask"]:::op
+    POS["build_positions_from_mask<br/>cumsum(mask) - 1"]:::op
+    PMASK["make_causal_prefill_mask<br/>lower-triangular AND token mask"]:::op
+    INIT["init_cache<br/>allocate zeroed cache, len FS"]:::module
+    ENCC["encoder_call<br/>standard Transformer.__call__<br/>(causal AR forward, no self-cond)"]:::module
+    SETEND["set_cache_end_index<br/>end_index = P + selected_idx * CS"]:::module
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+    kv[("prefilled KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index: [B]")]:::tensor
+    pr -- "[B, P]" --> CAT
+    x0t -- "[B, TC]" --> CAT
+    pr -- "[B, P]" --> MASKS
+    CAT -- "full_seq [B, FS]" --> ENCC
+    MASKS -- "full_seq_mask [B, FS]" --> POS
+    MASKS -- "full_seq_mask [B, FS]" --> PMASK
+    POS -- "positions [B, FS]" --> ENCC
+    PMASK -- "attn mask [B, FS, FS]" --> ENCC
+    INIT -- "empty cache [B, FS, N_kv, d]" --> ENCC
+    ENCC -- "[B, FS, V]" --> elog
+    ENCC -- "written k,v (end_index = FS)" --> SETEND
+    SETEND -- "end_index := P + idx*CS" --> kv
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
 SRC.seqTraining = `sequenceDiagram
     autonumber
     participant DL as Dataloader<br/>(sudoku_data)
@@ -750,6 +793,7 @@ const DIAGRAMS = {
   moe:       { title: 'L2 — MoERagged FFN', src: SRC.moe, parent: 'block' },
   embedder:  { title: 'L1 — Embedder & SelfConditioning', src: SRC.embedder, parent: 'l0' },
   trainForward: { title: 'Training forward (SFTDiffusion)', src: SRC.trainForward },
+  encode: { title: 'L2 — sft_encode (encoder prefill)', src: SRC.encode, parent: 'trainForward' },
 };
 
 const W = (name, sym, big, tiny) => ({name, sym, big, tiny});
@@ -923,7 +967,8 @@ const INFO = {
       desc: 'Counts valid canvases from canvas_mask, samples selected_canvas_idx ~ U[0, num_valid) per example. Always 0 when NC=1.', io: '-> int32[B]' },
     ENC: { title: 'sft_encode (encoder prefill)', file: 'sft_model.py:159-217; hd_gemma_network.py:52-107; mask_helpers.py:69-140,317-344',
       desc: 'Causal AR pass over prompt ++ x0 [B,FS]: builds positions (cumsum of valid mask - 1), causal prefill mask [B,FS,FS], runs the standard Transformer.__call__, returns encoder_logits and the prefilled KV cache; then overwrites cache end_index to P + idx*CS so the denoiser sees prompt + prior canvases only.',
-      io: '-> encoder_logits bf16[B,FS,V] (measured [2,24,64]), cache k,v [B,FS,N_kv,d]' },
+      io: '-> encoder_logits bf16[B,FS,V] (measured [2,24,64]), cache k,v [B,FS,N_kv,d]',
+      drill: 'encode' },
     DEC1: { title: 'sft_decode pass 1', file: 'sft_model.py:90-156, called :377',
       desc: 'Denoiser pass without self-conditioning: decoder mask [B,TC,C] (bidirectional within selected canvas, block-causal across canvases, mask_helpers.py:247-309), canvas positions = positions[:, P:].',
       io: '-> logits bf16[B,TC,V] (measured [2,16,64])' },
@@ -945,6 +990,35 @@ const INFO = {
     kv: { title: 'KV cache', file: 'mask_helpers.py:317-344', desc: 'Prefilled from prompt ++ x0; end_index frozen at P + idx*CS. Gradients flow through it (stop_gradient flag False).', io: 'per layer k,v [B,FS,N_kv,d]' },
     elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'AR next-token logits over the full sequence.', io: 'bf16[B,FS,V]' },
     dlog: { title: 'denoiser logits', file: 'sft_model.py:413-418', desc: 'x0-prediction logits (pass 2).', io: 'bf16[B,TC,V]' },
+  },
+  encode: {
+    CAT: { title: 'concat prompt ++ x0', file: 'sft_model.py:197',
+      desc: 'full_seq = concatenate([prompt, x0_tokens], axis=1). The encoder sees the CLEAN answer tokens, not the corrupted x_t.',
+      io: '([B,P], [B,TC]) -> int32[B,FS]  (measured [2,24])' },
+    MASKS: { title: 'validity masks', file: 'sft_model.py:199-200',
+      desc: 'prompt_mask = prompt != PAD; full_seq_mask = prompt_mask ++ canvas_mask. Marks which of the FS positions are real tokens vs right-padding.',
+      io: '-> bool[B,FS]' },
+    POS: { title: 'build_positions_from_mask', file: 'mask_helpers.py:69-88',
+      desc: 'positions = cumsum(mask) - 1, clamped at pads — RoPE positions skip padding so token i of the answer gets position prompt_length + i regardless of pad amount.',
+      io: 'bool[B,FS] -> int32[B,FS]' },
+    PMASK: { title: 'make_causal_prefill_mask', file: 'mask_helpers.py:91-140',
+      desc: 'Lower-triangular causal mask intersected with the token-validity mask, sized to the cache length. This pass is ordinary left-to-right attention — the bidirectional mask exists only in the decoder passes.',
+      io: 'bool[B,FS] -> bool[B,FS,FS]  (measured [2,24,24])' },
+    INIT: { title: 'init_cache', file: 'hd_gemma_network.py:131-151; _config.py:157-193; _modules.py:399-419',
+      desc: 'Allocates zeroed per-layer buffers: local k,v [B,FS,N_kv,d_h], global k,v [B,FS,N_gkv,K_g], end_index [B], positions [B,FS].',
+      io: '-> cache (measured k,v [2,24,2,8] local / [2,24,1,16] global)' },
+    ENCC: { title: 'encoder_call (Transformer.__call__)', file: 'hd_gemma_network.py:153-184',
+      desc: 'One standard causal Gemma forward. Same embedder / layer_i / final_norm weights as the denoiser passes (single shared param tree); self_conditioner is NOT run on this path. Writes every position’s K/V into the cache and returns AR next-token logits.',
+      weights: [W('(shared) embedder + layer_i/* + final_norm', 'see weight table', '25.23B', '~50k')],
+      io: '(tokens [B,FS], positions [B,FS], mask [B,FS,FS], cache) -> logits bf16[B,FS,V] + written cache',
+      drill: 'block' },
+    SETEND: { title: 'set_cache_end_index', file: 'mask_helpers.py:317-344; sft_model.py:211-215',
+      desc: 'Rewinds each layer’s per-example write cursor from FS to P + selected_canvas_idx * CS. The K/V beyond the cursor remain in the buffer but the decoder’s attention mask never addresses future canvases, so the denoiser conditions only on prompt + prior canvases.',
+      io: 'end_index int32[B] := P + idx*CS' },
+    pr: { title: 'prompt', file: 'batch.prompt', desc: 'Right-padded prompt tokens.', io: 'int32[B,P]' },
+    x0t: { title: 'x0 tokens', file: 'sft_model.py:337', desc: 'Clean canvas tokens, trailing channel dim squeezed.', io: 'int32[B,TC]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Consumed by EncoderARLoss (next-token CE over valid positions).', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
+    kv: { title: 'prefilled KV cache', file: 'sft_model.py:215', desc: 'Conditioning context for both sft_decode passes. Gradients flow through it back into the encoder computation (stop_gradient flag is False).', io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
   },
 };
 
