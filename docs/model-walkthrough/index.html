@@ -68,6 +68,13 @@
   .mermaid-static { border: 1px solid var(--line); border-radius: 8px;
                     padding: 10px; overflow-x: auto; margin: 12px 0; }
   .mermaid-static svg { max-width: 100%; height: auto; }
+  .mermaid-static g.node { cursor: pointer; }
+  .static-panel { border-top: 1px dashed var(--line); margin-top: 10px;
+                  padding: 10px 6px 2px; font-size: 13.5px; background: var(--panel);
+                  border-radius: 0 0 6px 6px; }
+  .static-panel h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .static-panel table { font-size: 12px; max-width: 640px; }
+  .static-panel .hint { color: var(--muted); font-style: italic; margin: 2px 0; }
   details { margin: 10px 0; }
   details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
   .legend-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px;
@@ -208,8 +215,9 @@ backbone <b>three times</b> per step: one causal encoder pass and two denoiser p
 <div class="mermaid-static" data-diagram="seqTraining"></div>
 
 <h2 id="training-flow">4. Training forward graph (SFTDiffusion.__call__)</h2>
-<p>Operator view of <span class="fileref">sft_model.py:276-431</span>. This is also reachable
-from the explorer above (node "SFT training wrapper" — here shown flat).</p>
+<p>Operator view of <span class="fileref">sft_model.py:276-431</span> (also reachable via the
+"Training forward ↗" link in the explorer). Nodes are clickable here too: click to inspect
+below the figure, double-click a highlighted node to open its sub-diagram in the explorer.</p>
 <div class="mermaid-static" data-diagram="trainForward"></div>
 
 <h3 id="encode-detail">4.1 Inside sft_encode (encoder prefill)</h3>
@@ -1071,11 +1079,8 @@ function bindNodes(diagramId) {
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
-function renderPanel(diagramId, nid, info) {
-  if (!info) {
-    panel.innerHTML = `<h4>${esc(nid)}</h4><p class="hint">No metadata for this node.</p>`;
-    return;
-  }
+function panelHTML(nid, info, inExplorer) {
+  if (!info) return `<h4>${esc(nid)}</h4><p class="hint">No metadata for this node.</p>`;
   let html = `<h4>${esc(info.title)}</h4>`;
   html += `<div class="fileref" style="white-space:normal">${esc(info.file || '')}</div>`;
   html += `<p>${esc(info.desc || '')}</p>`;
@@ -1088,18 +1093,59 @@ function renderPanel(diagramId, nid, info) {
   } else if (info.weights) {
     html += `<p class="hint">No parameters.</p>`;
   }
-  if (info.drill)
-    html += `<div class="drillable-hint">⤵ double-click the node (or <a data-nav="${info.drill}">open ${esc(DIAGRAMS[info.drill].title)}</a>)</div>`;
-  panel.innerHTML = html;
+  if (info.drill) {
+    const target = esc(DIAGRAMS[info.drill].title);
+    html += inExplorer
+      ? `<div class="drillable-hint">⤵ double-click the node (or <a data-nav="${info.drill}">open ${target}</a>)</div>`
+      : `<div class="drillable-hint">⤵ double-click the node (or <a data-nav="${info.drill}">open ${target}</a> in the explorer above)</div>`;
+  }
+  return html;
+}
+
+function bindNavLinks(container) {
+  container.querySelectorAll('a[data-nav]').forEach(a =>
+    a.addEventListener('click', () => gotoExplorer(a.dataset.nav)));
+}
+
+function gotoExplorer(diagramId) {
+  show(diagramId);
+  document.getElementById('explorer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderPanel(diagramId, nid, info) {
+  panel.innerHTML = panelHTML(nid, info, true);
   panel.querySelectorAll('a[data-nav]').forEach(a =>
     a.addEventListener('click', () => show(a.dataset.nav)));
 }
 
-/* static (non-interactive) diagrams */
+/* static diagrams: sequence diagrams stay inert; flowcharts get the same
+   click-to-inspect / double-click-to-drill behavior as the explorer, with an
+   inline info panel under the figure. */
 async function renderStatics() {
   for (const el of document.querySelectorAll('.mermaid-static')) {
-    const { svg } = await mermaid.render('mmds' + (renderCount++), SRC[el.dataset.diagram]);
+    const name = el.dataset.diagram;
+    const { svg } = await mermaid.render('mmds' + (renderCount++), SRC[name]);
     el.innerHTML = svg;
+    if (!SRC[name].startsWith('flowchart')) continue;
+    const info = INFO[name] || {};
+    const inline = document.createElement('div');
+    inline.className = 'static-panel';
+    inline.innerHTML = '<p class="hint">Click a node to inspect it here; double-click a highlighted node to open its sub-diagram in the explorer.</p>';
+    el.appendChild(inline);
+    el.querySelectorAll('g.node').forEach(node => {
+      const nid = nodeIdOf(node);
+      if (!nid) return;
+      const ni = info[nid];
+      node.style.cursor = 'pointer';
+      node.addEventListener('click', () => {
+        inline.innerHTML = panelHTML(nid, ni, false);
+        bindNavLinks(inline);
+      });
+      if (ni && ni.drill) {
+        node.addEventListener('dblclick', () => gotoExplorer(ni.drill));
+        node.style.filter = 'drop-shadow(0 1px 3px rgba(37,99,235,.45))';
+      }
+    });
   }
 }
 
