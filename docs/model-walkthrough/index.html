@@ -198,9 +198,6 @@ parameter-free ops.</p>
     breadcrumbs) to navigate the hierarchy.</p>
   </aside>
 </div>
-<details><summary>Raw Mermaid sources (also in <span class="fileref">docs/model-walkthrough/mmd/*.mmd</span>)</summary>
-<pre id="raw-sources"></pre>
-</details>
 
 <h2 id="training-seq">3. Training-step sequence (one kauldron step)</h2>
 <p>Order of operations for one optimizer step
@@ -1031,9 +1028,6 @@ async function renderStatics() {
     el.innerHTML = svg;
   }
 }
-
-document.getElementById('raw-sources').textContent =
-  Object.entries(SRC).map(([k, v]) => `%% ===== ${k} =====\n${v}`).join('\n\n');
 
 show('l0').then(renderStatics).catch(e => {
   svgHost.innerHTML = '<pre style="color:#b91c1c">Mermaid render error: ' + esc(e.message || e) + '</pre>';
