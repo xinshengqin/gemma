@@ -705,11 +705,16 @@ SRC.encode = `flowchart TB
     INIT["init_cache<br/>allocate zeroed cache, len FS"]:::module
     ENCC["encoder_call<br/>standard Transformer.__call__<br/>(causal AR forward, no self-cond)"]:::module
     SETEND["set_cache_end_index<br/>end_index = P + selected_idx * CS"]:::module
+    idx(["selected_canvas_idx<br/>[B]"]):::tensor
+    cmask(["canvas_mask<br/>[B, TC]"]):::tensor
     elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
     kv[("prefilled KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index: [B]")]:::tensor
+    posOut(["positions (returned)<br/>[B, FS]"]):::tensor
+    pmOut(["prompt_mask (returned)<br/>[B, P]"]):::tensor
     pr -- "[B, P]" --> CAT
     x0t -- "[B, TC]" --> CAT
     pr -- "[B, P]" --> MASKS
+    cmask -- "[B, TC]" --> MASKS
     CAT -- "full_seq [B, FS]" --> ENCC
     MASKS -- "full_seq_mask [B, FS]" --> POS
     MASKS -- "full_seq_mask [B, FS]" --> PMASK
@@ -718,7 +723,10 @@ SRC.encode = `flowchart TB
     INIT -- "empty cache [B, FS, N_kv, d]" --> ENCC
     ENCC -- "[B, FS, V]" --> elog
     ENCC -- "written k,v (end_index = FS)" --> SETEND
+    idx -- "[B]" --> SETEND
     SETEND -- "end_index := P + idx*CS" --> kv
+    POS -- "positions [B, FS]" --> posOut
+    MASKS -- "prompt_mask [B, P]" --> pmOut
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
@@ -1025,6 +1033,18 @@ const INFO = {
       io: 'end_index int32[B] := P + idx*CS' },
     pr: { title: 'prompt', file: 'batch.prompt', desc: 'Right-padded prompt tokens.', io: 'int32[B,P]' },
     x0t: { title: 'x0 tokens', file: 'sft_model.py:337', desc: 'Clean canvas tokens, trailing channel dim squeezed.', io: 'int32[B,TC]' },
+    idx: { title: 'selected_canvas_idx', file: 'sampled sft_model.py:329-334; used :214',
+      desc: 'Per-example canvas index sampled uniformly over valid canvases in the outer training forward. Inside sft_encode it only sets the cache cursor; it does not affect the encoder forward itself. Always 0 when NC=1.',
+      io: 'int32[B]' },
+    cmask: { title: 'canvas_mask', file: 'batch.canvas_mask; data.py:96-97; used sft_model.py:200',
+      desc: 'True on tokens of valid canvases. Concatenated with prompt_mask to form full_seq_mask, so PAD canvas positions get no position advance and are hidden from attention.',
+      io: 'bool[B,TC]' },
+    posOut: { title: 'positions (returned)', file: 'returned sft_model.py:217; consumed :140',
+      desc: 'Returned to the training forward; sft_decode slices positions[:, P:] as the canvas RoPE positions for both denoiser passes.',
+      io: 'int32[B,FS]  (measured [2,24])' },
+    pmOut: { title: 'prompt_mask (returned)', file: 'built sft_model.py:199; returned :217; consumed :129-137',
+      desc: 'Returned to the training forward; create_decoder_attention_mask uses it in both denoiser passes to hide PAD prompt positions.',
+      io: 'bool[B,P]' },
     elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Consumed by EncoderARLoss (next-token CE over valid positions).', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
     kv: { title: 'prefilled KV cache', file: 'sft_model.py:215', desc: 'Conditioning context for both sft_decode passes. Gradients flow through it back into the encoder computation (stop_gradient flag is False).', io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
   },
