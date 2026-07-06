@@ -731,6 +731,30 @@ SRC.encode = `flowchart TB
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
 
+SRC.encoderCall = `flowchart TB
+    full(["full_seq tokens<br/>[B, FS]"]):::tensor
+    pos(["positions<br/>[B, FS]"]):::tensor
+    amask(["causal prefill mask<br/>[B, FS, FS]"]):::tensor
+    MNOTE["mask[b,q,k] = (k &lt;= q) AND valid[b,k]<br/>strictly causal, PAD keys hidden everywhere<br/>(unlike the decoder mask: no bidirectionality)<br/>sliding window (1024) never binds: FS = 512"]:::note
+    EMB["Embedder.encode<br/>table[tokens] x sqrt(D)"]:::module
+    BLOCKS["Block x 30<br/>causal GQA attention + dual FFN<br/>each layer WRITES its K/V into the cache"]:::module
+    kv[("KV cache (being written)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index -> FS")]:::tensor
+    FN["final_norm (RMSNorm)"]:::module
+    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+    full -- "[B, FS] int" --> EMB
+    EMB -- "[B, FS, D]" --> BLOCKS
+    pos -- "RoPE positions [B, FS]" --> BLOCKS
+    amask -- "[B, FS, FS]" --> BLOCKS
+    MNOTE -.- amask
+    BLOCKS -- "k,v per layer" --> kv
+    BLOCKS -- "[B, FS, D]" --> FN
+    FN -- "[B, FS, D]" --> DEC
+    DEC -- "[B, FS, V]" --> elog
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef note fill:#fefce8,stroke:#ca8a04,color:#713f12,stroke-dasharray:5 5`;
+
 SRC.seqTraining = `sequenceDiagram
     autonumber
     participant DL as Dataloader<br/>(sudoku_data)
@@ -810,6 +834,7 @@ const DIAGRAMS = {
   embedder:  { title: 'L1 — Embedder & SelfConditioning', src: SRC.embedder, parent: 'l0' },
   trainForward: { title: 'Training forward (SFTDiffusion)', src: SRC.trainForward },
   encode: { title: 'L2 — sft_encode (encoder prefill)', src: SRC.encode, parent: 'trainForward' },
+  encoderCall: { title: 'L3 — encoder_call (causal Transformer forward)', src: SRC.encoderCall, parent: 'encode' },
 };
 
 const W = (name, sym, big, tiny) => ({name, sym, big, tiny});
@@ -1027,7 +1052,7 @@ const INFO = {
       desc: 'One standard causal Gemma forward. Same embedder / layer_i / final_norm weights as the denoiser passes (single shared param tree); self_conditioner is NOT run on this path. Writes every position’s K/V into the cache and returns AR next-token logits.',
       weights: [W('(shared) embedder + layer_i/* + final_norm', 'see weight table', '25.23B', '~50k')],
       io: '(tokens [B,FS], positions [B,FS], mask [B,FS,FS], cache) -> logits bf16[B,FS,V] + written cache',
-      drill: 'block' },
+      drill: 'encoderCall' },
     SETEND: { title: 'set_cache_end_index', file: 'mask_helpers.py:317-344; sft_model.py:211-215',
       desc: 'Rewinds each layer’s per-example write cursor from FS to P + selected_canvas_idx * CS. The K/V beyond the cursor remain in the buffer but the decoder’s attention mask never addresses future canvases, so the denoiser conditions only on prompt + prior canvases.',
       io: 'end_index int32[B] := P + idx*CS' },
@@ -1047,6 +1072,39 @@ const INFO = {
       io: 'bool[B,P]' },
     elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Consumed by EncoderARLoss (next-token CE over valid positions).', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
     kv: { title: 'prefilled KV cache', file: 'sft_model.py:215', desc: 'Conditioning context for both sft_decode passes. Gradients flow through it back into the encoder computation (stop_gradient flag is False).', io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
+  },
+  encoderCall: {
+    EMB: { title: 'Embedder.encode', file: 'gemma/gm/nn/gemma4/_modules.py:112-125',
+      desc: 'Table lookup scaled by sqrt(D). Unlike the denoiser path, the result feeds the blocks directly — SelfConditioning is not applied here.',
+      weights: [W('embedder/input_embedding', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'int32[B,FS] -> bf16[B,FS,D]  (measured [2,24] -> [2,24,32])' },
+    BLOCKS: { title: 'Block x 30 (causal)', file: 'gemma4/_modules.py:468',
+      desc: 'Same 30 blocks and weights as the denoiser passes, run with the causal prefill mask. Each layer writes its K/V into the cache at the RoPE positions. Note: with FS = 512 and sliding_window_size = 1024, the local-layer window constraint never actually binds during training — every valid causal position is within reach.',
+      weights: [W('layer_i/* (see weight table)', '~810M / layer', '24.3B total', '~16k/layer')],
+      io: 'bf16[B,FS,D] + mask [B,FS,FS] -> bf16[B,FS,D] + written cache',
+      drill: 'block' },
+    FN: { title: 'final_norm', file: 'gemma4/_transformer.py:196',
+      desc: 'RMSNorm over the last block output.',
+      weights: [W('final_norm/scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,FS,D]' },
+    DEC: { title: 'Embedder.decode (tied head)', file: '_modules.py:127-137; softcap diffusion/_transformer.py:182-184',
+      desc: 'logits = hidden @ table^T, then tanh soft-cap at +/-30. These are next-token AR logits, consumed by EncoderARLoss.',
+      weights: [W('(shares embedder table)', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'bf16[B,FS,D] -> bf16[B,FS,V]' },
+    full: { title: 'full_seq tokens', file: 'sft_model.py:197', desc: 'prompt ++ clean x0 tokens.', io: 'int32[B,FS]' },
+    pos: { title: 'positions', file: 'mask_helpers.py:69-88',
+      desc: 'cumsum(valid)-1: pads do not advance the counter. Used for RoPE and recorded in the cache.', io: 'int32[B,FS]' },
+    amask: { title: 'causal prefill mask', file: 'mask_helpers.py:91-140',
+      desc: 'mask[b, q, k] = (k <= q) AND valid[b, k]. Strictly causal (lower-triangular) with PAD keys hidden from every query; PAD query rows still compute but their outputs are unused. Example: P=4 with 3 valid prompt tokens, TC=2 canvas tokens (# = attend, . = masked):',
+      pre: 'keys:       p0 p1 p2 PD c0 c1\nq p0         #  .  .  .  .  .\nq p1         #  #  .  .  .  .\nq p2         #  #  #  .  .  .\nq PD (pad)   #  #  #  .  .  .   <- output unused; PD column hidden from all\nq c0         #  #  #  .  #  .\nq c1         #  #  #  .  #  #',
+      io: 'bool[B,FS,FS]  (measured [2,24,24])' },
+    MNOTE: { title: 'mask semantics (note)', file: 'mask_helpers.py:91-140 vs :247-309',
+      desc: 'Contrast with the decoder mask used by sft_decode: there, queries are canvas tokens only [B,TC,FS] and the selected canvas attends to itself bidirectionally. Here everything is left-to-right — an ordinary causal LM forward, which is what gives the AR next-token loss its meaning and makes the cached K/V valid causal context for the denoiser.',
+      pre: 'encoder rows (this pass):         decoder rows (sft_decode, selected canvas c0..c1):\nq c0: p0 p1 p2 .  c0  .           q c0: p0 p1 p2 .  c0 c1   <- sees c1:\nq c1: p0 p1 p2 .  c0 c1           q c1: p0 p1 p2 .  c0 c1      bidirectional',
+      io: '' },
+    kv: { title: 'KV cache (being written)', file: '_modules.py:399-419',
+      desc: 'Each block appends its k,v for all FS positions; Gemma sets end_index = FS after the pass, which sft_encode then rewinds via set_cache_end_index.',
+      io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Returned to sft_encode and ultimately consumed by EncoderARLoss.', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
   },
 };
 
@@ -1104,6 +1162,7 @@ function panelHTML(nid, info, inExplorer) {
   let html = `<h4>${esc(info.title)}</h4>`;
   html += `<div class="fileref" style="white-space:normal">${esc(info.file || '')}</div>`;
   html += `<p>${esc(info.desc || '')}</p>`;
+  if (info.pre) html += `<pre>${esc(info.pre)}</pre>`;
   if (info.io) html += `<p><b>I/O:</b> <code style="white-space:normal">${esc(info.io)}</code></p>`;
   if (info.weights && info.weights.length) {
     html += `<b>Weights</b><table><tr><th>param</th><th>symbolic</th><th>26B</th><th>tiny</th></tr>`;
