@@ -1,0 +1,40 @@
+%% L1 — one Block (gemma4/_modules.py:468). L = query len, C = cache len
+flowchart TB
+    xin(["x<br/>[B, L, D]"]):::tensor
+    PAN["pre_attention_norm<br/>RMSNorm"]:::module
+    ATT["attn : Attention<br/>(GQA + RoPE + QK-norm)"]:::module
+    POAN["post_attention_norm<br/>RMSNorm"]:::module
+    ADD1["+ residual"]:::op
+    PF2N["pre_ffw2_norm<br/>RMSNorm"]:::module
+    MLP2["mlp2 : FeedForward<br/>dense shared, hidden H_f"]:::module
+    POF2["post_ffw2_norm<br/>RMSNorm"]:::module
+    PFN["pre_ffw_norm<br/>RMSNorm"]:::module
+    MOE["mlp : MoERagged<br/>E experts, top-k"]:::module
+    POF1["post_ffw1_norm<br/>RMSNorm"]:::module
+    SUM["+ (dense branch + MoE branch)"]:::op
+    POFN["post_ffw_norm<br/>RMSNorm"]:::module
+    ADD2["+ residual, x skip_scale"]:::op
+    xout(["x'<br/>[B, L, D]"]):::tensor
+
+    xin -- "[B, L, D]" --> PAN
+    PAN -- "[B, L, D]" --> ATT
+    ATT -- "[B, L, D]" --> POAN
+    POAN -- "[B, L, D]" --> ADD1
+    xin -- "residual [B, L, D]" --> ADD1
+    ADD1 -- "[B, L, D]" --> PF2N
+    ADD1 -- "[B, L, D]" --> PFN
+    PF2N -- "[B, L, D]" --> MLP2
+    MLP2 -- "[B, L, D]" --> POF2
+    PFN -- "[B, L, D]" --> MOE
+    ADD1 -- "unnormalized_x (router input) [B, L, D]" --> MOE
+    MOE -- "[B, L, D]" --> POF1
+    POF2 -- "[B, L, D]" --> SUM
+    POF1 -- "[B, L, D]" --> SUM
+    SUM -- "[B, L, D]" --> POFN
+    POFN -- "[B, L, D]" --> ADD2
+    ADD1 -- "residual [B, L, D]" --> ADD2
+    ADD2 -- "[B, L, D]" --> xout
+
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12

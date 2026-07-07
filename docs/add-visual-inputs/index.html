@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiffusionGemma SFT (Sudoku) — Model Walkthrough</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1e293b; --muted: #64748b; --line: #e2e8f0;
+    --accent: #2563eb; --panel: #f8fafc; --warn-bg: #fffbeb; --warn-line: #d97706;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+         color: var(--fg); background: var(--bg); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 0.88em; background: var(--code-bg); padding: 1px 4px;
+                border-radius: 3px; }
+  pre { background: var(--code-bg); padding: 10px 14px; border-radius: 6px;
+        overflow-x: auto; font-size: 12.5px; line-height: 1.45; }
+  pre code { background: none; padding: 0; }
+
+  #layout { display: flex; min-height: 100vh; }
+  nav { width: 230px; flex: none; border-right: 1px solid var(--line);
+        padding: 18px 14px; position: sticky; top: 0; height: 100vh;
+        overflow-y: auto; background: var(--panel); }
+  nav h1 { font-size: 15px; margin: 0 0 12px; }
+  nav a { display: block; padding: 4px 8px; border-radius: 5px; color: var(--fg);
+          font-size: 13.5px; margin-bottom: 1px; }
+  nav a:hover { background: #e0e7ff; text-decoration: none; }
+  nav .sub { padding-left: 20px; font-size: 12.5px; color: var(--muted); }
+  main { flex: 1; min-width: 0; padding: 26px 34px 80px; max-width: 1200px; }
+
+  h2 { border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-top: 48px; }
+  h3 { margin-top: 28px; }
+  .fileref { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82em;
+             color: var(--muted); white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+  .tablewrap { overflow-x: auto; }
+  th, td { border: 1px solid var(--line); padding: 5px 9px; text-align: left;
+           vertical-align: top; }
+  th { background: var(--panel); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .callout { border-left: 4px solid var(--warn-line); background: var(--warn-bg);
+             padding: 10px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .verified { border-left-color: #16a34a; background: #f0fdf4; }
+
+  /* diagram explorer */
+  #explorer { display: flex; gap: 16px; align-items: flex-start; margin-top: 12px; }
+  #diagram-area { flex: 1; min-width: 0; border: 1px solid var(--line);
+                  border-radius: 8px; padding: 10px; background: #fff; }
+  #crumbs { font-size: 13px; margin-bottom: 8px; color: var(--muted); }
+  #crumbs a { cursor: pointer; }
+  #diagram-svg { overflow-x: auto; }
+  #diagram-svg svg { max-width: 100%; height: auto; }
+  #diagram-svg g.node { cursor: pointer; }
+  #side-panel { width: 340px; flex: none; border: 1px solid var(--line);
+                border-radius: 8px; padding: 14px 16px; background: var(--panel);
+                font-size: 13.5px; position: sticky; top: 12px;
+                max-height: calc(100vh - 24px); overflow-y: auto; }
+  #side-panel h4 { margin: 0 0 6px; font-size: 14.5px; }
+  #side-panel table { font-size: 12px; }
+  #side-panel .hint { color: var(--muted); font-style: italic; }
+  .drillable-hint { font-size: 12px; color: var(--accent); margin-top: 6px; }
+  .mermaid-static { border: 1px solid var(--line); border-radius: 8px;
+                    padding: 10px; overflow-x: auto; margin: 12px 0; }
+  .mermaid-static svg { max-width: 100%; height: auto; }
+  .mermaid-static g.node { cursor: pointer; }
+  .static-panel { border-top: 1px dashed var(--line); margin-top: 10px;
+                  padding: 10px 6px 2px; font-size: 13.5px; background: var(--panel);
+                  border-radius: 0 0 6px 6px; }
+  .static-panel h4 { margin: 0 0 6px; font-size: 14.5px; }
+  .static-panel table { font-size: 12px; max-width: 640px; }
+  .static-panel .hint { color: var(--muted); font-style: italic; margin: 2px 0; }
+  details { margin: 10px 0; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .legend-chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+                 margin-right: 5px; vertical-align: -1px; border: 1px solid #999; }
+  @media (max-width: 1000px) {
+    #layout { flex-direction: column; }
+    nav { width: 100%; height: auto; position: static; }
+    #explorer { flex-direction: column; }
+    #side-panel { width: 100%; position: static; max-height: none; }
+  }
+</style>
+</head>
+<body>
+<div id="layout">
+<nav>
+  <h1>DiffusionGemma SFT<br>(sft_sudoku_full)</h1>
+  <a href="#open-questions">0. Status &amp; open questions</a>
+  <a href="#overview">1. What this model is</a>
+  <a href="#architecture">2. Architecture explorer</a>
+  <a class="sub" href="#architecture">L0 → Block → Attention → MoE …</a>
+  <a href="#training-seq">3. Training-step sequence</a>
+  <a href="#training-flow">4. Training forward graph</a>
+  <a class="sub" href="#encode-detail">4.1 Inside sft_encode</a>
+  <a href="#inference-seq">5. Inference sequence</a>
+  <a href="#weights">6. Weight table</a>
+  <a href="#config-map">7. Config → architecture map</a>
+  <a href="#legend">8. Symbol legend</a>
+  <a href="#life-batch">9. Life of a Batch (train)</a>
+  <a href="#life-sample">10. Life of a Sample (infer)</a>
+  <a href="#verification">11. How this was verified</a>
+</nav>
+<main>
+
+<h1>DiffusionGemma 26B_A4B — SFT on Sudoku: model walkthrough</h1>
+<p>
+Ramp-up documentation for the training/inference pipeline defined by
+<span class="fileref">gemma/diffusion/hackable_diffusion_adapter/configs/sft_sudoku_full.py</span>
+in <a href="https://github.com/google-deepmind/gemma">google-deepmind/gemma</a>.
+Every tensor shape below is either traced to a <span class="fileref">file:line</span> or
+measured by the smoke run in <span class="fileref">tools/rampup/smoke.py</span>
+(tiny config: 3 layers, D=32, V=64; outputs in
+<span class="fileref">tools/rampup/measured/*.json</span>). Symbolic dimensions are defined in the
+<a href="#legend">symbol legend</a>.
+</p>
+
+<h2 id="open-questions">0. Status &amp; open questions</h2>
+<div class="callout verified">
+<b>Verified by execution:</b> one full training step (forward, both losses, backward,
+the exact optax chain from the config) and one full AR-diffusion sampling call
+(2 canvases × 4 denoising steps) ran on a tiny-but-topologically-identical model
+(local-sliding + global attention, MoE + dense shared FFN, self-conditioning).
+All shapes in the diagrams and narratives match the measured JSON. The <b>full</b>
+26B_A4B parameter inventory was measured with <code>jax.eval_shape</code> (no memory needed):
+<b>25,250,986,782 params</b> (≈25.25B, consistent with the "26B" name).
+</div>
+<div class="callout">
+<ul style="margin:6px 0 6px 18px; padding:0">
+<li><b>Diffusion time <code>t</code> is never fed to the network.</b>
+  <code>WrappedDiffusionGemmaNetwork.__call__</code> accepts <code>time</code> but never uses it
+  (<span class="fileref">hd_gemma_network.py:186-245</span>). No AdaLN / time embedding exists.
+  Noise-level information reaches the model only through the corrupted tokens and the
+  self-conditioning logits. Verified by code reading, not by an ablation.</li>
+<li><code>keep_last_prefill_kv=True</code> (<span class="fileref">diffusion/_models.py:31</span>):
+  its downstream consumer was not traced. <code>[UNVERIFIED]</code></li>
+<li>"A4B" ≈ 4B <i>active</i> params per token (top-8 of 128 experts + dense shared MLP) is an
+  interpretation of the class docstring; the code states no numeric active count. <code>[UNVERIFIED]</code></li>
+<li><code>self_cond_prob=0.5</code> is a hidden default
+  (<span class="fileref">sft_model.py:270</span>), not surfaced in the config file.</li>
+<li>The smoke run replicated the kauldron train step (loss formulas + optax chain) manually;
+  the kauldron <code>TrainStep</code> class itself and checkpoint loading
+  (<code>GemmaDiffusionCheckpointLoader</code>) were not executed (no checkpoint available).</li>
+<li>The smoke run used <code>num_canvases=2</code> to exercise the multi-canvas machinery;
+  the actual config uses <code>num_canvases=1</code>, so the AR outer loop runs exactly once
+  in production.</li>
+<li><span class="fileref">gemma/diffusion/_sampler.py</span> and <span class="fileref">_early_stopping.py</span>
+  are a parallel, <b>unused</b> sampler implementation — the eval path uses
+  <code>hackable_diffusion</code>'s <code>hd.sampling.*</code> instead.</li>
+<li>The diffusion loss covers <b>all</b> valid tokens of the selected canvas (clean and
+  corrupted alike, <code>mask_key="target_mask"</code>), not just corrupted positions —
+  a deliberate-looking design choice worth knowing.</li>
+</ul>
+</div>
+
+<h2 id="overview">1. What this model is</h2>
+<p>
+<b>DiffusionGemma_26B_A4B</b> (<span class="fileref">gemma/diffusion/_models.py:21</span>)
+is the Gemma 4 26B mixture-of-experts transformer
+(<span class="fileref">gemma/gm/nn/gemma4/_gemma4.py:238</span>) reused as a
+<b>discrete text-diffusion denoiser</b>. The backbone is architecturally unchanged
+(30 blocks: 25 local-sliding-window + 5 global attention layers; each block has a dense
+shared FFN <i>plus</i> a 128-expert top-8 MoE FFN; weight-tied embedding/output head).
+Two things make it "diffusion":
+</p>
+<ol>
+<li><b>Externally supplied attention masks</b> — within the canvas being denoised the mask is
+bidirectional; across canvases and to the prompt it is block-causal
+(<span class="fileref">mask_helpers.py:247-309</span>).</li>
+<li><b>Self-conditioning</b> — a small extra module (<code>SelfConditioning</code>,
+<span class="fileref">gemma/diffusion/_transformer.py:53</span>) mixes the previous denoising
+step's logits (re-embedded through the tied table) into the input embeddings.</li>
+</ol>
+<p>
+Training (SFT on Sudoku) couples <b>two objectives on the same backbone</b>: a causal
+"encoder" pass over <code>prompt ++ clean-answer</code> trained with ordinary next-token CE,
+whose KV cache then conditions a <b>denoiser</b> pass that reconstructs the clean answer
+tokens from a uniformly-corrupted copy (x0-prediction cross-entropy).
+Inference generates the answer canvas-by-canvas autoregressively; each canvas is filled by an
+inner diffusion loop (32/64/96 steps of D3PM-style stay/renoise/clean routing), then appended
+to the KV cache.
+</p>
+
+<h2 id="architecture">2. Architecture explorer</h2>
+<p>Click a <span class="legend-chip" style="background:#dbeafe;border-color:#2563eb"></span>module
+node to see its description, code location, weights and measured I/O in the side panel;
+nodes marked "double-click to open" drill into a sub-diagram.
+<span class="legend-chip" style="background:#fef3c7;border-color:#d97706"></span>Stadium
+nodes are pivotal tensors (activations/state), not modules.
+<span class="legend-chip" style="background:#e2e8f0;border-color:#64748b"></span>Grey nodes are
+parameter-free ops.</p>
+
+<div id="explorer">
+  <div id="diagram-area">
+    <div id="crumbs"></div>
+    <div id="diagram-svg"></div>
+  </div>
+  <aside id="side-panel">
+    <h4>Node inspector</h4>
+    <p class="hint">Click a node in the diagram. Double-click a drillable node (or use the
+    breadcrumbs) to navigate the hierarchy.</p>
+  </aside>
+</div>
+
+<h2 id="training-seq">3. Training-step sequence (one kauldron step)</h2>
+<p>Order of operations for one optimizer step
+(<span class="fileref">kauldron/train/train_step.py:284-320</span>). Note the model runs the
+backbone <b>three times</b> per step: one causal encoder pass and two denoiser passes
+(the first only to produce self-conditioning logits).</p>
+<div class="mermaid-static" data-diagram="seqTraining"></div>
+
+<h2 id="training-flow">4. Training forward graph (SFTDiffusion.__call__)</h2>
+<p>Operator view of <span class="fileref">sft_model.py:276-431</span> (also reachable via the
+"Training forward ↗" link in the explorer). Nodes are clickable here too: click to inspect
+below the figure, double-click a highlighted node to open its sub-diagram in the explorer.</p>
+<div class="mermaid-static" data-diagram="trainForward"></div>
+
+<h3 id="encode-detail">4.1 Inside sft_encode (encoder prefill)</h3>
+<p>Expansion of the "sft_encode" node above
+(<span class="fileref">sft_model.py:159-217</span>;
+<span class="fileref">hd_gemma_network.py:52-107</span>). One <b>standard causal</b>
+Gemma forward over <code>prompt ++ x0 [B, FS]</code> — the same <code>layer_i/*</code>,
+<code>embedder</code> and <code>final_norm</code> weights as the denoiser passes, but via
+<code>Transformer.__call__</code>, so the <code>self_conditioner</code> module is not run.
+It produces both training signals at once: <code>encoder_logits [B, FS, V]</code> for the AR
+loss, and the prefilled KV cache whose per-example write cursor is then rewound to
+<code>P + selected_idx·CS</code> so the denoiser reads only prompt + prior canvases as
+context. In the explorer, this diagram is a drill-down of the sft_encode node
+(Training forward → sft_encode).</p>
+<div class="mermaid-static" data-diagram="encode"></div>
+
+<h2 id="inference-seq">5. Inference sequence (AR diffusion sampling)</h2>
+<p>Both loops are explicit: the outer autoregressive canvas loop
+(<span class="fileref">hackable_diffusion .../ar_diffusion_sampler.py:244-332</span>) and the
+inner denoising loop (<span class="fileref">.../sampling.py:190-281</span>). With the
+production config <code>NC = max_num_canvases = 1</code>, the outer loop body runs once.
+The early-stopping evaluator variant wraps the inner loop in a
+<code>while</code> that exits when mean token entropy ≤ 0.05
+(<span class="fileref">.../diffusion_early_stopping.py:117-134</span>).</p>
+<div class="mermaid-static" data-diagram="seqInference"></div>
+
+<h2 id="weights">6. Weight table</h2>
+<p>Every parameter of the model as instantiated by this config, grouped by pattern
+(<code>layer_i</code> = one of 30 blocks). "26B shape" measured via
+<code>jax.eval_shape</code> on the real model; "tiny shape" measured on the smoke-run model
+(3 layers: 2 local + 1 global). All parameters are <b>bfloat16</b>. Initialization: in
+production every parameter is <b>overwritten by the pretrained checkpoint</b>
+<code>DIFFUSIONGEMMA_26B_A4B_IT</code> via <code>init_transform</code>
+(<span class="fileref">sft_sudoku_full.py:219-221</span>); flax module default initializers
+apply only before that load. Total: <b>25,250,986,782</b>.</p>
+<div class="tablewrap">
+<table>
+<tr><th>Parameter</th><th>Symbolic shape</th><th>26B shape</th><th>26B count (all layers)</th><th>Tiny shape</th><th>Parent module <span class="fileref">(file:line)</span></th></tr>
+<tr><td><code>embedder/input_embedding</code></td><td>[V, D]</td><td>[262144, 2816]</td><td class="num">738,197,504</td><td>[64, 32]</td><td>Embedder <span class="fileref">_modules.py:74</span> (tied output head)</td></tr>
+<tr><td><code>layer_i/pre_attention_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">84,480</td><td>[32]</td><td>Block <span class="fileref">_modules.py:497</span></td></tr>
+<tr><td><code>layer_i/attn/q_einsum/w</code></td><td>[N_h, D, K]</td><td>local [16, 2816, 256]<br>global [16, 2816, 512]</td><td class="num">403,701,760</td><td>[4, 32, 8] / [4, 32, 16]</td><td>Attention <span class="fileref">_modules.py:225</span></td></tr>
+<tr><td><code>layer_i/attn/kv_einsum/w</code> <i>(25 local layers)</i></td><td>[2, N_kv, D, d_h]</td><td>[2, 8, 2816, 256]</td><td class="num">288,358,400</td><td>[2, 2, 32, 8]</td><td>Attention <span class="fileref">_modules.py:233</span></td></tr>
+<tr><td><code>layer_i/attn/k_einsum/w</code> <i>(5 global layers; k = v)</i></td><td>[N_gkv, D, K_g]</td><td>[2, 2816, 512]</td><td class="num">14,417,920</td><td>[1, 32, 16]</td><td>Attention <span class="fileref">_modules.py:229</span></td></tr>
+<tr><td><code>layer_i/attn/attn_vec_einsum/w</code></td><td>[N_h, K, D]</td><td>local [16, 256, 2816]<br>global [16, 512, 2816]</td><td class="num">403,701,760</td><td>[4, 8, 32] / [4, 16, 32]</td><td>Attention <span class="fileref">_modules.py:222</span></td></tr>
+<tr><td><code>layer_i/attn/query_norm/scale</code>, <code>key_norm/scale</code></td><td>[K]</td><td>[256] / [512]</td><td class="num">17,920</td><td>[8] / [16]</td><td>Attention <span class="fileref">_modules.py:236-237</span> (value_norm has no scale)</td></tr>
+<tr><td><code>layer_i/post_attention_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">84,480</td><td>[32]</td><td>Block <span class="fileref">_modules.py:531</span></td></tr>
+<tr><td><code>layer_i/pre_ffw2_norm/scale</code>, <code>post_ffw2_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">168,960</td><td>[32]</td><td>Block <span class="fileref">_modules.py:567,572</span></td></tr>
+<tr><td><code>layer_i/mlp2/gating_einsum</code> <i>(dense shared FFN)</i></td><td>[2, H_f, D]</td><td>[2, 2112, 2816]</td><td class="num">356,843,520</td><td>[2, 48, 32]</td><td>FeedForward <span class="fileref">_modules.py:441</span></td></tr>
+<tr><td><code>layer_i/mlp2/linear</code></td><td>[H_f, D]</td><td>[2112, 2816]</td><td class="num">178,421,760</td><td>[48, 32]</td><td>FeedForward <span class="fileref">_modules.py:456</span></td></tr>
+<tr><td><code>layer_i/pre_ffw_norm/scale</code>, <code>post_ffw1_norm/scale</code>, <code>post_ffw_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">253,440</td><td>[32]</td><td>Block <span class="fileref">_modules.py:577,584,589</span></td></tr>
+<tr><td><code>layer_i/mlp/router_logits/w</code></td><td>[D, E]</td><td>[2816, 128]</td><td class="num">10,813,440</td><td>[32, 4]</td><td>MoERagged <span class="fileref">_moe.py:274</span></td></tr>
+<tr><td><code>layer_i/mlp/router_scale</code></td><td>[D]</td><td>[2816]</td><td class="num">84,480</td><td>[32]</td><td>MoERagged <span class="fileref">_moe.py:294</span></td></tr>
+<tr><td><code>layer_i/mlp/gating_einsum/w</code> <i>(experts)</i></td><td>[E, 2, E_d, D]</td><td>[128, 2, 704, 2816]</td><td class="num">15,225,323,520</td><td>[4, 2, 16, 32]</td><td>MoERagged <span class="fileref">_moe.py:282</span> — 60% of all params</td></tr>
+<tr><td><code>layer_i/mlp/linear/w</code> <i>(experts)</i></td><td>[E, E_d, D]</td><td>[128, 704, 2816]</td><td class="num">7,612,661,760</td><td>[4, 16, 32]</td><td>MoERagged <span class="fileref">_moe.py:286</span> — 30% of all params</td></tr>
+<tr><td><code>layer_i/mlp/per_expert_scale</code></td><td>[E]</td><td>[128]</td><td class="num">3,840</td><td>[4]</td><td>MoERagged <span class="fileref">_moe.py:289</span></td></tr>
+<tr><td><code>layer_i/skip_scale</code></td><td>[1]</td><td>[1]</td><td class="num">30</td><td>[1]</td><td>Block <span class="fileref">_modules.py:499</span></td></tr>
+<tr><td><code>final_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">2,816</td><td>[32]</td><td>Transformer <span class="fileref">gemma4/_transformer.py:196</span></td></tr>
+<tr><td><code>self_conditioner/pre_norm/scale</code></td><td>[D]</td><td>[2816]</td><td class="num">2,816</td><td>[32]</td><td>SelfConditioning <span class="fileref">diffusion/_transformer.py:60</span></td></tr>
+<tr><td><code>self_conditioner/ffw/gating_einsum</code></td><td>[2, H_f, D]</td><td>[2, 2112, 2816]</td><td class="num">11,894,784</td><td>[2, 48, 32]</td><td>SelfConditioning <span class="fileref">diffusion/_transformer.py:61</span></td></tr>
+<tr><td><code>self_conditioner/ffw/linear</code></td><td>[H_f, D]</td><td>[2112, 2816]</td><td class="num">5,947,392</td><td>[48, 32]</td><td>SelfConditioning <span class="fileref">diffusion/_transformer.py:61</span> (post_norm has no scale)</td></tr>
+<tr><th>Total</th><th></th><th></th><th class="num">25,250,986,782</th><th>50,959 (tiny)</th><th></th></tr>
+</table>
+</div>
+<p>Global-attention layers are indices <b>5, 11, 17, 23, 29</b>
+(pattern 5×LOCAL_SLIDING + 1×GLOBAL, tiled ×5;
+<span class="fileref">_gemma4.py:247-254</span>, <span class="fileref">_config.py:41-52</span>).
+There is <b>no output projection matrix</b> — logits are
+<code>x @ input_embedding.T</code> (<span class="fileref">_modules.py:127-137</span>) —
+and <b>no time-embedding parameters</b>.</p>
+
+<h2 id="config-map">7. Config → architecture mapping</h2>
+<p>All references into <span class="fileref">configs/sft_sudoku_full.py</span> unless noted.
+The backbone hyper-parameters are <i>not</i> in the config file — they are hard-coded in
+<code>Gemma4_26B_A4B</code> (<span class="fileref">gemma4/_gemma4.py:258-296</span>).</p>
+<div class="tablewrap">
+<table>
+<tr><th>Config field <span class="fileref">(line)</span></th><th>Value</th><th>Constructs / controls</th><th>Dimension</th></tr>
+<tr><td><code>aux.vocab_size</code> <span class="fileref">:109</span></td><td>262,144</td><td>corruption process categories; must equal <code>config.num_embed</code></td><td>V</td></tr>
+<tr><td><code>aux.corruption_process</code> <span class="fileref">:111-114</span></td><td>uniform CategoricalProcess + RFSchedule</td><td>forward noising: keep w.p. α(t)=1−t else uniform token <span class="fileref">(hd discrete.py:230-311, schedules.py:176-177)</span></td><td>—</td></tr>
+<tr><td><code>aux.prompt_len</code> <span class="fileref">:115</span></td><td>256</td><td>prompt padding (<span class="fileref">sudoku_data.py:189</span>), cache boundary, masks</td><td>P</td></tr>
+<tr><td><code>aux.num_canvases</code> <span class="fileref">:116</span></td><td>1</td><td>CanvasChunker segments; AR loop iterations</td><td>NC</td></tr>
+<tr><td><code>aux.canvas_size</code> <span class="fileref">:117</span></td><td>256</td><td>tokens per canvas; denoiser query length at inference</td><td>CS</td></tr>
+<tr><td><code>aux.use_lora / lora_rank</code> <span class="fileref">:118-121</span></td><td>False / 8</td><td>this config trains <b>full weights</b> (LoRA wrapper skipped, <span class="fileref">:145-152</span>)</td><td>—</td></tr>
+<tr><td><code>aux.peak_lr / end_lr</code> <span class="fileref">:122-123</span></td><td>1.5e-4 / 1.5e-5</td><td>warmup-cosine schedule <span class="fileref">:190-198</span> (warmup 1000)</td><td>—</td></tr>
+<tr><td><code>aux.stop_gradient_from_denoiser_to_encoder</code> <span class="fileref">:126</span></td><td>False</td><td>denoiser gradients flow into encoder KV <span class="fileref">(sft_model.py:355)</span></td><td>—</td></tr>
+<tr><td><code>aux.encoder/decoder_loss_weight</code> <span class="fileref">:127-128</span></td><td>1.0 / 1.0</td><td>loss weights <span class="fileref">:178,184</span></td><td>—</td></tr>
+<tr><td><code>model = SFTDiffusion(...)</code> <span class="fileref">:154-170</span></td><td></td><td>training forward wrapper <span class="fileref">(sft_model.py:225)</span>; kontext keys bind <code>batch.*</code></td><td>—</td></tr>
+<tr><td><code>gemma_network</code> <span class="fileref">:142-144</span></td><td>WrappedDiffusionGemmaNetwork(DiffusionGemma_26B_A4B())</td><td>the backbone (30 layers, D=2816, V=262144, MoE 128/top-8)</td><td>N_L, D, V, …</td></tr>
+<tr><td><code>time_sampler</code> <span class="fileref">:162-164</span></td><td>UniformTimeSampler(ε=1e-4)</td><td>t ∈ [1e-4, 1−1e-4], shape [B,1,1] <span class="fileref">(hd time_sampling.py:121-125)</span></td><td>—</td></tr>
+<tr><td><code>train_losses</code> <span class="fileref">:172-186</span></td><td>diffusion_loss + encoder_loss</td><td>NoWeightDiscreteLoss(mask=target_mask) + EncoderARLoss</td><td>—</td></tr>
+<tr><td><code>num_train_steps</code> <span class="fileref">:188</span></td><td>2,000</td><td>training length, cosine decay_steps</td><td>—</td></tr>
+<tr><td><code>optimizer</code> <span class="fileref">:200-205</span></td><td>clip(1.0) → adafactor → decay(1e-4) → lr</td><td>optax named_chain, applied in listed order</td><td>—</td></tr>
+<tr><td><code>init_transform</code> <span class="fileref">:219-221</span></td><td>GemmaDiffusionCheckpointLoader</td><td>loads pretrained DIFFUSIONGEMMA_26B_A4B_IT weights</td><td>—</td></tr>
+<tr><td><code>train_ds / eval_ds</code> <span class="fileref">:223-241</span></td><td>make_sudoku_ds(batch_size=8)</td><td>data pipeline (Bagz → tokenize → pad → chunk → shift)</td><td>B=8</td></tr>
+<tr><td><code>sharding</code> <span class="fileref">:138-140</span></td><td>FSDP</td><td>params + optimizer state sharding</td><td>—</td></tr>
+<tr><td><code>rng_streams</code> <span class="fileref">:214-217</span></td><td>default, sampling</td><td>model draws all randomness from 'sampling' <span class="fileref">(sft_model.py:307,311,328,404)</span></td><td>—</td></tr>
+<tr><td>Block remat monkey-patch <span class="fileref">:31-81</span></td><td>nn.remat(nothing_saveable)</td><td>gradient checkpointing on every Block — <b>import-time side effect</b> mutating the global class</td><td>—</td></tr>
+<tr><td><code>evals</code> via <code>ar_eval.make_ar_evals</code> <span class="fileref">:263-281</span></td><td>steps ∈ {32, 64, 96} ± early stopping</td><td>AR-diffusion sampling evaluators (temperature 0.7)</td><td>T_s</td></tr>
+</table>
+</div>
+
+<h2 id="legend">8. Symbol legend</h2>
+<div class="tablewrap">
+<table>
+<tr><th>Symbol</th><th>Meaning</th><th>Config source</th><th>26B value</th><th>Tiny (smoke)</th></tr>
+<tr><td>B</td><td>batch size</td><td><code>train_ds.batch_size</code> <span class="fileref">:227</span></td><td>8</td><td>2</td></tr>
+<tr><td>V</td><td>vocabulary size</td><td><code>aux.vocab_size</code> = <code>config.num_embed</code></td><td>262,144</td><td>64</td></tr>
+<tr><td>D</td><td>model / embedding dim</td><td><code>config.embed_dim</code> <span class="fileref">_gemma4.py:260</span></td><td>2,816</td><td>32</td></tr>
+<tr><td>N_L</td><td>number of blocks</td><td><code>len(config.attention_types)</code> <span class="fileref">_config.py:133</span></td><td>30</td><td>3</td></tr>
+<tr><td>N_h</td><td>query heads</td><td><code>config.num_heads</code></td><td>16</td><td>4</td></tr>
+<tr><td>N_kv</td><td>KV heads (local layers)</td><td><code>config.num_kv_heads</code></td><td>8</td><td>2</td></tr>
+<tr><td>N_gkv</td><td>KV heads (global layers)</td><td><code>config.num_global_kv_heads</code></td><td>2</td><td>1</td></tr>
+<tr><td>d_h</td><td>head dim = local key size</td><td><code>config.head_dim</code></td><td>256</td><td>8</td></tr>
+<tr><td>K_g</td><td>global key size (k = v)</td><td><code>config.global_key_size</code></td><td>512</td><td>16</td></tr>
+<tr><td>K</td><td>per-layer key size: d_h (local) or K_g (global)</td><td>—</td><td>256 / 512</td><td>8 / 16</td></tr>
+<tr><td>H_f</td><td>dense FFN hidden dim</td><td><code>config.hidden_dim</code> = <code>moe_dense_hidden_dim</code></td><td>2,112</td><td>48</td></tr>
+<tr><td>E</td><td>number of experts</td><td><code>config.num_experts</code></td><td>128</td><td>4</td></tr>
+<tr><td>k</td><td>experts per token</td><td><code>config.top_k_experts</code></td><td>8</td><td>2</td></tr>
+<tr><td>E_d</td><td>expert hidden dim</td><td><code>config.expert_dim</code></td><td>704</td><td>16</td></tr>
+<tr><td>P</td><td>padded prompt length</td><td><code>aux.prompt_len</code></td><td>256</td><td>8</td></tr>
+<tr><td>CS</td><td>canvas size</td><td><code>aux.canvas_size</code></td><td>256</td><td>8</td></tr>
+<tr><td>NC</td><td>number of canvases</td><td><code>aux.num_canvases</code></td><td>1</td><td>2</td></tr>
+<tr><td>TC</td><td>total canvas length = NC·CS</td><td>derived <span class="fileref">sft_model.py:272-274</span></td><td>256</td><td>16</td></tr>
+<tr><td>FS</td><td>full sequence = P + TC</td><td>derived <span class="fileref">sft_model.py:197</span></td><td>512</td><td>24</td></tr>
+<tr><td>C</td><td>KV-cache length (= FS here)</td><td><span class="fileref">hd_gemma_ar_state_handler.py:195</span></td><td>512</td><td>24</td></tr>
+<tr><td>L</td><td>query length of a backbone call: FS (encoder), TC (train denoise), CS (infer denoise)</td><td>—</td><td>512/256/256</td><td>24/16/8</td></tr>
+<tr><td>T_s</td><td>denoising steps per canvas</td><td><code>ar_eval.AR_DENOISING_STEPS</code></td><td>32/64/96</td><td>4</td></tr>
+<tr><td>W</td><td>sliding window (local layers)</td><td><code>config.sliding_window_size</code></td><td>1,024</td><td>8</td></tr>
+</table>
+</div>
+
+<h2 id="life-batch">9. Life of a Batch (training)</h2>
+<ol>
+<li><b>Read + format.</b> A Bagz record <code>{puzzle, solution}</code> is parsed
+  (<span class="fileref">sudoku_data.py:95-107</span>), the puzzle wrapped in the chat template
+  (<span class="fileref">sft_sudoku_full.py:130-136</span>) and both sides tokenized with the
+  Gemma4 tokenizer (<span class="fileref">sudoku_data.py:177-178</span>).</li>
+<li><b>Pad + chunk.</b> Prompt right-padded to <code>[P]=[256]</code>
+  (<span class="fileref">sudoku_data.py:189</span>). <code>CanvasChunker</code>
+  (<span class="fileref">data.py:64-102</span>) writes the response into an NC·CS canvas buffer:
+  EOS-fills the last partially-used canvas, PAD-fills unused ones, and emits
+  <code>canvas [TC]</code>, <code>canvas_id [TC]</code> (0-based segment index per token),
+  <code>canvas_mask [TC]</code> (True on valid canvases). <code>SequenceTargetShift</code>
+  (<span class="fileref">data.py:121-152</span>) rolls <code>prompt ++ canvas</code> left by one to
+  make AR targets: <code>encoder_target [FS]</code>, <code>encoder_target_mask [FS]</code>
+  (True only where current <i>and</i> next position are valid). After batching + a trailing
+  channel dim on canvas: <code>prompt int32[B,P]</code>, <code>canvas int32[B,TC,1]</code>,
+  <code>canvas_id[B,TC]</code>, <code>canvas_mask bool[B,TC]</code>,
+  <code>encoder_target[B,FS]</code>, <code>encoder_target_mask[B,FS]</code>
+  <i>(measured: [2,8], [2,16,1], [2,16], [2,16], [2,24], [2,24])</i>.</li>
+<li><b>Sample time, corrupt.</b> <code>t ~ U(1e-4, 1−1e-4)</code>, shape <code>[B,1,1]</code>
+  (<span class="fileref">sft_model.py:307</span>; hd <span class="fileref">time_sampling.py:121-125</span>).
+  Each canvas token independently keeps its value w.p. <code>α(t)=1−t</code> or is replaced
+  by a uniform random token: <code>xt [B,TC,1]</code>
+  (<span class="fileref">sft_model.py:310</span>; hd <span class="fileref">discrete.py:277-290</span>).
+  This is a <b>uniform</b> categorical process — there is no [MASK] token.</li>
+<li><b>Pick a canvas.</b> <code>selected_canvas_idx ~ U[0, num_valid_canvases) [B]</code>
+  (<span class="fileref">sft_model.py:321-334</span>). With NC=1 it is always 0.</li>
+<li><b>Encoder prefill (causal AR pass).</b> <code>full_seq = prompt ++ x0_tokens [B,FS]</code>;
+  positions = <code>cumsum(valid)−1</code>; causal prefill mask <code>[B,FS,FS]</code>
+  (<span class="fileref">sft_model.py:159-217</span>,
+  <span class="fileref">hd_gemma_network.py:52-107</span>,
+  <span class="fileref">mask_helpers.py:69-140</span>). One standard Gemma forward returns
+  <code>encoder_logits [B,FS,V]</code> <i>(measured bf16[2,24,64])</i> and fills the KV cache
+  (per layer: local <code>k,v [B,C,N_kv,d_h]</code>, global <code>k,v [B,C,N_gkv,K_g]</code>
+  <i>(measured [2,24,2,8] / [2,24,1,16])</i>). Then <code>end_index := P + idx·CS</code>
+  (<span class="fileref">sft_model.py:214-215</span>,
+  <span class="fileref">mask_helpers.py:317-344</span>) so the denoiser treats prompt + prior
+  canvases as its causal context. Gradients flow through the cache
+  (<code>stop_gradient…=False</code>, <span class="fileref">sft_model.py:355</span>).</li>
+<li><b>Denoiser pass 1.</b> Attention mask <code>[B,TC,C]</code>
+  (<span class="fileref">mask_helpers.py:247-309</span>): each canvas query sees non-PAD prompt
+  KV and KV of canvases with id ≤ selected — <b>bidirectional inside the selected canvas</b>,
+  future canvases hidden. The wrapped network embeds <code>xt</code>, applies self-conditioning
+  with zero <code>sc_logits</code>, runs the 30 blocks against the cache, decodes through the
+  tied table + softcap: <code>logits [B,TC,V]</code>
+  (<span class="fileref">hd_gemma_network.py:186-245</span>,
+  <span class="fileref">diffusion/_transformer.py:86-184</span>)
+  <i>(measured mask bool[2,16,24], logits bf16[2,16,64])</i>.</li>
+<li><b>Self-conditioning + denoiser pass 2.</b> Pass-1 logits are stop-gradiented and kept
+  per-example w.p. 0.5, else zeroed (<span class="fileref">sft_model.py:397-411</span>).
+  A second identical decode with <code>sc_logits</code> produces the loss-bearing logits
+  (<span class="fileref">sft_model.py:413</span>).</li>
+<li><b>Losses.</b> <code>target_mask = canvas_mask &amp; (canvas_id == idx) [B,TC]</code>
+  (<span class="fileref">sft_model.py:380</span>).
+  <b>diffusion_loss</b>: plain CE(pass-2 logits, clean <code>x0</code>) over
+  <code>target_mask</code> positions, mean per example → <code>[B]</code>, no SNR weighting
+  (<span class="fileref">hd discrete_loss.py:41-122</span>).
+  <b>encoder_loss</b>: masked next-token CE(encoder_logits, encoder_target) → <code>[B]</code>
+  (<span class="fileref">sft_model.py:608-643</span>).
+  Total = 1.0·mean + 1.0·mean
+  <i>(measured: 4.09/4.09 + 4.19/4.16 → 8.25 ≈ 2·ln 64, as expected for an untrained tiny model)</i>.</li>
+<li><b>Backward + update.</b> <code>jax.grad</code> w.r.t. params
+  (<span class="fileref">kauldron train_step.py:292-301</span>), then the optax chain in config
+  order: global-norm clip 1.0 → factored RMS (Adafactor) → weight decay 1e-4 → warmup-cosine LR
+  (<span class="fileref">sft_sudoku_full.py:190-205</span>); params are FSDP-sharded.
+  <i>(Smoke run executed this exact chain; shapes preserved.)</i></li>
+</ol>
+
+<h2 id="life-sample">10. Life of a Sample (inference)</h2>
+<ol>
+<li><b>Entry.</b> <code>eval_main</code> loads a checkpoint and runs an evaluator
+  (<span class="fileref">eval_main.py:126-207</span>) →
+  <code>GemmaSamplingEvaluator._ar_diffusion_step</code>
+  (<span class="fileref">sft_model.py:506-549</span>) builds
+  <code>cond = {prompt_tokens [B,P], prompt_lengths [B]}</code> and calls the AR sampler.</li>
+<li><b>Prompt prefill.</b> <code>init_ar_state</code>
+  (<span class="fileref">hd_gemma_ar_state_handler.py:170-270</span>) allocates the cache with
+  <code>C = P + NC·CS</code>, runs one causal encoder pass over the prompt (cache
+  <code>end_index = P</code>), and prepares canvas positions
+  <code>prompt_lengths + arange(CS) [B,CS]</code> and the decoder mask <code>[B,CS,C]</code>
+  <i>(measured [2,8], [2,8,24])</i>.</li>
+<li><b>Outer AR loop</b> (<span class="fileref">ar_diffusion_sampler.py:244-332</span>), while
+  canvases remain and not all <code>done</code>:
+  <ol type="a">
+  <li><b>Init noise.</b> <code>x_T ~ Uniform(V) [B,CS,1]</code> — uniform random tokens, not
+    masks (<span class="fileref">hd discrete.py:216-228</span>).</li>
+  <li><b>Inner diffusion loop</b> (<span class="fileref">hd sampling.py:190-281</span>),
+    T_s steps with t descending ~1 → ~0
+    (<span class="fileref">time_scheduling.py:96-121</span>). Each step:
+    inject previous logits as <code>sc_logits</code>
+    (<span class="fileref">hd_gemma_ar_state_handler.py:46-64</span>);
+    call the network → <code>logits [B,CS,V]</code>;
+    <code>DiscreteDDIMStep.update</code>
+    (<span class="fileref">hd discrete_step_sampler.py:844-929</span>) samples
+    <code>x0_hat ~ categorical(logits/0.7)</code> and routes each token among
+    <b>stay</b> (keep x_t) / <b>renoise</b> (fresh uniform) / <b>clean</b> (take x0_hat) with
+    posterior weights from <code>α=1−t</code>. Output <code>x_(t−1) [B,CS,1]</code>.</li>
+  <li><b>Commit canvas.</b> <code>update_ar_state</code>
+    (<span class="fileref">hd_gemma_ar_state_handler.py:276-359</span>): truncate at stop tokens
+    (EOS / END_OF_TURN / BEGIN_OF_TOOL_RESPONSE, <span class="fileref">ar_eval.py:100-104</span>) →
+    <code>done |= stopped</code>; one forward pass appends the canvas K/V to the cache
+    (<code>end_index += CS</code>); write tokens into <code>predicted_tokens [B,C]</code>;
+    advance positions and rebuild the mask for the next canvas.</li>
+  </ol></li>
+<li><b>Finalize.</b> Return <code>predicted_tokens[:, P:] [B, NC·CS]</code>
+  (<span class="fileref">hd_gemma_ar_state_handler.py:365-380</span>)
+  <i>(measured int32[2,16]; 2 canvases processed, 3 recorded denoising steps each)</i>.
+  Sudoku metrics run host-side on the detokenized samples
+  (<span class="fileref">sudoku_eval.py</span>).</li>
+</ol>
+<p><b>Train vs inference network call:</b> same backbone method; differences are only in
+orchestration — cache prefilled from <code>prompt ++ x0</code> (train) vs prompt-only then
+appended per canvas (inference); queries = all canvases <code>[B,TC,C]</code> (train) vs one
+canvas <code>[B,CS,C]</code> (inference); self-conditioning two-pass w.p. 0.5 (train) vs every
+step from the previous iteration (inference); <code>is_training</code> flag.</p>
+
+<h2 id="verification">11. How this was verified</h2>
+<p><span class="fileref">tools/rampup/smoke.py</span> builds the tiny model
+(3 layers = 2 local + 1 global, D=32, V=64, MoE 4 experts/top-2 — same topology, every dim
+shrunk), pushes dummy examples through the <b>real</b> data transforms
+(<code>CanvasChunker</code>, <code>SequenceTargetShift</code>), runs one full training step and
+one full AR sampling call, and records every flax module call's input/output shapes via
+<code>nn.intercept_methods</code>. Outputs:</p>
+<ul>
+<li><span class="fileref">tools/rampup/measured/module_io.json</span> — 1,011 recorded module calls
+(init / train_forward / inference phases)</li>
+<li><span class="fileref">tools/rampup/measured/weights_tiny.json</span> — tiny inventory, 50,959 params</li>
+<li><span class="fileref">tools/rampup/measured/weights_full_26b.json</span> — full 26B_A4B inventory via
+<code>jax.eval_shape</code>, 25,250,986,782 params</li>
+<li><span class="fileref">tools/rampup/measured/summary.json</span> — batch/preds/final-state shapes, loss values</li>
+</ul>
+<p>No shape in this document was copied from a docstring without being confirmed by either the
+measured JSON or the constructing code line.</p>
+
+</main>
+</div>
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: false, theme: 'neutral', flowchart: { htmlLabels: true } });
+
+/* ------------------------------------------------------------------ */
+/* Diagram sources (kept in sync with docs/model-walkthrough/mmd/*.mmd) */
+/* ------------------------------------------------------------------ */
+const SRC = {};
+
+SRC.l0 = `flowchart TB
+    xt(["x_t canvas tokens<br/>[B, L]"]):::tensor
+    sclog(["sc_logits (prev step)<br/>[B, L, V]"]):::tensor
+    kv[("KV cache (prompt + prior canvases)<br/>k,v: [B, C, N_kv, d] x 30 layers")]:::tensor
+    EMB["Embedder.encode<br/>table lookup x sqrt(D)"]:::module
+    ENCL["Embedder.encode_logits<br/>softmax(sc_logits) . table x sqrt(D)"]:::module
+    SC["SelfConditioning<br/>post_norm(emb + ffw(pre_norm(sc)))"]:::module
+    BLOCKS["Block x 30 (layer_0 .. layer_29)<br/>25x local-sliding + 5x global attn<br/>MoE + dense FFN"]:::module
+    FN["final_norm (RMSNorm)"]:::module
+    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
+    logits(["logits<br/>[B, L, V]"]):::tensor
+    xt -- "[B, L] int" --> EMB
+    sclog -- "[B, L, V]" --> ENCL
+    EMB -- "[B, L, D]" --> SC
+    ENCL -- "sc_embeddings [B, L, D]" --> SC
+    SC -- "[B, L, D]" --> BLOCKS
+    kv -. "read/write per layer" .-> BLOCKS
+    BLOCKS -- "[B, L, D]" --> FN
+    FN -- "[B, L, D]" --> DEC
+    DEC -- "[B, L, V]" --> logits
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.block = `flowchart TB
+    xin(["x<br/>[B, L, D]"]):::tensor
+    PAN["pre_attention_norm<br/>RMSNorm"]:::module
+    ATT["attn : Attention<br/>(GQA + RoPE + QK-norm)"]:::module
+    POAN["post_attention_norm<br/>RMSNorm"]:::module
+    ADD1["+ residual"]:::op
+    PF2N["pre_ffw2_norm<br/>RMSNorm"]:::module
+    MLP2["mlp2 : FeedForward<br/>dense shared, hidden H_f"]:::module
+    POF2["post_ffw2_norm<br/>RMSNorm"]:::module
+    PFN["pre_ffw_norm<br/>RMSNorm"]:::module
+    MOE["mlp : MoERagged<br/>E experts, top-k"]:::module
+    POF1["post_ffw1_norm<br/>RMSNorm"]:::module
+    SUM["+ (dense branch + MoE branch)"]:::op
+    POFN["post_ffw_norm<br/>RMSNorm"]:::module
+    ADD2["+ residual, x skip_scale"]:::op
+    xout(["x'<br/>[B, L, D]"]):::tensor
+    xin -- "[B, L, D]" --> PAN
+    PAN -- "[B, L, D]" --> ATT
+    ATT -- "[B, L, D]" --> POAN
+    POAN -- "[B, L, D]" --> ADD1
+    xin -- "residual [B, L, D]" --> ADD1
+    ADD1 -- "[B, L, D]" --> PF2N
+    ADD1 -- "[B, L, D]" --> PFN
+    PF2N -- "[B, L, D]" --> MLP2
+    MLP2 -- "[B, L, D]" --> POF2
+    PFN -- "[B, L, D]" --> MOE
+    ADD1 -- "unnormalized_x (router input) [B, L, D]" --> MOE
+    MOE -- "[B, L, D]" --> POF1
+    POF2 -- "[B, L, D]" --> SUM
+    POF1 -- "[B, L, D]" --> SUM
+    SUM -- "[B, L, D]" --> POFN
+    POFN -- "[B, L, D]" --> ADD2
+    ADD1 -- "residual [B, L, D]" --> ADD2
+    ADD2 -- "[B, L, D]" --> xout
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.attention = `flowchart TB
+    xn(["x_normed<br/>[B, L, D]"]):::tensor
+    QE["q_einsum<br/>BTD,NDH->BTNH"]:::module
+    KVE["kv_einsum<br/>BSD,CKDH->CBSKH"]:::module
+    QN["query_norm (RMS) + RoPE"]:::module
+    KN["key_norm (RMS) + RoPE"]:::module
+    VN["value_norm (RMS, no scale)"]:::module
+    kv[("KV cache layer_i<br/>k,v: [B, C, N_kv, K]<br/>end_index: [B]")]:::tensor
+    UPD["cache update<br/>dynamic_update_slice @ end_index"]:::op
+    DOT["GQA dot product<br/>BTNH,BSKH->BTNS (grouped)"]:::op
+    MASK["mask + softmax<br/>(sliding window AND attn_mask)"]:::op
+    WV["weighted sum<br/>BTNS,BSKH->BTNH"]:::op
+    OE["attn_vec_einsum<br/>BTNH,NHD->BTD"]:::module
+    out(["attn_output<br/>[B, L, D]"]):::tensor
+    xn -- "[B, L, D]" --> QE
+    xn -- "[B, L, D]" --> KVE
+    QE -- "q [B, L, N_h, K]" --> QN
+    KVE -- "k [B, L, N_kv, K]" --> KN
+    KVE -- "v [B, L, N_kv, K]" --> VN
+    KN -- "[B, L, N_kv, K]" --> UPD
+    VN -- "[B, L, N_kv, K]" --> UPD
+    kv -- "old k,v [B, C, N_kv, K]" --> UPD
+    UPD -- "k,v [B, C, N_kv, K]" --> DOT
+    QN -- "q [B, L, N_h, K]" --> DOT
+    DOT -- "logits [B, L, N_h, C]" --> MASK
+    MASK -- "probs [B, L, N_h, C]" --> WV
+    UPD -- "v [B, C, N_kv, K]" --> WV
+    WV -- "[B, L, N_h, K]" --> OE
+    OE -- "[B, L, D]" --> out
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.moe = `flowchart TB
+    xn(["x (pre_ffw_normed)<br/>[B, L, D]"]):::tensor
+    xu(["unnormalized_x<br/>[B, L, D]"]):::tensor
+    RN["router_norm (RMS, no scale)<br/>x router_scale / sqrt(D)"]:::module
+    RL["router_logits<br/>Einsum D,E"]:::module
+    TOPK["softmax + approx_max_k(k)<br/>renormalize weights"]:::op
+    DISP["expert dispatch<br/>sort tokens by expert"]:::op
+    GATE["gating_einsum (ragged_dot)<br/>[E, 2, E_d, D]"]:::module
+    ACT["gelu(x1) * x2"]:::op
+    LIN["linear (ragged_dot)<br/>[E, E_d, D]"]:::module
+    SCALE["x per_expert_scale[e]"]:::op
+    COMB["collect + combine<br/>sum_k w_k * out_k"]:::op
+    out(["moe_out<br/>[B, L, D]"]):::tensor
+    xu -- "[B, L, D]" --> RN
+    RN -- "[B, L, D]" --> RL
+    RL -- "router logits [B, L, E]" --> TOPK
+    TOPK -- "weights, choices [B, L, k]" --> DISP
+    xn -- "[B, L, D]" --> DISP
+    DISP -- "sorted tokens [B*L*k, D]" --> GATE
+    GATE -- "[B*L*k, 2*E_d]" --> ACT
+    ACT -- "[B*L*k, E_d]" --> LIN
+    LIN -- "[B*L*k, D]" --> SCALE
+    SCALE -- "[B*L*k, D]" --> COMB
+    TOPK -- "combine weights [B, L, k]" --> COMB
+    COMB -- "[B, L, D]" --> out
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.embedder = `flowchart TB
+    subgraph EMBG["Embedder (weight-tied: one table [V, D])"]
+        tok(["tokens [B, L]"]):::tensor
+        ENC["encode: table[tokens] x sqrt(D)"]:::module
+        scl(["sc_logits [B, L, V]"]):::tensor
+        ENL["encode_logits:<br/>softmax(logits) . table x sqrt(D)"]:::module
+        hfin(["final hidden [B, L, D]"]):::tensor
+        DEC["decode: x . table^T"]:::module
+        CAP["tanh(x / 30) x 30<br/>final_logit_softcap"]:::op
+    end
+    subgraph SCG["SelfConditioning"]
+        PRE["pre_norm (RMS)"]:::module
+        FFW["ffw : FeedForward<br/>gelu-gated, hidden H_f"]:::module
+        ADD["+ canvas embeddings"]:::op
+        POST["post_norm (RMS, no scale)"]:::module
+    end
+    emb(["embeddings [B, L, D]"]):::tensor
+    sce(["sc_embeddings [B, L, D]"]):::tensor
+    xout(["block input x [B, L, D]"]):::tensor
+    logits(["logits [B, L, V]"]):::tensor
+    tok -- "[B, L]" --> ENC
+    ENC -- "[B, L, D]" --> emb
+    scl -- "[B, L, V]" --> ENL
+    ENL -- "[B, L, D]" --> sce
+    sce -- "[B, L, D]" --> PRE
+    PRE -- "[B, L, D]" --> FFW
+    FFW -- "[B, L, D]" --> ADD
+    emb -- "[B, L, D]" --> ADD
+    ADD -- "[B, L, D]" --> POST
+    POST -- "[B, L, D]" --> xout
+    hfin -- "[B, L, D]" --> DEC
+    DEC -- "[B, L, V]" --> CAP
+    CAP -- "[B, L, V]" --> logits
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.trainForward = `flowchart TB
+    x0(["x0 = batch.canvas<br/>[B, TC, 1]"]):::tensor
+    pr(["prompt<br/>[B, P]"]):::tensor
+    TS["UniformTimeSampler<br/>t ~ U(eps, 1-eps)"]:::module
+    COR["corruption_process.corrupt<br/>keep w.p. alpha=1-t else uniform"]:::module
+    xt(["x_t<br/>[B, TC, 1]"]):::tensor
+    SEL["sample selected_canvas_idx<br/>~ U[0, num_valid) per example"]:::op
+    ENC["sft_encode: causal AR prefill<br/>over prompt ++ x0 (encoder pass)<br/>+ set_cache_end_index"]:::module
+    kv[("KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index = P + idx*CS")]:::tensor
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+    DEC1["sft_decode pass 1<br/>(denoiser, no self-cond)"]:::module
+    SCG["self-cond gate:<br/>stop_grad + Bernoulli(0.5) per example"]:::op
+    DEC2["sft_decode pass 2<br/>(denoiser + sc_logits)"]:::module
+    dlog(["denoiser logits<br/>[B, TC, V]"]):::tensor
+    DL["diffusion_loss<br/>NoWeightDiscreteLoss<br/>CE(logits, x0) on target_mask"]:::loss
+    EL["encoder_loss<br/>EncoderARLoss<br/>CE(encoder_logits, next-token)"]:::loss
+    x0 -- "[B, TC, 1]" --> TS
+    TS -- "t [B, 1, 1]" --> COR
+    x0 -- "[B, TC, 1]" --> COR
+    COR -- "[B, TC, 1]" --> xt
+    pr -- "[B, P]" --> ENC
+    x0 -- "x0 tokens [B, TC]" --> ENC
+    SEL -- "idx [B]" --> ENC
+    ENC -- "cache" --> kv
+    ENC -- "[B, FS, V]" --> elog
+    xt -- "[B, TC, 1]" --> DEC1
+    kv -. "read (frozen at end_index)" .-> DEC1
+    DEC1 -- "logits [B, TC, V]" --> SCG
+    SCG -- "sc_logits [B, TC, V]" --> DEC2
+    xt -- "[B, TC, 1]" --> DEC2
+    kv -. "read" .-> DEC2
+    DEC2 -- "[B, TC, V]" --> dlog
+    dlog -- "[B, TC, V]" --> DL
+    x0 -- "labels [B, TC]" --> DL
+    elog -- "[B, FS, V]" --> EL
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef loss fill:#fee2e2,stroke:#dc2626,color:#7f1d1d`;
+
+SRC.encode = `flowchart TB
+    pr(["prompt<br/>[B, P]"]):::tensor
+    x0t(["x0 tokens<br/>[B, TC]"]):::tensor
+    CAT["concat<br/>full_seq = prompt ++ x0"]:::op
+    MASKS["validity masks<br/>prompt_mask = prompt != PAD<br/>full_seq_mask = prompt_mask ++ canvas_mask"]:::op
+    POS["build_positions_from_mask<br/>cumsum(mask) - 1"]:::op
+    PMASK["make_causal_prefill_mask<br/>lower-triangular AND token mask"]:::op
+    INIT["init_cache<br/>allocate zeroed cache, len FS"]:::module
+    ENCC["encoder_call<br/>standard Transformer.__call__<br/>(causal AR forward, no self-cond)"]:::module
+    SETEND["set_cache_end_index<br/>end_index = P + selected_idx * CS"]:::module
+    idx(["selected_canvas_idx<br/>[B]"]):::tensor
+    cmask(["canvas_mask<br/>[B, TC]"]):::tensor
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+    kv[("prefilled KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index: [B]")]:::tensor
+    posOut(["positions (returned)<br/>[B, FS]"]):::tensor
+    pmOut(["prompt_mask (returned)<br/>[B, P]"]):::tensor
+    pr -- "[B, P]" --> CAT
+    x0t -- "[B, TC]" --> CAT
+    pr -- "[B, P]" --> MASKS
+    cmask -- "[B, TC]" --> MASKS
+    CAT -- "full_seq [B, FS]" --> ENCC
+    MASKS -- "full_seq_mask [B, FS]" --> POS
+    MASKS -- "full_seq_mask [B, FS]" --> PMASK
+    POS -- "positions [B, FS]" --> ENCC
+    PMASK -- "attn mask [B, FS, FS]" --> ENCC
+    INIT -- "empty cache [B, FS, N_kv, d]" --> ENCC
+    ENCC -- "[B, FS, V]" --> elog
+    ENCC -- "written k,v (end_index = FS)" --> SETEND
+    idx -- "[B]" --> SETEND
+    SETEND -- "end_index := P + idx*CS" --> kv
+    POS -- "positions [B, FS]" --> posOut
+    MASKS -- "prompt_mask [B, P]" --> pmOut
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.encoderCall = `flowchart TB
+    full(["full_seq tokens<br/>[B, FS]"]):::tensor
+    pos(["positions<br/>[B, FS]"]):::tensor
+    amask(["causal prefill mask<br/>[B, FS, FS]"]):::tensor
+    MNOTE["mask[b,q,k] = (k &lt;= q) AND valid[b,k]<br/>strictly causal, PAD keys hidden everywhere<br/>(unlike the decoder mask: no bidirectionality)<br/>sliding window (1024) never binds: FS = 512"]:::note
+    EMB["Embedder.encode<br/>table[tokens] x sqrt(D)"]:::module
+    BLOCKS["Block x 30<br/>causal GQA attention + dual FFN<br/>each layer WRITES its K/V into the cache"]:::module
+    kv[("KV cache (being written)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index -> FS")]:::tensor
+    FN["final_norm (RMSNorm)"]:::module
+    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+    full -- "[B, FS] int" --> EMB
+    EMB -- "[B, FS, D]" --> BLOCKS
+    pos -- "RoPE positions [B, FS]" --> BLOCKS
+    amask -- "[B, FS, FS]" --> BLOCKS
+    MNOTE -.- amask
+    BLOCKS -- "k,v per layer" --> kv
+    BLOCKS -- "[B, FS, D]" --> FN
+    FN -- "[B, FS, D]" --> DEC
+    DEC -- "[B, FS, V]" --> elog
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef note fill:#fefce8,stroke:#ca8a04,color:#713f12,stroke-dasharray:5 5`;
+
+SRC.decode = `flowchart TB
+    xt(["x_t<br/>[B, TC, 1]"]):::tensor
+    tin(["time t<br/>[B, 1, 1]"]):::tensor
+    sclin(["sc_logits<br/>[B, TC, V]<br/>(pass 2 only; zeros in pass 1)"]):::tensor
+    kvin[("KV cache (prefilled)<br/>end_index = P + idx*CS")]:::tensor
+    posin(["positions<br/>[B, FS]"]):::tensor
+    pmin(["prompt_mask<br/>[B, P]"]):::tensor
+    cmin(["canvas_mask<br/>[B, TC]"]):::tensor
+    idxin(["selected_canvas_idx<br/>[B]"]):::tensor
+    CMASK["create_decoder_attention_mask<br/>prompt OR canvases &lt;= selected;<br/>broadcast to all query rows"]:::op
+    amask(["decoder attention mask<br/>[B, TC, FS]"]):::tensor
+    SLICE["slice canvas positions<br/>positions[:, P:]"]:::op
+    NET["gemma_network<br/>WrappedDiffusionGemmaNetwork.__call__<br/>(denoiser forward, self-cond inside)"]:::module
+    dlog(["denoiser logits<br/>[B, TC, V]"]):::tensor
+    pmin -- "[B, P]" --> CMASK
+    cmin -- "[B, TC]" --> CMASK
+    idxin -- "[B]" --> CMASK
+    CMASK -- "[B, TC, FS]" --> amask
+    amask -- "[B, TC, FS]" --> NET
+    posin -- "[B, FS]" --> SLICE
+    SLICE -- "canvas positions [B, TC]" --> NET
+    kvin -. "read (frozen at end_index)" .-> NET
+    xt -- "[B, TC, 1]" --> NET
+    tin -. "accepted but UNUSED by the network" .-> NET
+    sclin -- "[B, TC, V]" --> NET
+    NET -- "[B, TC, V]" --> dlog
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
+SRC.seqTraining = `sequenceDiagram
+    autonumber
+    participant DL as Dataloader<br/>(sudoku_data)
+    participant TS as TrainStep<br/>(kauldron)
+    participant M as SFTDiffusion<br/>(model)
+    participant G as WrappedDiffusion<br/>GemmaNetwork
+    participant LS as Losses
+    participant OPTM as Optimizer<br/>(optax chain)
+    DL->>TS: batch {prompt [B,P], canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask}
+    TS->>TS: rngs = rng_streams.train_rngs(step)
+    TS->>M: model.apply(params, batch keys, rngs={'sampling'})
+    M->>M: t ~ UniformTimeSampler [B,1,1]
+    M->>M: xt = corrupt(x0, t) [B,TC,1]
+    M->>M: selected_canvas_idx ~ U[0, num_valid) [B]
+    M->>G: encoder_call(prompt ++ x0 [B,FS], causal mask [B,FS,FS])
+    G-->>M: encoder_logits [B,FS,V] + prefilled KV cache
+    M->>M: set_cache_end_index(P + idx*CS)
+    M->>G: __call__(xt, cache, decoder mask [B,TC,FS])
+    G-->>M: logits [B,TC,V]
+    M->>M: sc_logits = stop_grad(logits), zeroed w.p. 0.5/example
+    M->>G: __call__(xt, cache, mask, sc_logits)
+    G-->>M: logits [B,TC,V]
+    M-->>TS: preds {output.logits [B,TC,V], target (x0, target_mask),<br/>encoder_logits [B,FS,V], noise_info}
+    TS->>LS: diffusion_loss CE(output.logits, target.x0) on target_mask -> [B]
+    TS->>LS: encoder_loss CE(encoder_logits, encoder_target) on mask -> [B]
+    LS-->>TS: total = 1.0*mean + 1.0*mean (scalar)
+    TS->>TS: grads = jax.grad(total) w.r.t. params
+    TS->>OPTM: update(grads) clip(1.0) -> adafactor -> weight_decay(1e-4) -> lr schedule
+    OPTM-->>TS: new params (FSDP-sharded), step+1`;
+
+SRC.seqInference = `sequenceDiagram
+    autonumber
+    participant EV as GemmaSampling<br/>Evaluator
+    participant AR as GemmaKDARSampler<br/>(AR outer loop)
+    participant SH as GemmaARState<br/>Handler
+    participant DS as DiffusionSampler<br/>(inner loop)
+    participant ST as DiscreteDDIMStep
+    participant G as WrappedDiffusion<br/>GemmaNetwork
+    EV->>AR: __call__(inference_fn, batch_size, rng,<br/>cond={prompt_tokens [B,P], prompt_lengths [B]})
+    AR->>SH: init_ar_state(...)
+    SH->>G: encoder_call(prompt [B,P], causal prefill mask [B,P,C])
+    G-->>SH: KV cache prefilled (k,v [B,C,N_kv,d] x N_L, end_index=P)
+    SH-->>AR: state {kv_cache, positions [B,CS], attn_mask [B,CS,C],<br/>predicted_tokens [B,C], done [B]}
+    loop per canvas (while step < max_num_canvases and not all done)
+        AR->>AR: x_T ~ uniform over V  [B,CS,1]
+        AR->>SH: create_conditioning_from_state()
+        SH-->>AR: cond {kv_cache, positions, attention_mask, ...}
+        AR->>DS: canvas_sampler(inference_fn, rng, x_T, cond)
+        loop T_s denoising steps (t goes ~1 -> ~0)
+            DS->>DS: cond['sc_logits'] = prev step logits [B,CS,V]
+            DS->>G: inference_fn(t [B,1], x_t [B,CS,1], cond)
+            G-->>DS: logits [B,CS,V]
+            DS->>ST: update(logits, x_t, t, t_next)
+            ST->>ST: x0_hat ~ categorical(logits/0.7) [B,CS,1]
+            ST->>ST: route per token stay(x_t) / renoise / take x0_hat<br/>weights from alpha=1-t schedule
+            ST-->>DS: x_(t-1) [B,CS,1] + aux logits
+        end
+        DS-->>AR: final canvas x_0 [B,CS,1]
+        AR->>SH: update_ar_state(canvas)
+        SH->>SH: truncate at stop tokens (EOS...) -> done |= has_stop
+        SH->>G: forward pass appends canvas K/V to cache (end_index += CS)
+        SH->>SH: predicted_tokens[:, step:step+CS] = canvas<br/>positions += CS, rebuild attn mask for canvas i+1
+        SH-->>AR: updated state
+    end
+    AR->>SH: finalize_ar_state()
+    SH-->>AR: predicted_tokens[:, P:]  [B, NC*CS]
+    AR-->>EV: samples [B, NC*CS] + latency counters`;
+
+/* ------------------------------------------------------------------ */
+/* Node metadata (description, file refs, weights, measured I/O)       */
+/* ------------------------------------------------------------------ */
+const DIAGRAMS = {
+  l0:        { title: 'L0 — Denoiser forward', src: SRC.l0 },
+  block:     { title: 'L1 — Block (one of 30)', src: SRC.block, parent: 'l0' },
+  attention: { title: 'L2 — Attention', src: SRC.attention, parent: 'block' },
+  moe:       { title: 'L2 — MoERagged FFN', src: SRC.moe, parent: 'block' },
+  embedder:  { title: 'L1 — Embedder & SelfConditioning', src: SRC.embedder, parent: 'l0' },
+  trainForward: { title: 'Training forward (SFTDiffusion)', src: SRC.trainForward },
+  encode: { title: 'L2 — sft_encode (encoder prefill)', src: SRC.encode, parent: 'trainForward' },
+  encoderCall: { title: 'L3 — encoder_call (causal Transformer forward)', src: SRC.encoderCall, parent: 'encode' },
+  decode: { title: 'L3 — sft_decode (one denoiser pass)', src: SRC.decode, parent: 'trainForward' },
+};
+
+const W = (name, sym, big, tiny) => ({name, sym, big, tiny});
+const INFO = {
+  l0: {
+    EMB: { title: 'Embedder.encode', file: 'gemma/gm/nn/gemma4/_modules.py:112-125',
+      desc: 'Table lookup scaled by sqrt(D). The same [V, D] table also serves encode_logits and the output head (weight tying).',
+      weights: [W('embedder/input_embedding', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'in tokens int32[B,L] -> out bf16[B,L,D]  (measured: [2,24] -> [2,24,32] encoder pass)',
+      drill: 'embedder' },
+    ENCL: { title: 'Embedder.encode_logits', file: 'gemma/gm/nn/gemma4/_modules.py:139-155',
+      desc: 'Soft embedding of the previous denoising step: softmax(sc_logits) @ table * sqrt(D). Zero logits on the first step produce a uniform mixture, which SelfConditioning then zeroes out.',
+      weights: [W('(shares embedder table)', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'in bf16[B,L,V] -> out bf16[B,L,D]  (measured: [2,16,64] -> [2,16,32])',
+      drill: 'embedder' },
+    SC: { title: 'SelfConditioning', file: 'gemma/diffusion/_transformer.py:53-78, combine :154-164',
+      desc: 'post_norm(canvas_embeddings + ffw(pre_norm(sc_signal))). Replaces the token embeddings before the blocks. Signal is zeroed when sc_embeddings are all-zero (first step / no self-cond).',
+      weights: [W('self_conditioner/pre_norm/scale', '[D]', '[2816]', '[32]'),
+                W('self_conditioner/ffw/gating_einsum', '[2, H_f, D]', '[2, 2112, 2816]', '[2, 48, 32]'),
+                W('self_conditioner/ffw/linear', '[H_f, D]', '[2112, 2816]', '[48, 32]')],
+      io: 'in canvas_embeddings bf16[B,L,D], sc_signal bf16[B,L,D] -> out bf16[B,L,D]  (measured [2,16,32])',
+      drill: 'embedder' },
+    BLOCKS: { title: 'Block x 30', file: 'gemma/gm/nn/gemma4/_modules.py:468 (setup :497-591, call :594-664)',
+      desc: '30 pre-norm residual blocks. Attention pattern: 5x LOCAL_SLIDING then 1x GLOBAL, tiled x5 (global layers 5,11,17,23,29). Each block: GQA attention + dual FFN (dense shared mlp2 + 128-expert top-8 MoE mlp), 9 RMSNorms, learned skip_scale. Config remat-checkpoints every block (sft_sudoku_full.py:31-81).',
+      weights: [W('layer_i/* (see weight table)', '~810M / layer', '24.3B total', '~16k/layer')],
+      io: 'in bf16[B,L,D] + cache + mask [B,L,C] -> out bf16[B,L,D] + updated cache',
+      drill: 'block' },
+    FN: { title: 'final_norm', file: 'gemma/gm/nn/gemma4/_transformer.py:196',
+      desc: 'RMSNorm over the last block output.',
+      weights: [W('final_norm/scale', '[D]', '[2816]', '[32]')],
+      io: 'bf16[B,L,D] -> bf16[B,L,D]' },
+    DEC: { title: 'Embedder.decode (tied head)', file: 'gemma/gm/nn/gemma4/_modules.py:127-137; softcap gemma/diffusion/_transformer.py:180-184',
+      desc: 'Logits = hidden @ table^T followed by tanh soft-capping at +/-30 (final_logit_softcap). No separate output matrix exists.',
+      weights: [W('(shares embedder table)', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'bf16[B,L,D] -> bf16[B,L,V]  (measured [2,24,32] -> [2,24,64])',
+      drill: 'embedder' },
+    xt: { title: 'x_t — noisy canvas tokens', file: 'hd_gemma_network.py:210-215',
+      desc: 'Token ids in [0,V). Arrives as [B,L,1] from hackable_diffusion (trailing channel dim), squeezed to [B,L]. At train time L=TC (all canvases); at inference L=CS (one canvas).',
+      io: 'int32[B,L,1] -> int32[B,L]' },
+    sclog: { title: 'sc_logits — self-conditioning input', file: 'hd_gemma_network.py:222-228',
+      desc: 'Previous denoising step logits (inference: every step via PropagateSelfConditioningFn; train: pass-1 logits, stop-gradiented, kept w.p. 0.5). Defaults to zeros.',
+      io: 'bf16[B,L,V]' },
+    kv: { title: 'KV cache', file: 'gemma/gm/nn/gemma4/_modules.py:399-419, _config.py:157-193',
+      desc: 'Per layer: {k, v: [B, C, N_kv, d_h] (local) or [B, C, N_gkv, K_g] (global), end_index: [B] int32 write cursor, positions: [B, C]}. C = P + NC*CS = 512. Measured tiny: [2,24,2,8] local, [2,24,1,16] global.',
+      io: 'bf16 k,v per 30 layers' },
+    logits: { title: 'logits — denoiser output', file: 'hd_gemma_network.py:244-245',
+      desc: 'x0-prediction logits over the vocabulary for every canvas position.',
+      io: 'bf16[B,L,V]  (measured train [2,16,64], inference [2,8,64])' },
+  },
+  block: {
+    ATT: { title: 'Attention (GQA)', file: 'gemma/gm/nn/gemma4/_modules.py:201-397',
+      desc: 'Grouped-query attention. Local layers: 16 q heads share 8 kv heads, key size 256, RoPE base 10k over 100% of dims, sliding window 1024. Global layers: 16 q heads share 2 kv heads, key size 512, k==v (k_eq_v_global), RoPE base 1M over 25% of dims. RMS q/k-norm with scale, v-norm without.',
+      weights: [W('attn/q_einsum/w', '[N_h, D, K]', '[16,2816,256]/[16,2816,512]', '[4,32,8]/[4,32,16]'),
+                W('attn/kv_einsum/w (local)', '[2, N_kv, D, d_h]', '[2,8,2816,256]', '[2,2,32,8]'),
+                W('attn/k_einsum/w (global)', '[N_gkv, D, K_g]', '[2,2816,512]', '[1,32,16]'),
+                W('attn/attn_vec_einsum/w', '[N_h, K, D]', '[16,256,2816]/[16,512,2816]', '[4,8,32]/[4,16,32]'),
+                W('attn/query_norm|key_norm scale', '[K]', '[256]/[512]', '[8]/[16]')],
+      io: 'in (x bf16[B,L,D], pos int32[B,L], cache, mask bool[B,L,C]) -> (cache, bf16[B,L,D])  measured [2,24,32]',
+      drill: 'attention' },
+    MOE: { title: 'MoERagged', file: 'gemma/gm/nn/gemma4/_moe.py:261-407',
+      desc: 'Token-choice MoE: router (on unnormalized_x through router_norm * router_scale / sqrt(D)) picks top-8 of 128 experts via approx_max_k; tokens dispatched with jax.lax.ragged_dot; gelu-gated expert FFN; per-expert output scale; weighted combine.',
+      weights: [W('mlp/router_logits/w', '[D, E]', '[2816, 128]', '[32, 4]'),
+                W('mlp/router_scale', '[D]', '[2816]', '[32]'),
+                W('mlp/gating_einsum/w', '[E, 2, E_d, D]', '[128, 2, 704, 2816]', '[4, 2, 16, 32]'),
+                W('mlp/linear/w', '[E, E_d, D]', '[128, 704, 2816]', '[4, 16, 32]'),
+                W('mlp/per_expert_scale', '[E]', '[128]', '[4]')],
+      io: 'in bf16[B,L,D] (+unnormalized_x) -> out bf16[B,L,D]',
+      drill: 'moe' },
+    MLP2: { title: 'mlp2 — dense shared FFN', file: 'gemma/gm/nn/gemma4/_modules.py:422-465 (built :568)',
+      desc: 'Standard gelu-gated FFN applied to every token, in parallel with the MoE branch. gate: einsum ...F,NHF->...NH with N=2; out = gelu(g0)*g1 @ linear.',
+      weights: [W('mlp2/gating_einsum', '[2, H_f, D]', '[2, 2112, 2816]', '[2, 48, 32]'),
+                W('mlp2/linear', '[H_f, D]', '[2112, 2816]', '[48, 32]')],
+      io: 'bf16[B,L,D] -> bf16[B,L,D]' },
+    PAN: { title: 'pre_attention_norm', file: '_modules.py:497', desc: 'RMSNorm.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    POAN: { title: 'post_attention_norm', file: '_modules.py:531-533', desc: 'RMSNorm on attention output before the residual add.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    PF2N: { title: 'pre_ffw2_norm', file: '_modules.py:567', desc: 'RMSNorm feeding the dense branch.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    POF2: { title: 'post_ffw2_norm', file: '_modules.py:572-574', desc: 'RMSNorm on the dense branch output.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    PFN: { title: 'pre_ffw_norm', file: '_modules.py:577', desc: 'RMSNorm feeding the MoE experts (router uses unnormalized input).', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    POF1: { title: 'post_ffw1_norm', file: '_modules.py:584-586', desc: 'RMSNorm on the MoE branch output.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    POFN: { title: 'post_ffw_norm', file: '_modules.py:589-591', desc: 'RMSNorm on the summed FFN branches.', weights: [W('scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    ADD2: { title: 'residual + skip_scale', file: '_modules.py:641-664',
+      desc: 'outputs = (ffn_out + attn_residual) * skip_scale — a learned scalar per block.',
+      weights: [W('skip_scale', '[1]', '[1]', '[1]')], io: 'bf16[B,L,D]' },
+  },
+  attention: {
+    QE: { title: 'q_einsum', file: '_modules.py:225-227, applied :265',
+      desc: "einsum('BTD,NDH->BTNH'). K=256 on local layers, 512 on global layers (Block.setup passes global_key_size, _modules.py:511-512).",
+      weights: [W('q_einsum/w', '[N_h, D, K]', '[16,2816,256] / [16,2816,512]', '[4,32,8] / [4,32,16]')],
+      io: 'bf16[B,L,D] -> bf16[B,L,N_h,K]' },
+    KVE: { title: 'kv_einsum / k_einsum', file: '_modules.py:228-235, applied :276-281',
+      desc: "Local: einsum('BSD,CKDH->CBSKH') producing k and v together. Global: only k_einsum('BSD,KDH->BSKH') and v:=k (k_eq_v_global=True).",
+      weights: [W('kv_einsum/w (local)', '[2, N_kv, D, d_h]', '[2,8,2816,256]', '[2,2,32,8]'),
+                W('k_einsum/w (global)', '[N_gkv, D, K_g]', '[2,2816,512]', '[1,32,16]')],
+      io: 'bf16[B,L,D] -> k,v bf16[B,L,N_kv,K]' },
+    QN: { title: 'query_norm + RoPE', file: '_modules.py:236,267-273; gm/math/_positional_embeddings.py:23-75',
+      desc: 'RMSNorm (with scale) then rotary embedding. Local: base 10k, 100% of dims. Global: base 1M, 25% of dims (rest NoPE).',
+      weights: [W('query_norm/scale', '[K]', '[256]/[512]', '[8]/[16]')], io: 'bf16[B,L,N_h,K]' },
+    KN: { title: 'key_norm + RoPE', file: '_modules.py:237,289-295',
+      desc: 'Same treatment as queries.', weights: [W('key_norm/scale', '[K]', '[256]/[512]', '[8]/[16]')], io: 'bf16[B,L,N_kv,K]' },
+    VN: { title: 'value_norm', file: '_modules.py:238',
+      desc: 'RMSNorm without scale (no parameter). No RoPE on values.', weights: [], io: 'bf16[B,L,N_kv,K]' },
+    UPD: { title: 'cache update', file: '_modules.py:299-326 (dynamic_update_slice at end_index)',
+      desc: 'New k/v written into the cache at the per-example end_index cursor; positions recorded for the sliding-window test.',
+      io: 'k,v bf16[B,C,N_kv,K], end_index int32[B]' },
+    DOT: { title: 'GQA dot product', file: '_modules.py:328-334',
+      desc: 'Query heads grouped over kv heads; einsum yields [B, L, N_h, C] attention logits.', io: '-> bf16[B,L,N_h,C]' },
+    MASK: { title: 'mask + softmax', file: '_modules.py:336-372',
+      desc: 'Attention mask (externally supplied: causal prefill / block-causal decoder) intersected with the sliding-window mask on LOCAL_SLIDING layers; softmax over cache axis.', io: 'bf16[B,L,N_h,C]' },
+    WV: { title: 'weighted value sum', file: '_modules.py:373-375', desc: 'probs @ v.', io: '-> bf16[B,L,N_h,K]' },
+    OE: { title: 'attn_vec_einsum', file: '_modules.py:222-224, applied :375',
+      desc: "Output projection einsum('BTNH,NHD->BTD').",
+      weights: [W('attn_vec_einsum/w', '[N_h, K, D]', '[16,256,2816]/[16,512,2816]', '[4,8,32]/[4,16,32]')],
+      io: '-> bf16[B,L,D]' },
+    kv: { title: 'KV cache (this layer)', file: '_modules.py:399-419',
+      desc: 'k, v [B, C, N_kv, K]; end_index [B]; positions [B, C]. Measured tiny: [2,24,2,8] local / [2,24,1,16] global.', io: '' },
+  },
+  moe: {
+    RN: { title: 'router_norm + router_scale', file: '_moe.py:294-299, call :382-407',
+      desc: 'RMSNorm (no scale param) on the UNNORMALIZED block input, multiplied by learned router_scale and 1/sqrt(D) before the router matmul — avoids double-norm with pre_ffw_norm.',
+      weights: [W('router_scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    RL: { title: 'router_logits', file: '_moe.py:274-276',
+      desc: 'Linear map to expert logits (computed in fp32).',
+      weights: [W('router_logits/w', '[D, E]', '[2816, 128]', '[32, 4]')], io: '-> f32[B,L,E]' },
+    TOPK: { title: 'softmax + approx_max_k', file: '_moe.py:301-312',
+      desc: 'softmax over experts, then approximate top-k (k=8) selection; weights renormalized over the chosen k.', io: '-> weights f32[B,L,k], choices int32[B,L,k]' },
+    DISP: { title: 'expert dispatch', file: '_moe.py:313-325 (_expert_dispatch)',
+      desc: 'Tokens replicated k times, sorted by expert id; group sizes per expert for ragged_dot.', io: '-> [B*L*k, D]' },
+    GATE: { title: 'gating_einsum (experts)', file: '_moe.py:282-284, ragged_dot :326-341',
+      desc: 'Per-expert gate+up projection, executed as one ragged_dot over the sorted token buffer. 60% of all model parameters live here.',
+      weights: [W('gating_einsum/w', '[E, 2, E_d, D]', '[128, 2, 704, 2816]', '[4, 2, 16, 32]')],
+      io: '[B*L*k, D] -> [B*L*k, 2*E_d]' },
+    ACT: { title: 'gelu gate', file: '_moe.py:342-347', desc: 'gelu(x1) * x2.', io: '-> [B*L*k, E_d]' },
+    LIN: { title: 'linear (experts)', file: '_moe.py:286-288, ragged_dot :349-355',
+      desc: 'Per-expert down projection via ragged_dot.',
+      weights: [W('linear/w', '[E, E_d, D]', '[128, 704, 2816]', '[4, 16, 32]')],
+      io: '-> [B*L*k, D]' },
+    SCALE: { title: 'per_expert_scale', file: '_moe.py:289-293, applied :357-364',
+      desc: 'Learned per-expert scalar applied to each expert output.',
+      weights: [W('per_expert_scale', '[E]', '[128]', '[4]')], io: '[B*L*k, D]' },
+    COMB: { title: 'collect + combine', file: '_moe.py:366-380 (_expert_collect + einsum blkd,blk->bld)',
+      desc: 'Unsort tokens, weight each expert output by its (renormalized) router weight, sum over the k experts.', io: '-> bf16[B,L,D]' },
+  },
+  embedder: {
+    ENC: { title: 'encode', file: '_modules.py:112-125', desc: 'table[tokens] * sqrt(D).',
+      weights: [W('input_embedding', '[V, D]', '[262144, 2816]', '[64, 32]')], io: 'int32[B,L] -> bf16[B,L,D]' },
+    ENL: { title: 'encode_logits', file: '_modules.py:139-155',
+      desc: 'softmax(logits) @ table * sqrt(D) — a probability-weighted soft embedding of the previous prediction.',
+      weights: [W('(same table)', '[V, D]', '[262144, 2816]', '[64, 32]')], io: 'bf16[B,L,V] -> bf16[B,L,D]' },
+    DEC: { title: 'decode', file: '_modules.py:127-137', desc: 'hidden @ table^T (weight-tied head).',
+      weights: [W('(same table)', '[V, D]', '[262144, 2816]', '[64, 32]')], io: 'bf16[B,L,D] -> bf16[B,L,V]' },
+    CAP: { title: 'final_logit_softcap', file: 'gemma/diffusion/_transformer.py:182-184',
+      desc: 'logits = tanh(logits/30) * 30.', io: 'bf16[B,L,V]' },
+    PRE: { title: 'pre_norm', file: 'gemma/diffusion/_transformer.py:60', desc: 'RMSNorm (with scale) on the self-conditioning signal.',
+      weights: [W('pre_norm/scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,L,D]' },
+    FFW: { title: 'ffw', file: 'gemma/diffusion/_transformer.py:61-64',
+      desc: 'Gelu-gated FeedForward (features=D, hidden=H_f) applied to the normalized sc signal.',
+      weights: [W('ffw/gating_einsum', '[2, H_f, D]', '[2, 2112, 2816]', '[2, 48, 32]'),
+                W('ffw/linear', '[H_f, D]', '[2112, 2816]', '[48, 32]')], io: 'bf16[B,L,D]' },
+    ADD: { title: 'add canvas embeddings', file: 'gemma/diffusion/_transformer.py:74-77',
+      desc: 'canvas_embeddings + ffw_output. The result REPLACES the token embeddings (diffusion/_transformer.py:160-164).', io: 'bf16[B,L,D]' },
+    POST: { title: 'post_norm', file: 'gemma/diffusion/_transformer.py:65',
+      desc: 'RMSNorm without scale (no parameter).', weights: [], io: 'bf16[B,L,D]' },
+  },
+  trainForward: {
+    TS: { title: 'UniformTimeSampler', file: 'sft_model.py:307; hd time_sampling.py:121-125',
+      desc: 't ~ U(1e-4, 1-1e-4) per example, broadcast shape [B,1,1] (axes=(0,) keeps only batch).', io: '-> f32[B,1,1]' },
+    COR: { title: 'corruption_process.corrupt', file: 'sft_model.py:310; hd discrete.py:230-311',
+      desc: 'Uniform CategoricalProcess with RFSchedule: alpha(t)=1-t. Per token: keep x0 w.p. alpha, else replace by a uniform random token. Also emits target_info {x0, one-hot logits, is_corrupted}.',
+      io: '(x0 int32[B,TC,1], t [B,1,1]) -> xt int32[B,TC,1]' },
+    SEL: { title: 'canvas selection', file: 'sft_model.py:321-334',
+      desc: 'Counts valid canvases from canvas_mask, samples selected_canvas_idx ~ U[0, num_valid) per example. Always 0 when NC=1.', io: '-> int32[B]' },
+    ENC: { title: 'sft_encode (encoder prefill)', file: 'sft_model.py:159-217; hd_gemma_network.py:52-107; mask_helpers.py:69-140,317-344',
+      desc: 'Causal AR pass over prompt ++ x0 [B,FS]: builds positions (cumsum of valid mask - 1), causal prefill mask [B,FS,FS], runs the standard Transformer.__call__, returns encoder_logits and the prefilled KV cache; then overwrites cache end_index to P + idx*CS so the denoiser sees prompt + prior canvases only.',
+      io: '-> encoder_logits bf16[B,FS,V] (measured [2,24,64]), cache k,v [B,FS,N_kv,d]',
+      drill: 'encode' },
+    DEC1: { title: 'sft_decode pass 1', file: 'sft_model.py:90-156, called :377',
+      desc: 'Denoiser pass without self-conditioning (sc_logits zero). Builds the decoder attention mask [B,TC,FS] and canvas positions, then calls the wrapped network. Double-click to open the sft_decode sub-diagram — the mask illustration lives on its attention-mask node.',
+      io: '-> logits bf16[B,TC,V] (measured [2,16,64])',
+      drill: 'decode' },
+    SCG: { title: 'self-conditioning gate', file: 'sft_model.py:397-411',
+      desc: 'stop_gradient(pass-1 logits); kept per example w.p. self_cond_prob=0.5 (hidden default, sft_model.py:270), else zeroed.',
+      io: 'bf16[B,TC,V]' },
+    DEC2: { title: 'sft_decode pass 2', file: 'sft_model.py:413',
+      desc: 'Identical to pass 1 but with sc_logits in the conditioning — the attention mask is byte-for-byte the same (same decoder_kwargs, sft_model.py:362-375). THIS output feeds the loss. Double-click to open the shared sft_decode sub-diagram.',
+      io: '-> logits bf16[B,TC,V]',
+      drill: 'decode' },
+    DL: { title: 'diffusion_loss', file: 'config :172-179; hd discrete_loss.py:41-155',
+      desc: 'NoWeightDiscreteLoss(use_mask=True, mask_key=target_mask): plain CE between pass-2 logits and clean x0 over selected-canvas valid tokens, normalized per example. No schedule/SNR weighting.',
+      io: '-> [B] (measured [4.09, 4.09] ~ ln 64)' },
+    EL: { title: 'encoder_loss', file: 'config :180-185; sft_model.py:600-643',
+      desc: 'EncoderARLoss: masked next-token CE(encoder_logits, encoder_target), per-example mean. Trains the backbone as a causal LM on prompt+answer while its KV conditions the denoiser.',
+      io: '-> [B] (measured [4.19, 4.16])' },
+    x0: { title: 'x0 — clean canvas', file: 'batch.canvas; data.py:64-102', desc: 'Ground-truth response tokens, chunked into canvases, EOS-filled, PAD-padded.', io: 'int32[B,TC,1]' },
+    pr: { title: 'prompt', file: 'batch.prompt; sudoku_data.py:189', desc: 'Chat-templated Sudoku puzzle, tokenized, right-padded to P.', io: 'int32[B,P]' },
+    xt: { title: 'x_t', file: 'sft_model.py:310', desc: 'Corrupted canvas.', io: 'int32[B,TC,1]' },
+    kv: { title: 'KV cache', file: 'mask_helpers.py:317-344', desc: 'Prefilled from prompt ++ x0; end_index frozen at P + idx*CS. Gradients flow through it (stop_gradient flag False).', io: 'per layer k,v [B,FS,N_kv,d]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'AR next-token logits over the full sequence.', io: 'bf16[B,FS,V]' },
+    dlog: { title: 'denoiser logits', file: 'sft_model.py:413-418', desc: 'x0-prediction logits (pass 2).', io: 'bf16[B,TC,V]' },
+  },
+  encode: {
+    CAT: { title: 'concat prompt ++ x0', file: 'sft_model.py:197',
+      desc: 'full_seq = concatenate([prompt, x0_tokens], axis=1). The encoder sees the CLEAN answer tokens, not the corrupted x_t.',
+      io: '([B,P], [B,TC]) -> int32[B,FS]  (measured [2,24])' },
+    MASKS: { title: 'validity masks', file: 'sft_model.py:199-200',
+      desc: 'prompt_mask = prompt != PAD; full_seq_mask = prompt_mask ++ canvas_mask. Marks which of the FS positions are real tokens vs right-padding.',
+      io: '-> bool[B,FS]' },
+    POS: { title: 'build_positions_from_mask', file: 'mask_helpers.py:69-88',
+      desc: 'positions = cumsum(mask) - 1, clamped at pads — RoPE positions skip padding so token i of the answer gets position prompt_length + i regardless of pad amount.',
+      io: 'bool[B,FS] -> int32[B,FS]' },
+    PMASK: { title: 'make_causal_prefill_mask', file: 'mask_helpers.py:91-140',
+      desc: 'Lower-triangular causal mask intersected with the token-validity mask, sized to the cache length. This pass is ordinary left-to-right attention — the bidirectional mask exists only in the decoder passes.',
+      io: 'bool[B,FS] -> bool[B,FS,FS]  (measured [2,24,24])' },
+    INIT: { title: 'init_cache', file: 'hd_gemma_network.py:131-151; _config.py:157-193; _modules.py:399-419',
+      desc: 'Allocates zeroed per-layer buffers: local k,v [B,FS,N_kv,d_h], global k,v [B,FS,N_gkv,K_g], end_index [B], positions [B,FS].',
+      io: '-> cache (measured k,v [2,24,2,8] local / [2,24,1,16] global)' },
+    ENCC: { title: 'encoder_call (Transformer.__call__)', file: 'hd_gemma_network.py:153-184',
+      desc: 'One standard causal Gemma forward. Same embedder / layer_i / final_norm weights as the denoiser passes (single shared param tree); self_conditioner is NOT run on this path. Writes every position’s K/V into the cache and returns AR next-token logits.',
+      weights: [W('(shared) embedder + layer_i/* + final_norm', 'see weight table', '25.23B', '~50k')],
+      io: '(tokens [B,FS], positions [B,FS], mask [B,FS,FS], cache) -> logits bf16[B,FS,V] + written cache',
+      drill: 'encoderCall' },
+    SETEND: { title: 'set_cache_end_index', file: 'mask_helpers.py:317-344; sft_model.py:211-215',
+      desc: 'Rewinds each layer’s per-example write cursor from FS to P + selected_canvas_idx * CS. The K/V beyond the cursor remain in the buffer but the decoder’s attention mask never addresses future canvases, so the denoiser conditions only on prompt + prior canvases.',
+      io: 'end_index int32[B] := P + idx*CS' },
+    pr: { title: 'prompt', file: 'batch.prompt', desc: 'Right-padded prompt tokens.', io: 'int32[B,P]' },
+    x0t: { title: 'x0 tokens', file: 'sft_model.py:337', desc: 'Clean canvas tokens, trailing channel dim squeezed.', io: 'int32[B,TC]' },
+    idx: { title: 'selected_canvas_idx', file: 'sampled sft_model.py:329-334; used :214',
+      desc: 'Per-example canvas index sampled uniformly over valid canvases in the outer training forward. Inside sft_encode it only sets the cache cursor; it does not affect the encoder forward itself. Always 0 when NC=1.',
+      io: 'int32[B]' },
+    cmask: { title: 'canvas_mask', file: 'batch.canvas_mask; data.py:96-97; used sft_model.py:200',
+      desc: 'True on tokens of valid canvases. Concatenated with prompt_mask to form full_seq_mask, so PAD canvas positions get no position advance and are hidden from attention.',
+      io: 'bool[B,TC]' },
+    posOut: { title: 'positions (returned)', file: 'returned sft_model.py:217; consumed :140',
+      desc: 'Returned to the training forward; sft_decode slices positions[:, P:] as the canvas RoPE positions for both denoiser passes.',
+      io: 'int32[B,FS]  (measured [2,24])' },
+    pmOut: { title: 'prompt_mask (returned)', file: 'built sft_model.py:199; returned :217; consumed :129-137',
+      desc: 'Returned to the training forward; create_decoder_attention_mask uses it in both denoiser passes to hide PAD prompt positions.',
+      io: 'bool[B,P]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Consumed by EncoderARLoss (next-token CE over valid positions).', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
+    kv: { title: 'prefilled KV cache', file: 'sft_model.py:215', desc: 'Conditioning context for both sft_decode passes. Gradients flow through it back into the encoder computation (stop_gradient flag is False).', io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
+  },
+  encoderCall: {
+    EMB: { title: 'Embedder.encode', file: 'gemma/gm/nn/gemma4/_modules.py:112-125',
+      desc: 'Table lookup scaled by sqrt(D). Unlike the denoiser path, the result feeds the blocks directly — SelfConditioning is not applied here.',
+      weights: [W('embedder/input_embedding', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'int32[B,FS] -> bf16[B,FS,D]  (measured [2,24] -> [2,24,32])' },
+    BLOCKS: { title: 'Block x 30 (causal)', file: 'gemma4/_modules.py:468',
+      desc: 'Same 30 blocks and weights as the denoiser passes, run with the causal prefill mask. Each layer writes its K/V into the cache at the RoPE positions. Note: with FS = 512 and sliding_window_size = 1024, the local-layer window constraint never actually binds during training — every valid causal position is within reach.',
+      weights: [W('layer_i/* (see weight table)', '~810M / layer', '24.3B total', '~16k/layer')],
+      io: 'bf16[B,FS,D] + mask [B,FS,FS] -> bf16[B,FS,D] + written cache',
+      drill: 'block' },
+    FN: { title: 'final_norm', file: 'gemma4/_transformer.py:196',
+      desc: 'RMSNorm over the last block output.',
+      weights: [W('final_norm/scale', '[D]', '[2816]', '[32]')], io: 'bf16[B,FS,D]' },
+    DEC: { title: 'Embedder.decode (tied head)', file: '_modules.py:127-137; softcap diffusion/_transformer.py:182-184',
+      desc: 'logits = hidden @ table^T, then tanh soft-cap at +/-30. These are next-token AR logits, consumed by EncoderARLoss.',
+      weights: [W('(shares embedder table)', '[V, D]', '[262144, 2816]', '[64, 32]')],
+      io: 'bf16[B,FS,D] -> bf16[B,FS,V]' },
+    full: { title: 'full_seq tokens', file: 'sft_model.py:197', desc: 'prompt ++ clean x0 tokens.', io: 'int32[B,FS]' },
+    pos: { title: 'positions', file: 'mask_helpers.py:69-88',
+      desc: 'cumsum(valid)-1: pads do not advance the counter. Used for RoPE and recorded in the cache.', io: 'int32[B,FS]' },
+    amask: { title: 'causal prefill mask', file: 'mask_helpers.py:91-140',
+      desc: 'mask[b, q, k] = (k <= q) AND valid[b, k]. Strictly causal (lower-triangular) with PAD keys hidden from every query; PAD query rows still compute but their outputs are unused. Example: P=4 with 3 valid prompt tokens, TC=2 canvas tokens (# = attend, . = masked):',
+      pre: 'keys:       p0 p1 p2 PD c0 c1\nq p0         #  .  .  .  .  .\nq p1         #  #  .  .  .  .\nq p2         #  #  #  .  .  .\nq PD (pad)   #  #  #  .  .  .   <- output unused; PD column hidden from all\nq c0         #  #  #  .  #  .\nq c1         #  #  #  .  #  #',
+      io: 'bool[B,FS,FS]  (measured [2,24,24])' },
+    MNOTE: { title: 'mask semantics (note)', file: 'mask_helpers.py:91-140 vs :247-309',
+      desc: 'Contrast with the decoder mask used by sft_decode: there, queries are canvas tokens only [B,TC,FS] and the selected canvas attends to itself bidirectionally. Here everything is left-to-right — an ordinary causal LM forward, which is what gives the AR next-token loss its meaning and makes the cached K/V valid causal context for the denoiser.',
+      pre: 'encoder rows (this pass):         decoder rows (sft_decode, selected canvas c0..c1):\nq c0: p0 p1 p2 .  c0  .           q c0: p0 p1 p2 .  c0 c1   <- sees c1:\nq c1: p0 p1 p2 .  c0 c1           q c1: p0 p1 p2 .  c0 c1      bidirectional',
+      io: '' },
+    kv: { title: 'KV cache (being written)', file: '_modules.py:399-419',
+      desc: 'Each block appends its k,v for all FS positions; Gemma sets end_index = FS after the pass, which sft_encode then rewinds via set_cache_end_index.',
+      io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Returned to sft_encode and ultimately consumed by EncoderARLoss.', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
+  },
+  decode: {
+    CMASK: { title: 'create_decoder_attention_mask', file: 'mask_helpers.py:247-310; called sft_model.py:129-137',
+      desc: 'Key-set rule: attend to k if (k in prompt region AND prompt_mask[k]) OR (canvas_id(k) <= selected_canvas_idx AND canvas_mask[k]). Computed as [B,1,FS] and broadcast to all num_queries = TC rows — no per-query causality within a pass.',
+      io: '([B,P], [B,TC], [B]) -> bool[B,TC,FS]' },
+    amask: { title: 'decoder attention mask', file: 'mask_helpers.py:247-310',
+      desc: 'Every canvas query gets the identical row: valid prompt keys + all keys of canvases with id <= selected (bidirectional within them); future canvases and PAD hidden. Queries of future canvases still run but their outputs are excluded from the loss via target_mask (sft_model.py:380), not via this mask. Example: P=4 (3 valid + PAD), NC=2 canvases of CS=2 (A0 A1 | B0 B1), selected = A (# = attend, . = masked):',
+      pre: 'keys:       p0 p1 p2 PD A0 A1 B0 B1\nq A0         #  #  #  .  #  #  .  .   <- sees A1: bidirectional in canvas\nq A1         #  #  #  .  #  #  .  .\nq B0         #  #  #  .  #  #  .  .   <- same row (broadcast); output\nq B1         #  #  #  .  #  #  .  .      loss-masked via target_mask',
+      io: 'bool[B,TC,FS]  (measured [2,16,24])' },
+    SLICE: { title: 'canvas positions', file: 'sft_model.py:140',
+      desc: 'positions[:, P:] — the canvas rows of the full-sequence positions built during sft_encode, so canvas RoPE rotations match the K vectors already in the cache.',
+      io: 'int32[B,FS] -> int32[B,TC]' },
+    NET: { title: 'gemma_network (denoiser forward)', file: 'hd_gemma_network.py:186-245; sft_model.py:151-156',
+      desc: 'WrappedDiffusionGemmaNetwork.__call__: embeds x_t, applies SelfConditioning (zero-signal when sc_logits are zeros), runs the 30 blocks against the frozen cache with the decoder mask, decodes through the tied table + softcap. Double-click to open the L0 denoiser diagram.',
+      weights: [W('(shared) embedder + layer_i/* + final_norm + self_conditioner', 'see weight table', '25.25B', '~51k')],
+      io: '(xt [B,TC,1], conditioning) -> logits bf16[B,TC,V]',
+      drill: 'l0' },
+    xt: { title: 'x_t — corrupted canvas', file: 'sft_model.py:310',
+      desc: 'Clean canvas x0 with each token independently replaced by a uniform random token w.p. t.', io: 'int32[B,TC,1]' },
+    tin: { title: 'time t', file: 'sft_model.py:307; signature hd_gemma_network.py:190',
+      desc: 'Accepted by the network interface but never referenced in its body — the model gets no explicit noise-level signal (see open questions).', io: 'f32[B,1,1]' },
+    sclin: { title: 'sc_logits', file: 'sft_model.py:397-411',
+      desc: 'Pass 1: absent (network substitutes zeros). Pass 2: stop-gradiented pass-1 logits, zeroed per example w.p. 0.5.', io: 'bf16[B,TC,V]' },
+    kvin: { title: 'KV cache (prefilled)', file: 'sft_model.py:215',
+      desc: 'From sft_encode, end_index rewound to P + idx*CS. Read-only context here; gradients still flow through it into the encoder computation.', io: 'per layer k,v bf16[B,FS,N_kv,d]' },
+    posin: { title: 'positions', file: 'returned by sft_encode, sft_model.py:217', desc: 'Full-sequence pad-aware positions.', io: 'int32[B,FS]' },
+    pmin: { title: 'prompt_mask', file: 'sft_model.py:199', desc: 'Non-PAD prompt positions.', io: 'bool[B,P]' },
+    cmin: { title: 'canvas_mask', file: 'batch.canvas_mask; data.py:96-97', desc: 'Valid-canvas tokens.', io: 'bool[B,TC]' },
+    idxin: { title: 'selected_canvas_idx', file: 'sft_model.py:329-334', desc: 'Which canvas is being denoised; controls the mask key-set (and, upstream, the cache end_index).', io: 'int32[B]' },
+    dlog: { title: 'denoiser logits', file: 'hd_gemma_network.py:244-245',
+      desc: 'x0-prediction logits. Pass 1: feeds the self-conditioning gate only. Pass 2: feeds convert_predictions and the diffusion loss.', io: 'bf16[B,TC,V]  (measured [2,16,64])' },
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* Explorer                                                            */
+/* ------------------------------------------------------------------ */
+const svgHost = document.getElementById('diagram-svg');
+const crumbsEl = document.getElementById('crumbs');
+const panel = document.getElementById('side-panel');
+let stack = ['l0'];
+let renderCount = 0;
+
+function crumbPath(id) {
+  const path = [];
+  let cur = id;
+  while (cur) { path.unshift(cur); cur = DIAGRAMS[cur].parent; }
+  return path;
+}
+
+async function show(id) {
+  stack = crumbPath(id);
+  const { svg } = await mermaid.render('mmd' + (renderCount++), DIAGRAMS[id].src);
+  svgHost.innerHTML = svg;
+  crumbsEl.innerHTML = stack.map((d, i) =>
+    i === stack.length - 1 ? `<b>${DIAGRAMS[d].title}</b>`
+      : `<a data-nav="${d}">${DIAGRAMS[d].title}</a>`).join(' &nbsp;›&nbsp; ') +
+    (id !== 'trainForward' ? ` &nbsp;|&nbsp; <a data-nav="trainForward">Training forward ↗</a>` : ` &nbsp;|&nbsp; <a data-nav="l0">L0 ↗</a>`);
+  crumbsEl.querySelectorAll('a[data-nav]').forEach(a =>
+    a.addEventListener('click', () => show(a.dataset.nav)));
+  bindNodes(id);
+}
+
+function nodeIdOf(el) {
+  const m = /flowchart-(.+)-\d+$/.exec(el.id || '');
+  return m ? m[1] : null;
+}
+
+function bindNodes(diagramId) {
+  svgHost.querySelectorAll('g.node').forEach(el => {
+    const nid = nodeIdOf(el);
+    if (!nid) return;
+    const info = (INFO[diagramId] || {})[nid];
+    el.addEventListener('click', () => renderPanel(diagramId, nid, info));
+    if (info && info.drill) {
+      el.addEventListener('dblclick', () => show(info.drill));
+      el.style.filter = 'drop-shadow(0 1px 3px rgba(37,99,235,.45))';
+    }
+  });
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function panelHTML(nid, info, inExplorer) {
+  if (!info) return `<h4>${esc(nid)}</h4><p class="hint">No metadata for this node.</p>`;
+  let html = `<h4>${esc(info.title)}</h4>`;
+  html += `<div class="fileref" style="white-space:normal">${esc(info.file || '')}</div>`;
+  html += `<p>${esc(info.desc || '')}</p>`;
+  if (info.pre) html += `<pre>${esc(info.pre)}</pre>`;
+  if (info.io) html += `<p><b>I/O:</b> <code style="white-space:normal">${esc(info.io)}</code></p>`;
+  if (info.weights && info.weights.length) {
+    html += `<b>Weights</b><table><tr><th>param</th><th>symbolic</th><th>26B</th><th>tiny</th></tr>`;
+    for (const w of info.weights)
+      html += `<tr><td><code>${esc(w.name)}</code></td><td>${esc(w.sym)}</td><td>${esc(w.big)}</td><td>${esc(w.tiny)}</td></tr>`;
+    html += `</table>`;
+  } else if (info.weights) {
+    html += `<p class="hint">No parameters.</p>`;
+  }
+  if (info.drill) {
+    const target = esc(DIAGRAMS[info.drill].title);
+    html += inExplorer
+      ? `<div class="drillable-hint">⤵ double-click the node (or <a data-nav="${info.drill}">open ${target}</a>)</div>`
+      : `<div class="drillable-hint">⤵ double-click the node (or <a data-nav="${info.drill}">open ${target}</a> in the explorer above)</div>`;
+  }
+  return html;
+}
+
+function bindNavLinks(container) {
+  container.querySelectorAll('a[data-nav]').forEach(a =>
+    a.addEventListener('click', () => gotoExplorer(a.dataset.nav)));
+}
+
+function gotoExplorer(diagramId) {
+  show(diagramId);
+  document.getElementById('explorer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderPanel(diagramId, nid, info) {
+  panel.innerHTML = panelHTML(nid, info, true);
+  panel.querySelectorAll('a[data-nav]').forEach(a =>
+    a.addEventListener('click', () => show(a.dataset.nav)));
+}
+
+/* static diagrams: sequence diagrams stay inert; flowcharts get the same
+   click-to-inspect / double-click-to-drill behavior as the explorer, with an
+   inline info panel under the figure. */
+async function renderStatics() {
+  for (const el of document.querySelectorAll('.mermaid-static')) {
+    const name = el.dataset.diagram;
+    const { svg } = await mermaid.render('mmds' + (renderCount++), SRC[name]);
+    el.innerHTML = svg;
+    if (!SRC[name].startsWith('flowchart')) continue;
+    const info = INFO[name] || {};
+    const inline = document.createElement('div');
+    inline.className = 'static-panel';
+    inline.innerHTML = '<p class="hint">Click a node to inspect it here; double-click a highlighted node to open its sub-diagram in the explorer.</p>';
+    el.appendChild(inline);
+    el.querySelectorAll('g.node').forEach(node => {
+      const nid = nodeIdOf(node);
+      if (!nid) return;
+      const ni = info[nid];
+      node.style.cursor = 'pointer';
+      node.addEventListener('click', () => {
+        inline.innerHTML = panelHTML(nid, ni, false);
+        bindNavLinks(inline);
+      });
+      if (ni && ni.drill) {
+        node.addEventListener('dblclick', () => gotoExplorer(ni.drill));
+        node.style.filter = 'drop-shadow(0 1px 3px rgba(37,99,235,.45))';
+      }
+    });
+  }
+}
+
+show('l0').then(renderStatics).catch(e => {
+  svgHost.innerHTML = '<pre style="color:#b91c1c">Mermaid render error: ' + esc(e.message || e) + '</pre>';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+%% L3 — encoder_call: plain causal Transformer.__call__ as used inside
+%% sft_encode (hd_gemma_network.py:153-184 -> gemma4/_transformer.py).
+%% No SelfConditioning on this path.
+flowchart TB
+    full(["full_seq tokens<br/>[B, FS]"]):::tensor
+    pos(["positions<br/>[B, FS]"]):::tensor
+    amask(["causal prefill mask<br/>[B, FS, FS]"]):::tensor
+    MNOTE["mask[b,q,k] = (k &lt;= q) AND valid[b,k]<br/>strictly causal, PAD keys hidden everywhere<br/>(unlike the decoder mask: no bidirectionality)<br/>sliding window (1024) never binds: FS = 512"]:::note
+    EMB["Embedder.encode<br/>table[tokens] x sqrt(D)"]:::module
+    BLOCKS["Block x 30<br/>causal GQA attention + dual FFN<br/>each layer WRITES its K/V into the cache"]:::module
+    kv[("KV cache (being written)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index -> FS")]:::tensor
+    FN["final_norm (RMSNorm)"]:::module
+    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
+    elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
+
+    full -- "[B, FS] int" --> EMB
+    EMB -- "[B, FS, D]" --> BLOCKS
+    pos -- "RoPE positions [B, FS]" --> BLOCKS
+    amask -- "[B, FS, FS]" --> BLOCKS
+    MNOTE -.- amask
+    BLOCKS -- "k,v per layer" --> kv
+    BLOCKS -- "[B, FS, D]" --> FN
+    FN -- "[B, FS, D]" --> DEC
+    DEC -- "[B, FS, V]" --> elog
+
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef note fill:#fefce8,stroke:#ca8a04,color:#713f12,stroke-dasharray:5 5

@@ -1,0 +1,31 @@
+%% Training-step sequence — one kauldron TrainStep (kauldron train_step.py:284)
+sequenceDiagram
+    autonumber
+    participant DL as Dataloader<br/>(sudoku_data)
+    participant TS as TrainStep<br/>(kauldron)
+    participant M as SFTDiffusion<br/>(model)
+    participant G as WrappedDiffusion<br/>GemmaNetwork
+    participant LS as Losses
+    participant OPTM as Optimizer<br/>(optax chain)
+
+    DL->>TS: batch {prompt [B,P], canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask}
+    TS->>TS: rngs = rng_streams.train_rngs(step)
+    TS->>M: model.apply(params, batch keys, rngs={'sampling'})
+    M->>M: t ~ UniformTimeSampler [B,1,1]
+    M->>M: xt = corrupt(x0, t) [B,TC,1]
+    M->>M: selected_canvas_idx ~ U[0, num_valid) [B]
+    M->>G: encoder_call(prompt ++ x0 [B,FS], causal mask [B,FS,FS])
+    G-->>M: encoder_logits [B,FS,V] + prefilled KV cache
+    M->>M: set_cache_end_index(P + idx*CS)
+    M->>G: __call__(xt, cache, decoder mask [B,TC,FS])  %% pass 1
+    G-->>M: logits [B,TC,V]
+    M->>M: sc_logits = stop_grad(logits), zeroed w.p. 0.5/example
+    M->>G: __call__(xt, cache, mask, sc_logits)  %% pass 2
+    G-->>M: logits [B,TC,V]
+    M-->>TS: preds {output.logits [B,TC,V], target (x0, target_mask),<br/>encoder_logits [B,FS,V], noise_info}
+    TS->>LS: diffusion_loss: CE(output.logits, target.x0) on target_mask -> [B]
+    TS->>LS: encoder_loss: CE(encoder_logits, encoder_target) on mask -> [B]
+    LS-->>TS: total = 1.0*mean + 1.0*mean (scalar)
+    TS->>TS: grads = jax.grad(total) w.r.t. params
+    TS->>OPTM: update(grads) clip(1.0) -> adafactor -> weight_decay(1e-4) -> lr schedule
+    OPTM-->>TS: new params (FSDP-sharded), step+1
