@@ -1,0 +1,153 @@
+{
+  "vision_encoder_params": {
+    "entry/input_projection/w": {
+      "shape": [
+        768,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 884736
+    },
+    "entry/pos_emb": {
+      "shape": [
+        10240,
+        2,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 23592960
+    },
+    "standardize/bias": {
+      "shape": [
+        1152
+      ],
+      "dtype": "float32",
+      "count": 1152
+    },
+    "standardize/scale": {
+      "shape": [
+        1152
+      ],
+      "dtype": "float32",
+      "count": 1152
+    },
+    "transformer/stacked_layers/block/attn/attn_vec_einsum/w": {
+      "shape": [
+        27,
+        16,
+        72,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 35831808
+    },
+    "transformer/stacked_layers/block/attn/key_norm/scale": {
+      "shape": [
+        27,
+        72
+      ],
+      "dtype": "float32",
+      "count": 1944
+    },
+    "transformer/stacked_layers/block/attn/kv_einsum/w": {
+      "shape": [
+        27,
+        2,
+        16,
+        1152,
+        72
+      ],
+      "dtype": "float32",
+      "count": 71663616
+    },
+    "transformer/stacked_layers/block/attn/q_einsum/w": {
+      "shape": [
+        27,
+        16,
+        1152,
+        72
+      ],
+      "dtype": "float32",
+      "count": 35831808
+    },
+    "transformer/stacked_layers/block/attn/query_norm/scale": {
+      "shape": [
+        27,
+        72
+      ],
+      "dtype": "float32",
+      "count": 1944
+    },
+    "transformer/stacked_layers/block/mlp/gating_einsum/w": {
+      "shape": [
+        27,
+        2,
+        4304,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 267743232
+    },
+    "transformer/stacked_layers/block/mlp/linear/w": {
+      "shape": [
+        27,
+        4304,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 133871616
+    },
+    "transformer/stacked_layers/block/post_attention_norm/scale": {
+      "shape": [
+        27,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 31104
+    },
+    "transformer/stacked_layers/block/post_ffw_norm/scale": {
+      "shape": [
+        27,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 31104
+    },
+    "transformer/stacked_layers/block/pre_attention_norm/scale": {
+      "shape": [
+        27,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 31104
+    },
+    "transformer/stacked_layers/block/pre_ffw_norm/scale": {
+      "shape": [
+        27,
+        1152
+      ],
+      "dtype": "float32",
+      "count": 31104
+    }
+  },
+  "vision_encoder_total": 569550384,
+  "mm_projection_params": {
+    "mm_input_projection/w": {
+      "shape": [
+        1152,
+        2816
+      ],
+      "dtype": "float32",
+      "count": 3244032
+    }
+  },
+  "mm_projection_total": 3244032,
+  "grand_total_new_params": 572794416,
+  "max_patches": 2520,
+  "patch_dim": 768,
+  "num_mm_tokens_per_image": 280,
+  "image_budget_hw": [
+    800,
+    800
+  ]
+}

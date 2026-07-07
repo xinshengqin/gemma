@@ -1,0 +1,37 @@
+{
+  "special_tokens": {
+    "IMAGE_PLACEHOLDER": 258880,
+    "START_OF_IMAGE": 255999,
+    "END_OF_IMAGE": 258882,
+    "SOFT_TOKEN_PLACEHOLDER": -2
+  },
+  "in": [
+    [
+      2,
+      10,
+      11,
+      258880,
+      12
+    ]
+  ],
+  "out": [
+    [
+      2,
+      10,
+      11,
+      108,
+      255999,
+      -2,
+      -2,
+      -2,
+      -2,
+      -2,
+      258882,
+      108,
+      12
+    ]
+  ],
+  "in_len": 5,
+  "out_len": 13,
+  "span_per_image(S_v=5)": 9
+}

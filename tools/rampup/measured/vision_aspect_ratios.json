@@ -1,0 +1,57 @@
+[
+  {
+    "in_hw": [
+      800,
+      800
+    ],
+    "resized_hw": [
+      768,
+      768
+    ],
+    "soft_tokens": 256
+  },
+  {
+    "in_hw": [
+      1080,
+      1920
+    ],
+    "resized_hw": [
+      576,
+      1056
+    ],
+    "soft_tokens": 264
+  },
+  {
+    "in_hw": [
+      120,
+      200
+    ],
+    "resized_hw": [
+      576,
+      1008
+    ],
+    "soft_tokens": 252
+  },
+  {
+    "in_hw": [
+      2000,
+      500
+    ],
+    "resized_hw": [
+      1584,
+      384
+    ],
+    "soft_tokens": 264
+  },
+  {
+    "in_hw": [
+      48,
+      48
+    ],
+    "resized_hw": [
+      768,
+      768
+    ],
+    "soft_tokens": 256
+  }
+]

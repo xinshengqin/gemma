@@ -1,0 +1,21 @@
+{
+  "shapes": {
+    "text": [
+      2,
+      8,
+      3
+    ],
+    "mm": [
+      2,
+      4,
+      3
+    ],
+    "mask": [
+      2,
+      8
+    ]
+  },
+  "merged_row1_pos0_preserved": true,
+  "merged_row1_pos2_is_mm": true,
+  "note": "excess mm rows scatter to slot 0 then slot 0 is restored -> per-example variable counts are safe if T >= per-example count"
+}

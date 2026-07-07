@@ -1,0 +1,706 @@
+{
+  "tiny_weights": {
+    "entry/pos_emb": {
+      "shape": [
+        10240,
+        2,
+        16
+      ],
+      "dtype": "float32",
+      "count": 327680
+    },
+    "entry/input_projection/w": {
+      "shape": [
+        768,
+        16
+      ],
+      "dtype": "float32",
+      "count": 12288
+    },
+    "transformer/stacked_layers/block/attn/attn_vec_einsum/w": {
+      "shape": [
+        2,
+        2,
+        8,
+        16
+      ],
+      "dtype": "float32",
+      "count": 512
+    },
+    "transformer/stacked_layers/block/attn/key_norm/scale": {
+      "shape": [
+        2,
+        8
+      ],
+      "dtype": "float32",
+      "count": 16
+    },
+    "transformer/stacked_layers/block/attn/kv_einsum/w": {
+      "shape": [
+        2,
+        2,
+        2,
+        16,
+        8
+      ],
+      "dtype": "float32",
+      "count": 1024
+    },
+    "transformer/stacked_layers/block/attn/q_einsum/w": {
+      "shape": [
+        2,
+        2,
+        16,
+        8
+      ],
+      "dtype": "float32",
+      "count": 512
+    },
+    "transformer/stacked_layers/block/attn/query_norm/scale": {
+      "shape": [
+        2,
+        8
+      ],
+      "dtype": "float32",
+      "count": 16
+    },
+    "transformer/stacked_layers/block/mlp/gating_einsum/w": {
+      "shape": [
+        2,
+        2,
+        32,
+        16
+      ],
+      "dtype": "float32",
+      "count": 2048
+    },
+    "transformer/stacked_layers/block/mlp/linear/w": {
+      "shape": [
+        2,
+        32,
+        16
+      ],
+      "dtype": "float32",
+      "count": 1024
+    },
+    "transformer/stacked_layers/block/post_attention_norm/scale": {
+      "shape": [
+        2,
+        16
+      ],
+      "dtype": "float32",
+      "count": 32
+    },
+    "transformer/stacked_layers/block/post_ffw_norm/scale": {
+      "shape": [
+        2,
+        16
+      ],
+      "dtype": "float32",
+      "count": 32
+    },
+    "transformer/stacked_layers/block/pre_attention_norm/scale": {
+      "shape": [
+        2,
+        16
+      ],
+      "dtype": "float32",
+      "count": 32
+    },
+    "transformer/stacked_layers/block/pre_ffw_norm/scale": {
+      "shape": [
+        2,
+        16
+      ],
+      "dtype": "float32",
+      "count": 32
+    },
+    "standardize/scale": {
+      "shape": [
+        16
+      ],
+      "dtype": "float32",
+      "count": 16
+    },
+    "standardize/bias": {
+      "shape": [
+        16
+      ],
+      "dtype": "float32",
+      "count": 16
+    }
+  },
+  "tiny_total": 345280,
+  "io": {
+    "preprocess_image": {
+      "in": [
+        120,
+        200,
+        3
+      ],
+      "out": [
+        576,
+        1008,
+        3
+      ],
+      "note": "resized to multiples of 48px, aspect preserved, [0,1] f32"
+    },
+    "patchify_and_pad": {
+      "patches": [
+        1,
+        2520,
+        768
+      ],
+      "positions_xy": [
+        1,
+        2520,
+        2
+      ],
+      "num_real_patches_per_image": [
+        2268
+      ]
+    },
+    "soft_tokens_S_v": 252,
+    "vision_encoder_out": {
+      "embeddings": [
+        1,
+        280,
+        16
+      ],
+      "mask": [
+        1,
+        280
+      ],
+      "valid_soft_tokens": 252
+    },
+    "encode_vision": {
+      "in": [
+        1,
+        1,
+        252,
+        16
+      ],
+      "out": [
+        1,
+        1,
+        252,
+        32
+      ]
+    }
+  },
+  "module_calls": [
+    {
+      "module": "VisionEncoder",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "VisionEntry",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "VisionEntry",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "VisionTransformer",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "ScanVisionBlock",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "ScanVisionBlock",
+      "method": "<lambda>",
+      "out": []
+    },
+    {
+      "module": "VisionBlock",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Block",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        2,
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "_qkv",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "_compute_attn_vec",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "FeedForward",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        32
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "FeedForward",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Block",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "VisionBlock",
+      "method": "__call__",
+      "out": [
+        [
+          1,
+          2520,
+          16
+        ],
+        null
+      ]
+    },
+    {
+      "module": "VisionBlock",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Block",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        2,
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "_qkv",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "_compute_attn_vec",
+      "out": [
+        1,
+        2520,
+        2,
+        8
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Attention",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "FeedForward",
+      "method": "setup",
+      "out": null
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        2,
+        32
+      ]
+    },
+    {
+      "module": "Einsum",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "FeedForward",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "RMSNorm",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "Block",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "VisionBlock",
+      "method": "__call__",
+      "out": [
+        [
+          1,
+          2520,
+          16
+        ],
+        null
+      ]
+    },
+    {
+      "module": "VisionTransformer",
+      "method": "__call__",
+      "out": [
+        1,
+        2520,
+        16
+      ]
+    },
+    {
+      "module": "VisionExit",
+      "method": "_maybe_downsample",
+      "out": [
+        [
+          1,
+          280,
+          16
+        ],
+        [
+          1,
+          280
+        ]
+      ]
+    },
+    {
+      "module": "VisionExit",
+      "method": "_single_call",
+      "out": [
+        [
+          1,
+          280,
+          16
+        ],
+        [
+          1,
+          280
+        ]
+      ]
+    },
+    {
+      "module": "VisionExit",
+      "method": "__call__",
+      "out": [
+        [
+          [
+            1,
+            280,
+            16
+          ],
+          [
+            1,
+            280
+          ]
+        ]
+      ]
+    },
+    {
+      "module": "Standardize",
+      "method": "__call__",
+      "out": [
+        1,
+        280,
+        16
+      ]
+    },
+    {
+      "module": "VisionEncoder",
+      "method": "__call__",
+      "out": [
+        [
+          [
+            1,
+            280,
+            16
+          ],
+          [
+            1,
+            280
+          ]
+        ]
+      ]
+    }
+  ]
+}
