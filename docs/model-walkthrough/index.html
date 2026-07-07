@@ -755,6 +755,36 @@ SRC.encoderCall = `flowchart TB
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
     classDef note fill:#fefce8,stroke:#ca8a04,color:#713f12,stroke-dasharray:5 5`;
 
+SRC.decode = `flowchart TB
+    xt(["x_t<br/>[B, TC, 1]"]):::tensor
+    tin(["time t<br/>[B, 1, 1]"]):::tensor
+    sclin(["sc_logits<br/>[B, TC, V]<br/>(pass 2 only; zeros in pass 1)"]):::tensor
+    kvin[("KV cache (prefilled)<br/>end_index = P + idx*CS")]:::tensor
+    posin(["positions<br/>[B, FS]"]):::tensor
+    pmin(["prompt_mask<br/>[B, P]"]):::tensor
+    cmin(["canvas_mask<br/>[B, TC]"]):::tensor
+    idxin(["selected_canvas_idx<br/>[B]"]):::tensor
+    CMASK["create_decoder_attention_mask<br/>prompt OR canvases &lt;= selected;<br/>broadcast to all query rows"]:::op
+    amask(["decoder attention mask<br/>[B, TC, FS]"]):::tensor
+    SLICE["slice canvas positions<br/>positions[:, P:]"]:::op
+    NET["gemma_network<br/>WrappedDiffusionGemmaNetwork.__call__<br/>(denoiser forward, self-cond inside)"]:::module
+    dlog(["denoiser logits<br/>[B, TC, V]"]):::tensor
+    pmin -- "[B, P]" --> CMASK
+    cmin -- "[B, TC]" --> CMASK
+    idxin -- "[B]" --> CMASK
+    CMASK -- "[B, TC, FS]" --> amask
+    amask -- "[B, TC, FS]" --> NET
+    posin -- "[B, FS]" --> SLICE
+    SLICE -- "canvas positions [B, TC]" --> NET
+    kvin -. "read (frozen at end_index)" .-> NET
+    xt -- "[B, TC, 1]" --> NET
+    tin -. "accepted but UNUSED by the network" .-> NET
+    sclin -- "[B, TC, V]" --> NET
+    NET -- "[B, TC, V]" --> dlog
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12`;
+
 SRC.seqTraining = `sequenceDiagram
     autonumber
     participant DL as Dataloader<br/>(sudoku_data)
@@ -835,6 +865,7 @@ const DIAGRAMS = {
   trainForward: { title: 'Training forward (SFTDiffusion)', src: SRC.trainForward },
   encode: { title: 'L2 — sft_encode (encoder prefill)', src: SRC.encode, parent: 'trainForward' },
   encoderCall: { title: 'L3 — encoder_call (causal Transformer forward)', src: SRC.encoderCall, parent: 'encode' },
+  decode: { title: 'L3 — sft_decode (one denoiser pass)', src: SRC.decode, parent: 'trainForward' },
 };
 
 const W = (name, sym, big, tiny) => ({name, sym, big, tiny});
@@ -1011,16 +1042,16 @@ const INFO = {
       io: '-> encoder_logits bf16[B,FS,V] (measured [2,24,64]), cache k,v [B,FS,N_kv,d]',
       drill: 'encode' },
     DEC1: { title: 'sft_decode pass 1', file: 'sft_model.py:90-156, called :377',
-      desc: 'Denoiser pass without self-conditioning: decoder mask [B,TC,FS] built by create_decoder_attention_mask (mask_helpers.py:247-310), canvas positions = positions[:, P:]. The mask is computed once per example and BROADCAST to every query row — each canvas query attends to valid prompt keys plus all keys of canvases with id <= selected, bidirectionally. Example: P=4 (3 valid + PAD), NC=2 canvases of CS=2 (A0 A1 | B0 B1), selected canvas = A (# = attend, . = masked):',
-      pre: 'keys:       p0 p1 p2 PD A0 A1 B0 B1\nq A0         #  #  #  .  #  #  .  .   <- sees A1: bidirectional in canvas\nq A1         #  #  #  .  #  #  .  .\nq B0         #  #  #  .  #  #  .  .   <- same row (broadcast); output\nq B1         #  #  #  .  #  #  .  .      loss-masked via target_mask',
-      io: '-> logits bf16[B,TC,V] (measured [2,16,64])' },
+      desc: 'Denoiser pass without self-conditioning (sc_logits zero). Builds the decoder attention mask [B,TC,FS] and canvas positions, then calls the wrapped network. Double-click to open the sft_decode sub-diagram — the mask illustration lives on its attention-mask node.',
+      io: '-> logits bf16[B,TC,V] (measured [2,16,64])',
+      drill: 'decode' },
     SCG: { title: 'self-conditioning gate', file: 'sft_model.py:397-411',
       desc: 'stop_gradient(pass-1 logits); kept per example w.p. self_cond_prob=0.5 (hidden default, sft_model.py:270), else zeroed.',
       io: 'bf16[B,TC,V]' },
     DEC2: { title: 'sft_decode pass 2', file: 'sft_model.py:413',
-      desc: 'Identical to pass 1 but with sc_logits in the conditioning — the attention mask is byte-for-byte the same (same decoder_kwargs, sft_model.py:362-375). THIS output feeds the loss. Same example as pass 1 (P=4 with 3 valid, 2 canvases A|B, selected = A):',
-      pre: 'keys:       p0 p1 p2 PD A0 A1 B0 B1\nq A0         #  #  #  .  #  #  .  .   <- identical mask to pass 1;\nq A1         #  #  #  .  #  #  .  .      only sc_logits differs\nq B0         #  #  #  .  #  #  .  .\nq B1         #  #  #  .  #  #  .  .',
-      io: '-> logits bf16[B,TC,V]' },
+      desc: 'Identical to pass 1 but with sc_logits in the conditioning — the attention mask is byte-for-byte the same (same decoder_kwargs, sft_model.py:362-375). THIS output feeds the loss. Double-click to open the shared sft_decode sub-diagram.',
+      io: '-> logits bf16[B,TC,V]',
+      drill: 'decode' },
     DL: { title: 'diffusion_loss', file: 'config :172-179; hd discrete_loss.py:41-155',
       desc: 'NoWeightDiscreteLoss(use_mask=True, mask_key=target_mask): plain CE between pass-2 logits and clean x0 over selected-canvas valid tokens, normalized per example. No schedule/SNR weighting.',
       io: '-> [B] (measured [4.09, 4.09] ~ ln 64)' },
@@ -1107,6 +1138,37 @@ const INFO = {
       desc: 'Each block appends its k,v for all FS positions; Gemma sets end_index = FS after the pass, which sft_encode then rewinds via set_cache_end_index.',
       io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
     elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Returned to sft_encode and ultimately consumed by EncoderARLoss.', io: 'bf16[B,FS,V]  (measured [2,24,64])' },
+  },
+  decode: {
+    CMASK: { title: 'create_decoder_attention_mask', file: 'mask_helpers.py:247-310; called sft_model.py:129-137',
+      desc: 'Key-set rule: attend to k if (k in prompt region AND prompt_mask[k]) OR (canvas_id(k) <= selected_canvas_idx AND canvas_mask[k]). Computed as [B,1,FS] and broadcast to all num_queries = TC rows — no per-query causality within a pass.',
+      io: '([B,P], [B,TC], [B]) -> bool[B,TC,FS]' },
+    amask: { title: 'decoder attention mask', file: 'mask_helpers.py:247-310',
+      desc: 'Every canvas query gets the identical row: valid prompt keys + all keys of canvases with id <= selected (bidirectional within them); future canvases and PAD hidden. Queries of future canvases still run but their outputs are excluded from the loss via target_mask (sft_model.py:380), not via this mask. Example: P=4 (3 valid + PAD), NC=2 canvases of CS=2 (A0 A1 | B0 B1), selected = A (# = attend, . = masked):',
+      pre: 'keys:       p0 p1 p2 PD A0 A1 B0 B1\nq A0         #  #  #  .  #  #  .  .   <- sees A1: bidirectional in canvas\nq A1         #  #  #  .  #  #  .  .\nq B0         #  #  #  .  #  #  .  .   <- same row (broadcast); output\nq B1         #  #  #  .  #  #  .  .      loss-masked via target_mask',
+      io: 'bool[B,TC,FS]  (measured [2,16,24])' },
+    SLICE: { title: 'canvas positions', file: 'sft_model.py:140',
+      desc: 'positions[:, P:] — the canvas rows of the full-sequence positions built during sft_encode, so canvas RoPE rotations match the K vectors already in the cache.',
+      io: 'int32[B,FS] -> int32[B,TC]' },
+    NET: { title: 'gemma_network (denoiser forward)', file: 'hd_gemma_network.py:186-245; sft_model.py:151-156',
+      desc: 'WrappedDiffusionGemmaNetwork.__call__: embeds x_t, applies SelfConditioning (zero-signal when sc_logits are zeros), runs the 30 blocks against the frozen cache with the decoder mask, decodes through the tied table + softcap. Double-click to open the L0 denoiser diagram.',
+      weights: [W('(shared) embedder + layer_i/* + final_norm + self_conditioner', 'see weight table', '25.25B', '~51k')],
+      io: '(xt [B,TC,1], conditioning) -> logits bf16[B,TC,V]',
+      drill: 'l0' },
+    xt: { title: 'x_t — corrupted canvas', file: 'sft_model.py:310',
+      desc: 'Clean canvas x0 with each token independently replaced by a uniform random token w.p. t.', io: 'int32[B,TC,1]' },
+    tin: { title: 'time t', file: 'sft_model.py:307; signature hd_gemma_network.py:190',
+      desc: 'Accepted by the network interface but never referenced in its body — the model gets no explicit noise-level signal (see open questions).', io: 'f32[B,1,1]' },
+    sclin: { title: 'sc_logits', file: 'sft_model.py:397-411',
+      desc: 'Pass 1: absent (network substitutes zeros). Pass 2: stop-gradiented pass-1 logits, zeroed per example w.p. 0.5.', io: 'bf16[B,TC,V]' },
+    kvin: { title: 'KV cache (prefilled)', file: 'sft_model.py:215',
+      desc: 'From sft_encode, end_index rewound to P + idx*CS. Read-only context here; gradients still flow through it into the encoder computation.', io: 'per layer k,v bf16[B,FS,N_kv,d]' },
+    posin: { title: 'positions', file: 'returned by sft_encode, sft_model.py:217', desc: 'Full-sequence pad-aware positions.', io: 'int32[B,FS]' },
+    pmin: { title: 'prompt_mask', file: 'sft_model.py:199', desc: 'Non-PAD prompt positions.', io: 'bool[B,P]' },
+    cmin: { title: 'canvas_mask', file: 'batch.canvas_mask; data.py:96-97', desc: 'Valid-canvas tokens.', io: 'bool[B,TC]' },
+    idxin: { title: 'selected_canvas_idx', file: 'sft_model.py:329-334', desc: 'Which canvas is being denoised; controls the mask key-set (and, upstream, the cache end_index).', io: 'int32[B]' },
+    dlog: { title: 'denoiser logits', file: 'hd_gemma_network.py:244-245',
+      desc: 'x0-prediction logits. Pass 1: feeds the self-conditioning gate only. Pass 2: feeds convert_predictions and the diffusion loss.', io: 'bf16[B,TC,V]  (measured [2,16,64])' },
   },
 };
 

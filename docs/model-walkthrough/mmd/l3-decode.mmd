@@ -1,0 +1,34 @@
+%% L3 — sft_decode: one denoiser pass (sft_model.py:90-156). Shared by
+%% pass 1 (sc_logits absent/zero) and pass 2 (sc_logits from pass 1).
+%% Reached by double-clicking either sft_decode node in the training forward.
+flowchart TB
+    xt(["x_t<br/>[B, TC, 1]"]):::tensor
+    tin(["time t<br/>[B, 1, 1]"]):::tensor
+    sclin(["sc_logits<br/>[B, TC, V]<br/>(pass 2 only; zeros in pass 1)"]):::tensor
+    kvin[("KV cache (prefilled)<br/>end_index = P + idx*CS")]:::tensor
+    posin(["positions<br/>[B, FS]"]):::tensor
+    pmin(["prompt_mask<br/>[B, P]"]):::tensor
+    cmin(["canvas_mask<br/>[B, TC]"]):::tensor
+    idxin(["selected_canvas_idx<br/>[B]"]):::tensor
+    CMASK["create_decoder_attention_mask<br/>prompt OR canvases &lt;= selected;<br/>broadcast to all query rows"]:::op
+    amask(["decoder attention mask<br/>[B, TC, FS]"]):::tensor
+    SLICE["slice canvas positions<br/>positions[:, P:]"]:::op
+    NET["gemma_network<br/>WrappedDiffusionGemmaNetwork.__call__<br/>(denoiser forward, self-cond inside)"]:::module
+    dlog(["denoiser logits<br/>[B, TC, V]"]):::tensor
+
+    pmin -- "[B, P]" --> CMASK
+    cmin -- "[B, TC]" --> CMASK
+    idxin -- "[B]" --> CMASK
+    CMASK -- "[B, TC, FS]" --> amask
+    amask -- "[B, TC, FS]" --> NET
+    posin -- "[B, FS]" --> SLICE
+    SLICE -- "canvas positions [B, TC]" --> NET
+    kvin -. "read (frozen at end_index)" .-> NET
+    xt -- "[B, TC, 1]" --> NET
+    tin -. "accepted but UNUSED by the network" .-> NET
+    sclin -- "[B, TC, V]" --> NET
+    NET -- "[B, TC, V]" --> dlog
+
+    classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
