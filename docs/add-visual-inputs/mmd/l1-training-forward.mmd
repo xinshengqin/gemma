@@ -1,14 +1,16 @@
 %% L1 — SFTDiffusion training forward (sft_model.py:276-431)
-%% P=prompt_len, CS=canvas_size, NC=num_canvases, TC=NC*CS, FS=P+TC
+%% P=prompt_len(384), CS=canvas_size, NC=num_canvases, TC=NC*CS, FS=P+TC
+%% MODIFIED for vision: images feed sft_encode; denoiser passes unchanged.
 flowchart TB
     x0(["x0 = batch.canvas<br/>[B, TC, 1]"]):::tensor
-    pr(["prompt<br/>[B, P]"]):::tensor
+    pr(["prompt (image span pre-expanded)<br/>[B, P]"]):::modtensor
+    imgp(["patches [B, P_p, p_d]<br/>positions_xy [B, P_p, 2]"]):::newtensor
     TS["UniformTimeSampler<br/>t ~ U(eps, 1-eps)"]:::module
     COR["corruption_process.corrupt<br/>keep w.p. alpha=1-t else uniform"]:::module
     xt(["x_t<br/>[B, TC, 1]"]):::tensor
     SEL["sample selected_canvas_idx<br/>~ U[0, num_valid) per example"]:::op
-    ENC["sft_encode: causal AR prefill<br/>over prompt ++ x0 (encoder pass)<br/>+ set_cache_end_index"]:::module
-    kv[("KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index = P + idx*CS")]:::tensor
+    ENC["sft_encode: causal AR prefill<br/>over prompt ++ x0 (encoder pass)<br/>vision tower + merge run inside<br/>+ set_cache_end_index"]:::modmod
+    kv[("KV cache (incl. image K/V)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index = P + idx*CS")]:::modtensor
     elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
     DEC1["sft_decode pass 1<br/>(denoiser, no self-cond)"]:::module
     SCG["self-cond gate:<br/>stop_grad + Bernoulli(0.5) per example"]:::op
@@ -16,12 +18,12 @@ flowchart TB
     dlog(["denoiser logits<br/>[B, TC, V]"]):::tensor
     DL["diffusion_loss<br/>NoWeightDiscreteLoss<br/>CE(logits, x0) on target_mask"]:::loss
     EL["encoder_loss<br/>EncoderARLoss<br/>CE(encoder_logits, next-token)"]:::loss
-
     x0 -- "[B, TC, 1]" --> TS
     TS -- "t [B, 1, 1]" --> COR
     x0 -- "[B, TC, 1]" --> COR
     COR -- "[B, TC, 1]" --> xt
     pr -- "[B, P]" --> ENC
+    imgp -- "images [B, P_p, p_d]" --> ENC
     x0 -- "x0 tokens [B, TC]" --> ENC
     SEL -- "idx [B]" --> ENC
     ENC -- "cache" --> kv
@@ -36,8 +38,10 @@ flowchart TB
     dlog -- "[B, TC, V]" --> DL
     x0 -- "labels [B, TC]" --> DL
     elog -- "[B, FS, V]" --> EL
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
     classDef loss fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+    classDef modmod fill:#dbeafe,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#1e3a5f
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12

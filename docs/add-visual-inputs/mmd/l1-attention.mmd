@@ -11,11 +11,10 @@ flowchart TB
     kv[("KV cache layer_i<br/>k,v: [B, C, N_kv, K]<br/>end_index: [B]")]:::tensor
     UPD["cache update<br/>dynamic_update_slice @ end_index"]:::op
     DOT["GQA dot product<br/>BTNH,BSKH->BTNS (grouped)"]:::op
-    MASK["mask + softmax<br/>(sliding window ∩ attn_mask)"]:::op
+    MASK["mask + softmax<br/>(sliding window AND attn_mask)"]:::op
     WV["weighted sum<br/>BTNS,BSKH->BTNH"]:::op
     OE["attn_vec_einsum<br/>BTNH,NHD->BTD"]:::module
     out(["attn_output<br/>[B, L, D]"]):::tensor
-
     xn -- "[B, L, D]" --> QE
     xn -- "[B, L, D]" --> KVE
     QE -- "q [B, L, N_h, K]" --> QN
@@ -31,7 +30,6 @@ flowchart TB
     UPD -- "v [B, C, N_kv, K]" --> WV
     WV -- "[B, L, N_h, K]" --> OE
     OE -- "[B, L, D]" --> out
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12

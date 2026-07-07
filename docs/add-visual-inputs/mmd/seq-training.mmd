@@ -1,30 +1,35 @@
 %% Training-step sequence — one kauldron TrainStep (kauldron train_step.py:284)
+%% Purple rect = the only region vision touches (encoder prefill).
 sequenceDiagram
     autonumber
-    participant DL as Dataloader<br/>(sudoku_data)
+    participant DL as Dataloader<br/>(sudoku_vision_data)
     participant TS as TrainStep<br/>(kauldron)
     participant M as SFTDiffusion<br/>(model)
     participant G as WrappedDiffusion<br/>GemmaNetwork
     participant LS as Losses
     participant OPTM as Optimizer<br/>(optax chain)
-
-    DL->>TS: batch {prompt [B,P], canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask}
+    DL->>TS: batch {prompt [B,P], patches [B,P_p,p_d], positions_xy [B,P_p,2],<br/>canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask (MM slots zeroed)}
     TS->>TS: rngs = rng_streams.train_rngs(step)
     TS->>M: model.apply(params, batch keys, rngs={'sampling'})
     M->>M: t ~ UniformTimeSampler [B,1,1]
-    M->>M: xt = corrupt(x0, t) [B,TC,1]
+    M->>M: xt = corrupt(x0, t) [B,TC,1]  (image never noised)
     M->>M: selected_canvas_idx ~ U[0, num_valid) [B]
-    M->>G: encoder_call(prompt ++ x0 [B,FS], causal mask [B,FS,FS])
-    G-->>M: encoder_logits [B,FS,V] + prefilled KV cache
+    rect rgb(243, 232, 255)
+    note over M,G: vision runs HERE and only here (encoder prefill)
+    M->>G: encoder_call(prompt ++ x0 [B,FS], images=(patches, positions_xy),<br/>causal + sliding-bidir masks [B,FS,FS])
+    G->>G: VisionEncoder -> soft tokens [B,S_max,D_v] -> encode_vision -> [B,S_max,D]
+    G->>G: merge at tokens == -2 -> embeddings [B,FS,D]
+    G-->>M: encoder_logits [B,FS,V] + prefilled KV cache (incl. image K/V)
+    end
     M->>M: set_cache_end_index(P + idx*CS)
-    M->>G: __call__(xt, cache, decoder mask [B,TC,FS])  %% pass 1
+    M->>G: __call__(xt, cache, decoder mask [B,TC,FS])
     G-->>M: logits [B,TC,V]
     M->>M: sc_logits = stop_grad(logits), zeroed w.p. 0.5/example
-    M->>G: __call__(xt, cache, mask, sc_logits)  %% pass 2
+    M->>G: __call__(xt, cache, mask, sc_logits)
     G-->>M: logits [B,TC,V]
     M-->>TS: preds {output.logits [B,TC,V], target (x0, target_mask),<br/>encoder_logits [B,FS,V], noise_info}
-    TS->>LS: diffusion_loss: CE(output.logits, target.x0) on target_mask -> [B]
-    TS->>LS: encoder_loss: CE(encoder_logits, encoder_target) on mask -> [B]
+    TS->>LS: diffusion_loss CE(output.logits, target.x0) on target_mask -> [B]
+    TS->>LS: encoder_loss CE(encoder_logits, encoder_target) on mask -> [B]
     LS-->>TS: total = 1.0*mean + 1.0*mean (scalar)
     TS->>TS: grads = jax.grad(total) w.r.t. params
     TS->>OPTM: update(grads) clip(1.0) -> adafactor -> weight_decay(1e-4) -> lr schedule

@@ -1,5 +1,6 @@
 %% Inference sequence — AR diffusion sampling (one eval batch)
 %% C = cache_length = P + NC*CS. T_s = num denoising steps (32/64/96).
+%% Purple rect = the only region vision touches (prompt prefill).
 sequenceDiagram
     autonumber
     participant EV as GemmaSampling<br/>Evaluator
@@ -8,25 +9,27 @@ sequenceDiagram
     participant DS as DiffusionSampler<br/>(inner loop)
     participant ST as DiscreteDDIMStep
     participant G as WrappedDiffusion<br/>GemmaNetwork
-
-    EV->>AR: __call__(inference_fn, batch_size, rng,<br/>cond={prompt_tokens [B,P], prompt_lengths [B]})
+    EV->>AR: __call__(inference_fn, batch_size, rng,<br/>cond={prompt_tokens [B,P] (expanded), prompt_lengths [B],<br/>patches [B,P_p,p_d], positions_xy [B,P_p,2]})
     AR->>SH: init_ar_state(...)
-    SH->>G: encoder_call(prompt [B,P], causal prefill mask [B,P,C])
-    G-->>SH: KV cache prefilled (k,v [B,C,N_kv,d] x N_L, end_index=P)
+    rect rgb(243, 232, 255)
+    note over SH,G: vision runs HERE and only here (prompt prefill)
+    SH->>G: encoder_call(prompt [B,P], images=(patches, positions_xy),<br/>causal + sliding-bidir masks [B,P,C])
+    G->>G: VisionEncoder -> encode_vision -> merge at tokens == -2
+    G-->>SH: KV cache prefilled incl. image K/V<br/>(k,v [B,C,N_kv,d] x N_L, end_index=P)
+    end
     SH-->>AR: state {kv_cache, positions [B,CS], attn_mask [B,CS,C],<br/>predicted_tokens [B,C], done [B]}
-
     loop per canvas (while step < max_num_canvases and not all done)
         AR->>AR: x_T ~ uniform over V  [B,CS,1]
         AR->>SH: create_conditioning_from_state()
         SH-->>AR: cond {kv_cache, positions, attention_mask, ...}
         AR->>DS: canvas_sampler(inference_fn, rng, x_T, cond)
-        loop T_s denoising steps (t: ~1 -> ~0)
+        loop T_s denoising steps (t goes ~1 -> ~0)
             DS->>DS: cond['sc_logits'] = prev step logits [B,CS,V]
             DS->>G: inference_fn(t [B,1], x_t [B,CS,1], cond)
             G-->>DS: logits [B,CS,V]
             DS->>ST: update(logits, x_t, t, t_next)
             ST->>ST: x0_hat ~ categorical(logits/0.7) [B,CS,1]
-            ST->>ST: route per token: stay(x_t) / renoise / take x0_hat<br/>weights from alpha=1-t schedule
+            ST->>ST: route per token stay(x_t) / renoise / take x0_hat<br/>weights from alpha=1-t schedule
             ST-->>DS: x_(t-1) [B,CS,1] + aux logits
         end
         DS-->>AR: final canvas x_0 [B,CS,1]
@@ -36,7 +39,6 @@ sequenceDiagram
         SH->>SH: predicted_tokens[:, step:step+CS] = canvas<br/>positions += CS, rebuild attn mask for canvas i+1
         SH-->>AR: updated state
     end
-
     AR->>SH: finalize_ar_state()
     SH-->>AR: predicted_tokens[:, P:]  [B, NC*CS]
     AR-->>EV: samples [B, NC*CS] + latency counters

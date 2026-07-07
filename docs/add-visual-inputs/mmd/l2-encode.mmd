@@ -1,31 +1,34 @@
 %% L2 — sft_encode: encoder prefill pass (sft_model.py:159-217,
 %% prefill_kv_cache_with_encoder hd_gemma_network.py:52-107)
+%% MODIFIED for vision: images forwarded, vision-aware prefill masks. [DESIGN]
 flowchart TB
-    pr(["prompt<br/>[B, P]"]):::tensor
+    pr(["prompt (image span pre-expanded)<br/>[B, P]"]):::modtensor
+    imgp(["patches [B, P_p, p_d]<br/>positions_xy [B, P_p, 2]"]):::newtensor
     x0t(["x0 tokens<br/>[B, TC]"]):::tensor
     CAT["concat<br/>full_seq = prompt ++ x0"]:::op
-    MASKS["validity masks<br/>prompt_mask = prompt != PAD<br/>full_seq_mask = prompt_mask ++ canvas_mask"]:::op
+    MASKS["validity masks (unchanged rule)<br/>prompt_mask = prompt != PAD<br/>(soft-token slots -2 are non-PAD -> valid)<br/>full_seq_mask = prompt_mask ++ canvas_mask"]:::op
     POS["build_positions_from_mask<br/>cumsum(mask) - 1"]:::op
-    PMASK["make_causal_prefill_mask<br/>lower-triangular AND token mask"]:::op
+    PMASK["make_vision_prefill_masks [DESIGN]<br/>causal mask AND token mask<br/>+ sliding variant: bidirectional in image span"]:::modmod
     INIT["init_cache<br/>allocate zeroed cache, len FS"]:::module
-    ENCC["encoder_call<br/>standard Transformer.__call__<br/>(causal AR forward, no self-cond)"]:::module
+    ENCC["encoder_call<br/>Transformer.__call__(…, images=…)<br/>vision tower + merge inside;<br/>remove_mm_logits bypassed [DESIGN]"]:::modmod
     SETEND["set_cache_end_index<br/>end_index = P + selected_idx * CS"]:::module
     idx(["selected_canvas_idx<br/>[B]"]):::tensor
     cmask(["canvas_mask<br/>[B, TC]"]):::tensor
     elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
-    kv[("prefilled KV cache<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index: [B]")]:::tensor
+    kv[("prefilled KV cache (incl. image K/V)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index: [B]")]:::modtensor
     posOut(["positions (returned)<br/>[B, FS]"]):::tensor
     pmOut(["prompt_mask (returned)<br/>[B, P]"]):::tensor
-
     pr -- "[B, P]" --> CAT
     x0t -- "[B, TC]" --> CAT
     pr -- "[B, P]" --> MASKS
     cmask -- "[B, TC]" --> MASKS
     CAT -- "full_seq [B, FS]" --> ENCC
+    imgp -- "images [B, P_p, p_d] + [B, P_p, 2]" --> ENCC
     MASKS -- "full_seq_mask [B, FS]" --> POS
     MASKS -- "full_seq_mask [B, FS]" --> PMASK
+    pr -- "image-span mask (tokens == -2) [B, P]" --> PMASK
     POS -- "positions [B, FS]" --> ENCC
-    PMASK -- "attn mask [B, FS, FS]" --> ENCC
+    PMASK -- "attn + sliding masks [B, FS, FS]" --> ENCC
     INIT -- "empty cache [B, FS, N_kv, d]" --> ENCC
     ENCC -- "[B, FS, V]" --> elog
     ENCC -- "written k,v (end_index = FS)" --> SETEND
@@ -33,7 +36,9 @@ flowchart TB
     SETEND -- "end_index := P + idx*CS" --> kv
     POS -- "positions [B, FS]" --> posOut
     MASKS -- "prompt_mask [B, P]" --> pmOut
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+    classDef modmod fill:#dbeafe,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#1e3a5f
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12

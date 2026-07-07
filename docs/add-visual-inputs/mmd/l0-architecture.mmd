@@ -1,10 +1,10 @@
 %% L0 — DiffusionGemma_26B_A4B denoiser forward (call_with_self_conditioning)
 %% nodes = modules/ops, edges = activations. Stadium nodes = pivotal tensors.
+%% MODIFIED for vision: cache contents include image K/V (dashed purple).
 flowchart TB
     xt(["x_t canvas tokens<br/>[B, L]"]):::tensor
     sclog(["sc_logits (prev step)<br/>[B, L, V]"]):::tensor
-    kv[("KV cache (prompt + prior canvases)<br/>k,v: [B, C, N_kv, d] x 30 layers")]:::tensor
-
+    kv[("KV cache (prompt incl. IMAGE soft-token K/V<br/>+ prior canvases)<br/>k,v: [B, C, N_kv, d] x 30 layers")]:::modtensor
     EMB["Embedder.encode<br/>table lookup x sqrt(D)"]:::module
     ENCL["Embedder.encode_logits<br/>softmax(sc_logits) . table x sqrt(D)"]:::module
     SC["SelfConditioning<br/>post_norm(emb + ffw(pre_norm(sc)))"]:::module
@@ -12,7 +12,6 @@ flowchart TB
     FN["final_norm (RMSNorm)"]:::module
     DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
     logits(["logits<br/>[B, L, V]"]):::tensor
-
     xt -- "[B, L] int" --> EMB
     sclog -- "[B, L, V]" --> ENCL
     EMB -- "[B, L, D]" --> SC
@@ -22,6 +21,6 @@ flowchart TB
     BLOCKS -- "[B, L, D]" --> FN
     FN -- "[B, L, D]" --> DEC
     DEC -- "[B, L, V]" --> logits
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12

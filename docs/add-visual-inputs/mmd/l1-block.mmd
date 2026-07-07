@@ -15,7 +15,6 @@ flowchart TB
     POFN["post_ffw_norm<br/>RMSNorm"]:::module
     ADD2["+ residual, x skip_scale"]:::op
     xout(["x'<br/>[B, L, D]"]):::tensor
-
     xin -- "[B, L, D]" --> PAN
     PAN -- "[B, L, D]" --> ATT
     ATT -- "[B, L, D]" --> POAN
@@ -34,7 +33,6 @@ flowchart TB
     POFN -- "[B, L, D]" --> ADD2
     ADD1 -- "residual [B, L, D]" --> ADD2
     ADD2 -- "[B, L, D]" --> xout
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12

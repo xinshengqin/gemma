@@ -1,0 +1,32 @@
+%% L1 — Vision input path (NEW, solid purple). Reuses gemma4's native stack:
+%% preprocessing gemma4/vision/_preprocessing.py, encoder vision/_encoder.py:36,
+%% projection gemma4/_modules.py:157, merge gm/vision/_token_utils.py:308.
+%% Runs ONCE per sequence, inside the encoder/prefill pass only. [DESIGN]
+flowchart TB
+    img(["raw image<br/>[H, W, 3] uint8"]):::newtensor
+    PRE["preprocess_image (host, NumPy)<br/>aspect-preserving resize to multiples of 48px,<br/>(H_r/16)(W_r/16) &lt;= P_p; scale to [0,1]"]:::newmod
+    PAT["patchify_and_pad (host)<br/>16x16 patches, pad to P_p"]:::newmod
+    patches(["patches [B, P_p, p_d]<br/>positions_xy [B, P_p, 2] (-1 = pad)"]):::newtensor
+    ENTRY["VisionEntry<br/>input_projection p_d -> D_v<br/>+ factorized 2D pos-emb[positions_xy]"]:::newmod
+    VIT["VisionTransformer<br/>N_v = 27 pre-norm MHA blocks<br/>D_v=1152, 16 heads, ffw H_v=4304"]:::newmod
+    EXIT["VisionExit<br/>3x3 avg-pool by position -> S_max,<br/>x sqrt(D_v) (no params)"]:::newmod
+    STD["Standardize<br/>(x-mean)/std * scale + bias"]:::newmod
+    soft(["soft tokens [B, S_max, D_v]<br/>+ valid mask [B, S_max] (S_v true)"]):::newtensor
+    PROJ["Embedder.encode_vision<br/>mm_pre_projection_norm (RMS, no scale)<br/>+ mm_input_projection D_v -> D"]:::newmod
+    stok(["projected soft tokens<br/>[B, S_max, D] float32"]):::newtensor
+    MERGE["merge_flat_embeddings<br/>scatter at prompt tokens == -2<br/>(excess pad rows -> slot 0, restored)"]:::newmod
+    temb(["prompt embeddings, image slots filled<br/>[B, FS, D]"]):::newtensor
+    img -- "[H, W, 3]" --> PRE
+    PRE -- "[H_r, W_r, 3] f32" --> PAT
+    PAT -- "[B, P_p, p_d]" --> patches
+    patches -- "[B, P_p, p_d] + [B, P_p, 2]" --> ENTRY
+    ENTRY -- "[B, P_p, D_v]" --> VIT
+    VIT -- "[B, P_p, D_v]" --> EXIT
+    EXIT -- "[B, S_max, D_v]" --> STD
+    STD -- "[B, S_max, D_v]" --> soft
+    soft -- "[B, S_max, D_v]" --> PROJ
+    PROJ -- "[B, S_max, D]" --> stok
+    stok -- "[B, S_max, D]" --> MERGE
+    MERGE -- "[B, FS, D]" --> temb
+    classDef newmod fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#4c1d95
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95

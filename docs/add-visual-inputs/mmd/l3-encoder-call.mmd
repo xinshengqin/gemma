@@ -1,28 +1,39 @@
-%% L3 — encoder_call: plain causal Transformer.__call__ as used inside
+%% L3 — encoder_call: causal Transformer.__call__ as used inside
 %% sft_encode (hd_gemma_network.py:153-184 -> gemma4/_transformer.py).
-%% No SelfConditioning on this path.
+%% No SelfConditioning on this path. MODIFIED for vision: the tower runs
+%% here, soft tokens merged at -2 slots, sliding bidir-in-image mask.
 flowchart TB
-    full(["full_seq tokens<br/>[B, FS]"]):::tensor
+    full(["full_seq tokens (incl. -2 slots)<br/>[B, FS]"]):::modtensor
+    imgs(["patches [B, P_p, p_d]<br/>positions_xy [B, P_p, 2]"]):::newtensor
     pos(["positions<br/>[B, FS]"]):::tensor
     amask(["causal prefill mask<br/>[B, FS, FS]"]):::tensor
-    MNOTE["mask[b,q,k] = (k &lt;= q) AND valid[b,k]<br/>strictly causal, PAD keys hidden everywhere<br/>(unlike the decoder mask: no bidirectionality)<br/>sliding window (1024) never binds: FS = 512"]:::note
-    EMB["Embedder.encode<br/>table[tokens] x sqrt(D)"]:::module
-    BLOCKS["Block x 30<br/>causal GQA attention + dual FFN<br/>each layer WRITES its K/V into the cache"]:::module
-    kv[("KV cache (being written)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index -> FS")]:::tensor
+    smask(["sliding mask (local layers)<br/>bidirectional within image span<br/>[B, FS, FS]"]):::newtensor
+    MNOTE["main mask[b,q,k] = (k &lt;= q) AND valid[b,k] — unchanged<br/>local-sliding layers instead use the vision sliding mask<br/>(image block fully mutual, window check skipped)<br/>sliding window (1024) still never binds: FS = 640"]:::note
+    EMB["Embedder.encode<br/>table[tokens] x sqrt(D)<br/>(-2 slots embed garbage, overwritten by merge)"]:::module
+    VENC["VisionEncoder + Embedder.encode_vision<br/>patches -> S_max soft tokens -> D"]:::newmod
+    MERGE["merge_flat_embeddings<br/>scatter soft tokens at tokens == -2"]:::newmod
+    BLOCKS["Block x 30<br/>causal GQA attention + dual FFN<br/>each layer WRITES its K/V into the cache<br/>(incl. the image positions)"]:::module
+    kv[("KV cache (being written, incl. image K/V)<br/>k,v: [B, FS, N_kv, d] x N_L<br/>end_index -> FS")]:::modtensor
     FN["final_norm (RMSNorm)"]:::module
-    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30"]:::module
+    DEC["Embedder.decode (tied)<br/>x . table^T, tanh softcap x30<br/>remove_mm_logits bypassed [DESIGN]"]:::modmod
     elog(["encoder_logits<br/>[B, FS, V]"]):::tensor
-
     full -- "[B, FS] int" --> EMB
-    EMB -- "[B, FS, D]" --> BLOCKS
+    imgs -- "[B, P_p, p_d]" --> VENC
+    EMB -- "text embeddings [B, FS, D]" --> MERGE
+    VENC -- "soft tokens [B, S_max, D]" --> MERGE
+    MERGE -- "[B, FS, D]" --> BLOCKS
     pos -- "RoPE positions [B, FS]" --> BLOCKS
     amask -- "[B, FS, FS]" --> BLOCKS
-    MNOTE -.- amask
+    smask -- "[B, FS, FS]" --> BLOCKS
+    MNOTE -.- smask
     BLOCKS -- "k,v per layer" --> kv
     BLOCKS -- "[B, FS, D]" --> FN
     FN -- "[B, FS, D]" --> DEC
     DEC -- "[B, FS, V]" --> elog
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
     classDef note fill:#fefce8,stroke:#ca8a04,color:#713f12,stroke-dasharray:5 5
+    classDef newmod fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#4c1d95
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+    classDef modmod fill:#dbeafe,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#1e3a5f
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12

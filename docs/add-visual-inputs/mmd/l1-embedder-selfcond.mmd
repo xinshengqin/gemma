@@ -1,5 +1,6 @@
 %% L1 — Embedder (tied head) + SelfConditioning
 %% Embedder: gemma4/_modules.py:60. SelfConditioning: diffusion/_transformer.py:53
+%% (encode_vision, the NEW mm projection, is drawn in l1-vision.mmd)
 flowchart TB
     subgraph EMBG["Embedder (weight-tied: one table [V, D])"]
         tok(["tokens [B, L]"]):::tensor
@@ -20,7 +21,6 @@ flowchart TB
     sce(["sc_embeddings [B, L, D]"]):::tensor
     xout(["block input x [B, L, D]"]):::tensor
     logits(["logits [B, L, V]"]):::tensor
-
     tok -- "[B, L]" --> ENC
     ENC -- "[B, L, D]" --> emb
     scl -- "[B, L, V]" --> ENL
@@ -34,7 +34,6 @@ flowchart TB
     hfin -- "[B, L, D]" --> DEC
     DEC -- "[B, L, V]" --> CAP
     CAP -- "[B, L, V]" --> logits
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12

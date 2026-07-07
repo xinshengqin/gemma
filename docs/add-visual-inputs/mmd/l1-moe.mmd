@@ -13,7 +13,6 @@ flowchart TB
     SCALE["x per_expert_scale[e]"]:::op
     COMB["collect + combine<br/>sum_k w_k * out_k"]:::op
     out(["moe_out<br/>[B, L, D]"]):::tensor
-
     xu -- "[B, L, D]" --> RN
     RN -- "[B, L, D]" --> RL
     RL -- "router logits [B, L, E]" --> TOPK
@@ -26,7 +25,6 @@ flowchart TB
     SCALE -- "[B*L*k, D]" --> COMB
     TOPK -- "combine weights [B, L, k]" --> COMB
     COMB -- "[B, L, D]" --> out
-
     classDef module fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
     classDef op fill:#e2e8f0,stroke:#64748b,color:#1e293b
     classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
