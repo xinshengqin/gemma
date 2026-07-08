@@ -1,0 +1,27 @@
+%% L2 — merge_flat_embeddings scatter mechanics (NEW)
+%% gm/vision/_token_utils.py:308-344 (nonzero :336, save :338, scatter :340,
+%% restore slot 0 :342). Only the -2 slots change between input and output;
+%% padding soft rows are routed to slot 0 and undone by the restore.
+flowchart TB
+    tok(["full_seq tokens [B, FS]<br/>&lt;bos&gt; text… &#92;n&#92;n &lt;soi&gt; -2 ×S_v &lt;eoi&gt; &#92;n&#92;n PAD… | x0 canvas"]):::modtensor
+    temb(["text embeddings [B, FS, D]<br/>from Embedder.encode; the -2 slots hold<br/>garbage rows (table[V-2] lookups)"]):::tensor
+    mm(["projected soft tokens [B, S_max, D]<br/>rows 0..S_v-1 valid, rows S_v..S_max-1 padding"]):::newtensor
+    MASKOP["placeholder mask<br/>mask = (tokens == -2)  [B, FS]<br/>exactly S_v true per example"]:::newmod
+    NZ["jnp.nonzero(mask, size=S_max)<br/>target_pos [S_max]: first S_v entries = slot<br/>indices (ascending), rest = 0 (fill value)"]:::newmod
+    SAVE["save first_pos = text_emb[0]<br/>(the &lt;bos&gt; embedding)"]:::newmod
+    SCAT["scatter (vmap over B)<br/>merged = text_emb.at[target_pos].set(mm)<br/>valid rows land in the -2 slots in order;<br/>ALL padding rows write to index 0"]:::newmod
+    REST["restore slot 0<br/>merged.at[0].set(first_pos)<br/>undoes every padding write"]:::newmod
+    out(["merged embeddings [B, FS, D]<br/>&lt;bos&gt; text… &#92;n&#92;n &lt;soi&gt; V0..V(S_v-1) &lt;eoi&gt; &#92;n&#92;n PAD… | x0<br/>only the -2 slots changed"]):::newtensor
+    tok -- "[B, FS] int" --> MASKOP
+    MASKOP -- "mask [B, FS]" --> NZ
+    temb -- "[B, FS, D]" --> SAVE
+    NZ -- "target_pos [B, S_max]" --> SCAT
+    temb -- "[B, FS, D]" --> SCAT
+    mm -- "[B, S_max, D]" --> SCAT
+    SCAT -- "[B, FS, D] (slot 0 clobbered)" --> REST
+    SAVE -- "first_pos [B, D]" --> REST
+    REST -- "[B, FS, D]" --> out
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef newmod fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#4c1d95
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12

@@ -916,6 +916,30 @@ SRC.vision = `flowchart TB
     classDef newmod fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#4c1d95
     classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95`;
 
+SRC.merge = `flowchart TB
+    tok(["full_seq tokens [B, FS]<br/>&lt;bos&gt; text… &#92;n&#92;n &lt;soi&gt; -2 ×S_v &lt;eoi&gt; &#92;n&#92;n PAD… | x0 canvas"]):::modtensor
+    temb(["text embeddings [B, FS, D]<br/>from Embedder.encode; the -2 slots hold<br/>garbage rows (table[V-2] lookups)"]):::tensor
+    mm(["projected soft tokens [B, S_max, D]<br/>rows 0..S_v-1 valid, rows S_v..S_max-1 padding"]):::newtensor
+    MASKOP["placeholder mask<br/>mask = (tokens == -2)  [B, FS]<br/>exactly S_v true per example"]:::newmod
+    NZ["jnp.nonzero(mask, size=S_max)<br/>target_pos [S_max]: first S_v entries = slot<br/>indices (ascending), rest = 0 (fill value)"]:::newmod
+    SAVE["save first_pos = text_emb[0]<br/>(the &lt;bos&gt; embedding)"]:::newmod
+    SCAT["scatter (vmap over B)<br/>merged = text_emb.at[target_pos].set(mm)<br/>valid rows land in the -2 slots in order;<br/>ALL padding rows write to index 0"]:::newmod
+    REST["restore slot 0<br/>merged.at[0].set(first_pos)<br/>undoes every padding write"]:::newmod
+    out(["merged embeddings [B, FS, D]<br/>&lt;bos&gt; text… &#92;n&#92;n &lt;soi&gt; V0..V(S_v-1) &lt;eoi&gt; &#92;n&#92;n PAD… | x0<br/>only the -2 slots changed"]):::newtensor
+    tok -- "[B, FS] int" --> MASKOP
+    MASKOP -- "mask [B, FS]" --> NZ
+    temb -- "[B, FS, D]" --> SAVE
+    NZ -- "target_pos [B, S_max]" --> SCAT
+    temb -- "[B, FS, D]" --> SCAT
+    mm -- "[B, S_max, D]" --> SCAT
+    SCAT -- "[B, FS, D] (slot 0 clobbered)" --> REST
+    SAVE -- "first_pos [B, D]" --> REST
+    REST -- "[B, FS, D]" --> out
+    classDef tensor fill:#fef3c7,stroke:#d97706,color:#7c2d12
+    classDef newmod fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#4c1d95
+    classDef newtensor fill:#f3e8ff,stroke:#9333ea,color:#4c1d95
+    classDef modtensor fill:#fef3c7,stroke:#9333ea,stroke-width:2.5px,stroke-dasharray:6 3,color:#7c2d12`;
+
 SRC.visionData = `flowchart TB
     bagz(["Bagz record<br/>{puzzle_image, solution}"]):::modtensor
     PARSE["ParseSudokuVisionExample<br/>decode image; prompt text contains &lt;|image|&gt;"]:::newmod
@@ -1183,6 +1207,7 @@ const DIAGRAMS = {
   moe:       { title: 'L2 — MoERagged FFN', src: SRC.moe, parent: 'block' },
   embedder:  { title: 'L1 — Embedder & SelfConditioning', src: SRC.embedder, parent: 'l0' },
   vision:    { title: 'L1 — Vision input path (NEW)', src: SRC.vision, parent: 'encoderCall' },
+  merge:     { title: 'L2 — merge_flat_embeddings (scatter mechanics, NEW)', src: SRC.merge, parent: 'vision' },
   trainForward: { title: 'Training forward (SFTDiffusion)', src: SRC.trainForward },
   encode: { title: 'L2 — sft_encode (encoder prefill)', src: SRC.encode, parent: 'trainForward' },
   encoderCall: { title: 'L3 — encoder_call (causal Transformer forward)', src: SRC.encoderCall, parent: 'encode' },
@@ -1395,12 +1420,45 @@ const INFO = {
       desc: 'Image tokens in the LM embedding space, same scale conventions as text embeddings after the standardize + norm chain.',
       io: 'f32[B,S_max,D]' },
     MERGE: { title: 'merge_flat_embeddings (NEW to this pipeline)', file: 'gm/vision/_token_utils.py:308-344; called gemma4/_transformer.py:523-540',
-      desc: 'Per-example scatter: soft tokens replace the -2 placeholder positions of the text embeddings. Excess (padding) rows scatter to slot 0 which is then restored — measured in vision_merge_semantics.json — so per-example variable S_v needs no static counts [DESIGN: batched variant replaces the batch-1 _encode_vision].',
+      desc: 'Per-example scatter: soft tokens replace the -2 placeholder positions of the text embeddings. Excess (padding) rows scatter to slot 0 which is then restored — measured in vision_merge_semantics.json — so per-example variable S_v needs no static counts [DESIGN: batched variant replaces the batch-1 _encode_vision]. Double-click for the scatter mechanics and the full before/after sequence layout.',
       weights: [],
-      io: '(text [B,FS,D], soft [B,S_max,D], mask [B,FS]) -> [B,FS,D]' },
+      io: '(text [B,FS,D], soft [B,S_max,D], mask [B,FS]) -> [B,FS,D]',
+      drill: 'merge' },
     temb: { title: 'merged prompt embeddings (NEW)', file: 'gemma4/_transformer.py:421-487',
       desc: 'What the 30 backbone blocks actually consume during the encoder prefill: text embeddings with the image span filled in. From here on, the image is just D-dim activations.',
       io: 'f32/bf16[B,FS,D]' },
+  },
+  merge: {
+    tok: { title: 'full_seq tokens (input)', file: 'sft_model.py:197; expansion _token_utils.py:375-434',
+      desc: 'The expanded sequence whose -2 sentinels mark where soft tokens go. Full layout for one visual-sudoku example (one image, S_v soft tokens, prompt padded to P=384, canvas appended):',
+      pre: 'pos:    0      1..k         k+1   k+2    k+3 .. k+2+S_v   k+3+S_v  k+4+S_v  ..P-1   P .. FS-1\ntoken:  <bos>  instruction  \\n\\n  <soi>  -2  -2 .. -2     <eoi>    \\n\\n     PAD     x0 canvas\n                                         [-- S_v slots --]                    (pad    (clean\n                                                                              to P)   answer)',
+      io: 'int32[B, FS]' },
+    temb: { title: 'text embeddings (input)', file: 'gemma4/_modules.py:112-125 (Embedder.encode)',
+      desc: 'Straight table lookup of the tokens above — so the -2 slots hold garbage (Python negative indexing wraps to table[V-2]). Everything else is a real embedding. E[t] = embedding of token t, G = garbage row:',
+      pre: 'pos:    0       1..k    k+1      k+2     k+3 .. k+2+S_v  k+3+S_v  k+4+S_v..  P..\nemb in: E[bos]  E[txt]  E[\\n\\n]  E[soi]  G   G  ..  G     E[eoi]   E[\\n\\n]..  E[x0]..',
+      io: 'bf16/f32[B, FS, D]' },
+    mm: { title: 'projected soft tokens (input)', file: 'gemma4/_modules.py:157-161 output; padding pad_soft_tokens_to_max vision/_encoder.py:219',
+      desc: 'The image as S_max=280 rows in D-space: V0..V(S_v-1) are the valid pooled+projected patches (raster order), the remaining S_max-S_v rows are padding that must NOT appear in the output — the scatter routes them to slot 0, which is then restored.',
+      io: 'f32[B, S_max, D]' },
+    MASKOP: { title: 'placeholder mask', file: 'gemma4/_transformer.py:532 (mask = tokens == TOKEN_PLACEHOLDER)',
+      desc: 'True exactly at the -2 slots — S_v positions per example. This mask, not any static count, decides where soft tokens land; that is what makes the batched variant free of per-batch recompilation.',
+      io: 'bool[B, FS]' },
+    NZ: { title: 'nonzero with static size', file: '_token_utils.py:336',
+      desc: 'jnp.nonzero(mask, size=S_max): jit needs a static output size, so it returns S_max indices — the first S_v are the real slot positions (ascending), the rest take the fill value 0. Those fill-zeros are why slot 0 gets clobbered and must be saved/restored.',
+      io: 'bool[FS] -> int32[S_max] (per example, vmapped)' },
+    SAVE: { title: 'save slot 0', file: '_token_utils.py:338',
+      desc: 'first_pos = text_embeddings[0] — the <bos> embedding, kept aside before the scatter.',
+      io: '-> f32[D]' },
+    SCAT: { title: 'scatter', file: '_token_utils.py:340 (vmap wrapper :308-316)',
+      desc: 'text_embeddings.at[target_pos].set(mm): row i of the soft tokens writes to target_pos[i]. Valid rows fill the -2 slots in order; every padding row writes to index 0 (last write wins there — the value is garbage but about to be fixed).',
+      io: '([FS,D], [S_max], [S_max,D]) -> [FS,D]' },
+    REST: { title: 'restore slot 0', file: '_token_utils.py:342',
+      desc: 'merged.at[0].set(first_pos) — undoes all the padding writes in one move. Measured in vision_merge_semantics.json: slot 0 preserved, valid slots replaced, with per-example variable S_v.',
+      io: '[FS,D] -> [FS,D]' },
+    out: { title: 'merged embeddings (output)', file: '_token_utils.py:344; consumed gemma4/_transformer.py:421-487',
+      desc: 'Identical to the input embeddings at every position EXCEPT the -2 slots, which now hold the image. This is what the 30 blocks consume. Full layout:',
+      pre: 'pos:     0       1..k    k+1      k+2     k+3 .. k+2+S_v      k+3+S_v  k+4+S_v..  P..\nemb out: E[bos]  E[txt]  E[\\n\\n]  E[soi]  V0  V1 .. V(S_v-1)  E[eoi]   E[\\n\\n]..  E[x0]..\n                                          [- image, was G -]\ndelta vs input: ONLY the S_v former -2 slots changed; <bos>, text, markers,\nPAD and canvas positions are bit-identical.',
+      io: 'bf16/f32[B, FS, D]' },
   },
   visionData: {
     bagz: { title: 'Bagz record — MODIFIED', file: 'data/sudoku/*.bagz [DESIGN]',
@@ -1529,9 +1587,10 @@ const INFO = {
       io: 'patches f32[B,P_p,p_d] -> soft tokens f32[B,S_max,D], S_v valid  (measured tiny: [1,2520,768] -> tower [1,280,16] with 252 valid; projection measured on the 252 extracted tokens -> [..,252,32], stock batch-1 path)',
       drill: 'vision' },
     MERGE: { title: 'merge_flat_embeddings (NEW)', file: 'gm/vision/_token_utils.py:308-344; called gemma4/_transformer.py:523-540',
-      desc: 'Scatters the projected soft tokens into the -2 placeholder positions of the text embeddings, per example. Excess padding rows land on slot 0 and slot 0 is restored (measured) — safe for variable S_v.',
+      desc: 'Scatters the projected soft tokens into the -2 placeholder positions of the text embeddings, per example. Excess padding rows land on slot 0 and slot 0 is restored (measured) — safe for variable S_v. Double-click for the scatter mechanics and the full before/after sequence layout.',
       weights: [],
-      io: '(text [B,FS,D], soft [B,S_max,D], mask [B,FS]) -> [B,FS,D]' },
+      io: '(text [B,FS,D], soft [B,S_max,D], mask [B,FS]) -> [B,FS,D]',
+      drill: 'merge' },
     BLOCKS: { title: 'Block x 30 (causal)', file: 'gemma4/_modules.py:468',
       desc: 'Same 30 blocks and weights as the denoiser passes. Local-sliding layers consume the vision sliding mask (bidirectional within the image block, window skipped: _transformer.py:367-375); global layers keep the causal mask. Each layer writes its K/V into the cache at the RoPE positions — image positions included. With FS = 640 < sliding_window 1024 the window still never binds.',
       weights: [W('layer_i/* (see weight table)', '~810M / layer', '24.3B total', '~16k/layer')],
