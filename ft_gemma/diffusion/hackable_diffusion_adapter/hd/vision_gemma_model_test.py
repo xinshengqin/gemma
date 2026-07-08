@@ -186,24 +186,37 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
         token:     2    5    12    -2    -2    13     7    0
                   bos  text <soi>  soft  soft  <eoi>  text PAD
 
-    Output: the text embeddings with EXACTLY rows 3 and 4 replaced by the
-    two projected soft tokens — every other row bit-identical. (The row
-    *values* come from network parameters, so this canonical test pins the
-    contract — which rows change — rather than golden numbers, which would
-    only snapshot the random init.)
+    The projected soft-token stack has S_max = 4 rows, of which only the
+    first S_v = 2 are REAL (position-based pooling emits valid slots first);
+    rows 2-3 are padding:
+
+        soft row:   0     1     2        3
+                   real  real  padding  padding
+
+    Output: the text embeddings with EXACTLY rows 3 and 4 replaced by soft
+    rows 0 and 1, in order — every other row bit-identical. The two padding
+    soft rows are discarded: they scatter onto slot 0, which is then
+    restored. (The row *values* come from network parameters, so this
+    canonical test pins the contract — which rows change and where each
+    source row lands — rather than golden numbers, which would only
+    snapshot the random init.)
     """
     tokens = jnp.asarray([[2, 5, 12, -2, -2, 13, 7, 0]], dtype=jnp.int32)
     patches, positions_xy, s_v = vision_test_utils.make_grid_image(6, 3, 0)
     self.assertEqual(s_v, 2)
+    images = (jnp.asarray(patches)[None], jnp.asarray(positions_xy)[None])
 
     embeddings = self.model.apply(
         self.variables, tokens, method=lambda m, t: m.embedder.encode(t)
     )
+    soft = self.model.apply(
+        self.variables, images, method='_encode_vision'
+    )  # [1, S_max=4, D]
     merged = self.model.apply(
         self.variables,
         tokens=tokens,
         embeddings=embeddings,
-        images=(jnp.asarray(patches)[None], jnp.asarray(positions_xy)[None]),
+        images=images,
         method='_merge_mm_embeddings',
     )
 
@@ -215,6 +228,22 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
         row_changed,
         # 0:bos  1:text 2:<soi> 3:soft 4:soft 5:<eoi> 6:text 7:PAD
         [False, False, False, True, True, False, False, False],
+    )
+
+    # The REAL soft rows (0 and 1) land in the -2 slots, in order.
+    np.testing.assert_array_equal(
+        np.asarray(merged[0, 3]), np.asarray(soft[0, 0].astype(merged.dtype))
+    )
+    np.testing.assert_array_equal(
+        np.asarray(merged[0, 4]), np.asarray(soft[0, 1].astype(merged.dtype))
+    )
+    # The PADDING soft rows (2 and 3) were discarded: both scattered onto
+    # slot 0, which was restored to the bos embedding afterwards.
+    np.testing.assert_array_equal(
+        np.asarray(merged[0, 0]), np.asarray(embeddings[0, 0])
+    )
+    self.assertTrue(
+        np.any(np.asarray(merged[0, 0]) != np.asarray(soft[0, 3].astype(merged.dtype))),
     )
 
   def test_merge_changes_only_the_soft_token_slots(self):

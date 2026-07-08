@@ -230,6 +230,21 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
     np.testing.assert_array_equal(np.asarray(cache['layer_0']['end_index']), [6])
     self.assertEqual(cache['layer_0']['k'].shape, (1, 8, 2, 8))
 
+    # Which cache slots hold REAL (written) K/V vs stay empty:
+    #
+    #   slot:     0    1    2     3     4     5     6  7
+    #   content: bos  text soft  soft  text  PAD    -  -
+    #   written:  y    y    y     y     y     y     n  n
+    #
+    # ALL six prompt slots are written — including the PAD at slot 5, whose
+    # K/V is garbage: padding is protected by the masks above (key column 5
+    # is False for every query), NOT by skipping the write. Slots 2-3 hold
+    # the image-derived K/V. Slots 6-7 were never written.
+    k = np.asarray(cache['layer_0']['k'], dtype=np.float32)
+    for slot in (0, 1, 2, 3, 4, 5):
+      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
+    np.testing.assert_array_equal(k[0, 6:], 0.0)
+
   def test_prefill_with_images_full_length_logits_and_cursor(self):
     cache, logits, positions, attn = self._prefill(
         images=(self.patches, self.positions_xy)
