@@ -198,7 +198,8 @@ placeholder expansion (<code>&lt;|image|&gt;</code> → span of S_v+4 tokens); a
   (<span class="fileref">gemma4/_transformer.py:318-330</span>;
   <span class="fileref">_token_utils.py:348-366</span>) — wrong for gemma4's variable counts
   and for pre-expanded prompts. The design keeps logits at full length [B, FS, V] and instead
-  masks image positions out of the AR loss (see §10, steps 4 and 10).</li>
+  masks the whole expanded image span (soft slots and markers) out of the AR loss
+  (see §10, steps 4 and 10).</li>
 <li><b>External sliding mask</b> <code>[DESIGN]</code>. With images, the transformer builds its
   vision-bidirectional sliding mask internally as [B, L, L] from <code>tokens != 0</code>
   (<span class="fileref">gemma4/_transformer.py:460-471</span>) — correct at training prefill
@@ -218,6 +219,20 @@ placeholder expansion (<code>&lt;|image|&gt;</code> → span of S_v+4 tokens); a
 <li><b>Small images are up-scaled.</b> Aspect-preserving resize always targets the full
   2520-patch budget (48×48 → 768×768 → 256 soft tokens, measured) — S_v is 250–280 in
   practice, never "few tokens for a small image".</li>
+<li><b>Open recipe question — should the encoder AR loss supervise the prompt at SFT?</b>
+  The shipped SFT configs keep full-sequence AR CE (weight 1.0, prompt included,
+  <span class="fileref">data.py:131-148</span>) — formally a pretraining-shaped objective.
+  The mainline AR-Gemma SFT stack masks prompts ("0 for prompt, 1 for response",
+  <span class="fileref">gm/data/_tasks.py:72</span>), and diffusion-LM SFT recipes are
+  unanimous that the prompt stays clean and loss-free (LLaDA eq. 5, arXiv:2502.09992;
+  MMaDA; LLaDA-V; Dream 7B). No published diffusion LM retains an auxiliary AR loss at SFT —
+  though none shares this architecture where the AR pass produces the conditioning KV cache;
+  the closest analogue (BD3-LM's clean-context pass) trains that pass through the diffusion
+  gradient alone. A literature-consistent middle ground is restricting the AR loss to the
+  response/canvas region; <code>encoder_loss_weight=0</code> is also mechanically safe
+  (nothing else consumes <code>encoder_logits</code>, and the encoder pass still trains via
+  the diffusion loss since <code>stop_gradient_from_denoiser_to_encoder=False</code>).
+  Left as a training-recipe knob — this design changes only the image-span masking.</li>
 <li>Baseline open questions (time <code>t</code> unused by the network; "A4B" active-param
   reading; <code>self_cond_prob=0.5</code> hidden default; unused
   <span class="fileref">gemma/diffusion/_sampler.py</span>) are unchanged from
@@ -547,8 +562,13 @@ prompt now carries the image span.</p>
   <code>canvas [TC]</code>, <code>canvas_id [TC]</code>, <code>canvas_mask [TC]</code>.
   <code>SequenceTargetShift</code> (<span class="fileref">data.py:121-152</span>) still rolls
   <code>prompt ++ canvas</code> left by one, but now <b>also zeroes
-  <code>encoder_target_mask</code> wherever the current or next position is a soft-token slot</b>
-  — the AR loss must not ask the model to predict the unpredictable −2 sentinels.
+  <code>encoder_target_mask</code> wherever the current or next position lies inside the
+  expanded image span</b> (<code>\n\n &lt;soi&gt; [-2]×S_v &lt;eoi&gt; \n\n</code>): the −2
+  sentinels are unpredictable, and the boundary markers are masked too, matching how Gemma
+  multimodal fine-tuning treats image markup ("during fine-tuning, the prompt is always
+  masked", <span class="fileref">gemma4/_transformer.py:323-325</span>; the samplers forbid
+  generating <code>&lt;soi&gt;</code>/<code>&lt;eoi&gt;</code> anyway,
+  <span class="fileref">gm/text/_tokenizer.py:444-448</span>).
   Batch: <code>prompt int32[B,P]</code>, <code>patches f32[B,P_p,p_d]</code>
   <span class="badge-new">NEW</span>, <code>positions_xy int32[B,P_p,2]</code>
   <span class="badge-new">NEW</span>, <code>canvas int32[B,TC,1]</code>,
@@ -608,9 +628,9 @@ prompt now carries the image span.</p>
   (<span class="fileref">hd discrete_loss.py:41-122</span>).
   <b>encoder_loss</b>: masked next-token CE(encoder_logits, encoder_target) → <code>[B]</code>
   (<span class="fileref">sft_model.py:608-643</span>) — the mask from step 4 already excludes
-  soft-token positions, so the AR objective covers text (including predicting
-  <code>&lt;start_of_image&gt;</code> and the token after <code>\n\n</code>) but never a −2
-  sentinel. Total = 1.0·mean + 1.0·mean.</li>
+  the whole image span, so the AR objective supervises only genuine text tokens — never a −2
+  sentinel nor the <code>&lt;soi&gt;</code>/<code>&lt;eoi&gt;</code>/<code>\n\n</code> markup.
+  Total = 1.0·mean + 1.0·mean.</li>
 <li><b>Backward + update.</b> <b>Unchanged</b> mechanics: <code>jax.grad</code> w.r.t. params
   (<span class="fileref">kauldron train_step.py:292-301</span>), optax chain
   clip(1.0) → Adafactor → weight decay 1e-4 → warmup-cosine LR
@@ -948,7 +968,7 @@ SRC.visionData = `flowchart TB
     EXP["ExpandImagePlaceholders<br/>&lt;|image|&gt; -> &#92;n&#92;n &lt;soi&gt; [-2] x S_v &lt;eoi&gt; &#92;n&#92;n"]:::newmod
     PAD["Pad prompt to P = 384"]:::modmod
     CHUNK["CanvasChunker (unchanged)<br/>canvas / canvas_id / canvas_mask"]:::module
-    SHIFT["SequenceTargetShift<br/>+ zero encoder_target_mask on soft-token slots"]:::modmod
+    SHIFT["SequenceTargetShift<br/>+ zero encoder_target_mask on the whole image span<br/>(&#92;n&#92;n &lt;soi&gt; slots &lt;eoi&gt; &#92;n&#92;n)"]:::modmod
     batch(["batch: prompt [B,P], patches [B,P_p,p_d], positions_xy [B,P_p,2],<br/>canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask [B,FS]"]):::modtensor
     bagz -- "image [H, W, 3]" --> PREP
     bagz -- "prompt/solution text" --> PARSE
@@ -1483,7 +1503,7 @@ const INFO = {
       desc: 'Identical to baseline: response -> NC*CS canvas buffer with EOS/PAD filling, canvas_id, canvas_mask. Canvases never contain image tokens.',
       io: '-> canvas [TC], canvas_id [TC], canvas_mask [TC]' },
     SHIFT: { title: 'SequenceTargetShift — MODIFIED mask', file: 'data.py:121-152 + MM masking [DESIGN]',
-      desc: 'Same left-shift construction of AR targets over prompt ++ canvas; additionally zeroes encoder_target_mask where the current or next token is a -2 soft slot, so the AR loss never asks for an unpredictable target. Predicting <start_of_image> and the text after the closing \\n\\n remains supervised.',
+      desc: 'Same left-shift construction of AR targets over prompt ++ canvas; additionally zeroes encoder_target_mask wherever the current OR next position lies anywhere in the expanded image span (\\n\\n <soi> [-2]×S_v <eoi> \\n\\n, positions k+1 … k+4+S_v). The -2 slots are genuinely unpredictable; the boundary markers are masked too for consistency with how Gemma multimodal fine-tuning treats image markup — "during fine-tuning, the prompt is always masked" (gemma4/_transformer.py:323-325) and the samplers forbid generating <soi>/<eoi> outright (gm/text/_tokenizer.py:444-448). Text before the span and after the trailing \\n\\n stays supervised.',
       io: '-> encoder_target [FS], encoder_target_mask [FS]' },
     batch: { title: 'train batch — MODIFIED', file: 'keep list, sudoku_data.py:223-230 + new fields [DESIGN]',
       desc: 'Baseline fields plus patches [B,P_p,p_d] f32 and positions_xy [B,P_p,2] int32, bound into the model via kontext keys (batch.patches / batch.positions_xy).',
@@ -1519,7 +1539,7 @@ const INFO = {
       desc: 'NoWeightDiscreteLoss(use_mask=True, mask_key=target_mask): plain CE between pass-2 logits and clean x0 over selected-canvas valid tokens, normalized per example. No schedule/SNR weighting.',
       io: '-> [B] (measured [4.09, 4.09] ~ ln 64)' },
     EL: { title: 'encoder_loss — MODIFIED mask contents', file: 'config :180-185; sft_model.py:600-643',
-      desc: 'EncoderARLoss: masked next-token CE(encoder_logits, encoder_target), per-example mean — formula unchanged. The mask from the data pipeline now additionally zeroes positions whose current or next token is a -2 soft slot, so the AR objective never asks the model to predict an image embedding.',
+      desc: 'EncoderARLoss: masked next-token CE(encoder_logits, encoder_target), per-example mean — formula unchanged. The mask from the data pipeline now additionally zeroes every position whose current or next token lies in the expanded image span (soft slots AND the <soi>/<eoi>/\\n\\n markers), so the AR objective never supervises image embeddings or image markup — consistent with Gemma multimodal fine-tuning convention.',
       io: '-> [B]' },
     x0: { title: 'x0 — clean canvas', file: 'batch.canvas; data.py:64-102', desc: 'Ground-truth response tokens, chunked into canvases, EOS-filled, PAD-padded. Never contains image tokens.', io: 'int32[B,TC,1]' },
     pr: { title: 'prompt — MODIFIED contents', file: 'batch.prompt [DESIGN]',
@@ -1622,7 +1642,7 @@ const INFO = {
     kv: { title: 'KV cache (being written) — MODIFIED contents', file: '_modules.py:399-419',
       desc: 'Each block appends its k,v for all FS positions — image soft-token positions included, which is how the image becomes visible to the denoiser later. Gemma sets end_index = FS after the pass, which sft_encode then rewinds via set_cache_end_index.',
       io: 'per layer k,v bf16[B,FS,N_kv,d], end_index int32[B]' },
-    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Returned to sft_encode and ultimately consumed by EncoderARLoss. Full length [B,FS,V] (remove_mm_logits bypassed [DESIGN]); positions whose target is a -2 slot are excluded by encoder_target_mask.', io: 'bf16[B,FS,V]' },
+    elog: { title: 'encoder_logits', file: 'sft_model.py:202-209', desc: 'Returned to sft_encode and ultimately consumed by EncoderARLoss. Full length [B,FS,V] (remove_mm_logits bypassed [DESIGN]); the entire image span (soft slots and <soi>/<eoi>/\\n\\n markers) is excluded from the AR loss by encoder_target_mask.', io: 'bf16[B,FS,V]' },
   },
   decode: {
     CMASK: { title: 'create_decoder_attention_mask', file: 'mask_helpers.py:247-310; called sft_model.py:129-137',

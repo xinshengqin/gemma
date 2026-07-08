@@ -8,7 +8,7 @@ flowchart TB
     EXP["ExpandImagePlaceholders<br/>&lt;|image|&gt; -> &#92;n&#92;n &lt;soi&gt; [-2] x S_v &lt;eoi&gt; &#92;n&#92;n"]:::newmod
     PAD["Pad prompt to P = 384"]:::modmod
     CHUNK["CanvasChunker (unchanged)<br/>canvas / canvas_id / canvas_mask"]:::module
-    SHIFT["SequenceTargetShift<br/>+ zero encoder_target_mask on soft-token slots"]:::modmod
+    SHIFT["SequenceTargetShift<br/>+ zero encoder_target_mask on the whole image span<br/>(&#92;n&#92;n &lt;soi&gt; slots &lt;eoi&gt; &#92;n&#92;n)"]:::modmod
     batch(["batch: prompt [B,P], patches [B,P_p,p_d], positions_xy [B,P_p,2],<br/>canvas [B,TC,1], canvas_id, canvas_mask,<br/>encoder_target [B,FS], encoder_target_mask [B,FS]"]):::modtensor
     bagz -- "image [H, W, 3]" --> PREP
     bagz -- "prompt/solution text" --> PARSE
