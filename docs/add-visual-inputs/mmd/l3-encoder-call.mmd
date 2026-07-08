@@ -23,8 +23,8 @@ flowchart TB
     VENC -- "soft tokens [B, S_max, D]" --> MERGE
     MERGE -- "[B, FS, D]" --> BLOCKS
     pos -- "RoPE positions [B, FS]" --> BLOCKS
-    amask -- "[B, FS, FS]" --> BLOCKS
-    smask -- "[B, FS, FS]" --> BLOCKS
+    amask -- "[B, FS, FS] -> the 5 GLOBAL layers" --> BLOCKS
+    smask -- "[B, FS, FS] -> the 25 LOCAL_SLIDING layers<br/>(replaces main mask, window check skipped)" --> BLOCKS
     MNOTE -.- smask
     BLOCKS -- "k,v per layer" --> kv
     BLOCKS -- "[B, FS, D]" --> FN

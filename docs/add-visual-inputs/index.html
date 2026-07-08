@@ -1050,8 +1050,8 @@ SRC.encoderCall = `flowchart TB
     VENC -- "soft tokens [B, S_max, D]" --> MERGE
     MERGE -- "[B, FS, D]" --> BLOCKS
     pos -- "RoPE positions [B, FS]" --> BLOCKS
-    amask -- "[B, FS, FS]" --> BLOCKS
-    smask -- "[B, FS, FS]" --> BLOCKS
+    amask -- "[B, FS, FS] -> the 5 GLOBAL layers" --> BLOCKS
+    smask -- "[B, FS, FS] -> the 25 LOCAL_SLIDING layers<br/>(replaces main mask, window check skipped)" --> BLOCKS
     MNOTE -.- smask
     BLOCKS -- "k,v per layer" --> kv
     BLOCKS -- "[B, FS, D]" --> FN
@@ -1547,8 +1547,8 @@ const INFO = {
     full: { title: 'full_seq tokens — MODIFIED contents', file: 'sft_model.py:197', desc: 'prompt (with expanded image span, -2 slots) ++ clean x0 tokens.', io: 'int32[B,FS]' },
     imgs: { title: 'patches + positions_xy (NEW)', file: 'batch.patches / batch.positions_xy [DESIGN]',
       desc: 'The preprocessed image, entering the transformer forward as the images= argument (PreprocessedVisionInput-style).', io: 'f32[B,P_p,p_d], int32[B,P_p,2]' },
-    smask: { title: 'vision sliding mask (NEW)', file: 'built by make_vision_prefill_masks [DESIGN]; semantics gm/utils/_attention_mask.py:24-129; consumed gemma4/_transformer.py:367-375',
-      desc: 'For the 25 local-sliding layers only: causal everywhere except the image block, whose S_v soft tokens see each other fully; the sliding-window check is skipped on these layers when this mask is supplied. Sized to the cache axis so the same builder works at inference prefill (C > P) — the stock internal builder is [B,L,L] and would mismatch there.',
+    smask: { title: 'vision sliding mask (NEW)', file: 'built by make_vision_prefill_masks [DESIGN]; semantics gm/utils/_attention_mask.py:24-129; routing gemma4/_transformer.py:368-375; documented gemma4/_config.py:127-131',
+      desc: 'For the 25 local-sliding layers only: causal everywhere except the image block, whose S_v soft tokens see each other fully; the sliding-window check is skipped on these layers when this mask is supplied (_modules.py:340-351). The 5 GLOBAL layers keep the plain causal mask — the config comment states this split verbatim ("bidirectional for image tokens in sliding layers only, causal for global layers", used by 26B_A4B/31B; E2B/E4B use None = fully causal). Bidirectionality is per CONTIGUOUS image block (_attention_mask.py:99-129 numbers contiguous soft-token runs), so multiple images separated by text would not attend to each other. Sized to the cache axis so the same builder works at inference prefill (C > P) — the stock internal builder is [B,L,L] and would mismatch there.',
       io: 'bool[B,FS,FS] (train prefill) / bool[B,P,C] (inference prefill)' },
     pos: { title: 'positions', file: 'mask_helpers.py:69-88',
       desc: 'cumsum(valid)-1: pads do not advance the counter; the -2 soft slots DO (they are valid), so image tokens get ordinary sequential RoPE positions — the 2D structure lives only in the vision tower posemb. Unchanged code.', io: 'int32[B,FS]' },
