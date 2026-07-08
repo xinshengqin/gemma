@@ -106,18 +106,26 @@ def get_config():
   ##############################################################################
   # Smoke-run trainer settings.
   ##############################################################################
+  # One optimizer step: the kauldron loop checkpoints the state at the top
+  # of iteration i, so the final (i = num_train_steps) iteration saves the
+  # 1-update state as ckpt_1 for offline eval. (The smoke runner instead
+  # sets stop_after_steps=1 to run exactly one update and skip that extra
+  # iteration.)
   cfg.num_train_steps = 1
-  # Kauldron runs `num_train_steps + 1` loop iterations; cap at exactly one
-  # optimizer update for the smoke run.
-  cfg.stop_after_steps = 1
   # Constant LR so the single optimizer update visibly changes the params
   # (the full config's warmup schedule yields lr=0 at step 0).
   cfg.schedules["learning_rate"] = optax.constant_schedule(1e-3)
   # No 26B checkpoint to load for the tiny model.
   cfg.init_transform = None
-  # Skip standalone evals / checkpoint export in the smoke run.
+  # Skip standalone evals / checkpoint export in the smoke run (eval_main
+  # injects the AR sampling evaluators itself).
   cfg.evals = {}
-  cfg.checkpointer = kd.ckpts.NoopCheckpointer()
+  # Save every step so offline eval (eval_main) can restore the 1-step run.
+  cfg.checkpointer = kd.ckpts.Checkpointer(
+      fast=False,
+      save_interval_steps=1,
+      max_to_keep=1,
+  )
   cfg.workdir = "/tmp/ft_gemma_sudoku_vision_smoke"
 
   ##############################################################################

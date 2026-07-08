@@ -72,6 +72,9 @@ def main(argv):
 
   cfg = sft_sudoku_vision_full_tiny.get_config()
   cfg.workdir = _WORKDIR.value
+  # Kauldron runs `num_train_steps + 1` loop iterations (the extra one
+  # checkpoints the final state); cap at exactly one optimizer update.
+  cfg.stop_after_steps = 1
   trainer = konfig.resolve(cfg)
 
   ##############################################################################

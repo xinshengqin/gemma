@@ -22,6 +22,7 @@ Denoiser passes, self-conditioning, corruption, DDIM stepper, both loss
 formulas and the optimizer are unchanged from the baseline.
 """
 
+from ft_gemma.diffusion.hackable_diffusion_adapter import compat
 from ft_gemma.diffusion.hackable_diffusion_adapter.eval import vision_ar_eval
 from kauldron import konfig
 
@@ -29,6 +30,11 @@ import functools
 import jax
 from flax import linen as nn
 from gemma.gm.nn.gemma4 import _modules
+
+# Environment shim (no-op on compatible jax/etils versions). Applied at
+# import time so `python -m kauldron.main --cfg=<this file>` works, same as
+# the Block remat monkey-patch below.
+compat.patch_etils_jax_prng()
 
 # Gradient checkpointing.
 # nn.remat requires only positional args so we use a wrapper.

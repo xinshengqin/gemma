@@ -12,10 +12,10 @@ from kauldron import konfig
 
 # pylint: disable=g-import-not-at-top
 with konfig.imports():
+  from ft_gemma.diffusion.hackable_diffusion_adapter.eval import vision_text_metric
   from ft_gemma.diffusion.hackable_diffusion_adapter.hd import vision_ar_state_handler
   from ft_gemma.diffusion.hackable_diffusion_adapter.hd import vision_sft_model
   from gemma import gm
-  from gemma.diffusion.hackable_diffusion_adapter.eval import text_metric
   from gemma.diffusion.hackable_diffusion_adapter.hd import hd_gemma_ar_state_handler
   from hackable_diffusion import hd
   import jax.numpy as jnp
@@ -108,7 +108,9 @@ def make_ar_evals(
         num_batches=cfg.ref.aux.eval_num_batches,
         metrics=metrics,
         summaries={
-            "text_samples_ar": text_metric.DetokenizePromptAndResponse(
+            # Vision variant: strips the -2 soft-token placeholders from the
+            # expanded prompt before detokenization.
+            "text_samples_ar": vision_text_metric.VisionDetokenizePromptAndResponse(
                 prompt="batch.prompt",
                 response="samples",
                 num_texts=10,
