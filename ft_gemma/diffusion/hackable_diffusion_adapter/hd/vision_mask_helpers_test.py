@@ -35,6 +35,51 @@ class MakeVisionPrefillMasksTest(absltest.TestCase):
   TOKENS = [[4, 5, 9, -2, -2, -2, 10, 6, 0, 0]]
   SOFT = slice(3, 6)  # the -2 slots
 
+  def test_canonical_usage(self):
+    """One toy example, inputs and BOTH output masks fully written out.
+
+    Input: one row of 6 tokens — text, <soi>-like marker, two -2 soft-token
+    slots, <eoi>-like marker, PAD — with an 8-slot cache:
+
+        position:  0    1      2     3     4      5
+        token:     4    9     -2    -2    10      0
+                  text  <soi> soft  soft  <eoi>  PAD
+    """
+    tokens = jnp.asarray([[4, 9, -2, -2, 10, 0]], dtype=jnp.int32)
+    token_mask = tokens != 0
+    attn, sliding = vision_mask_helpers.make_vision_prefill_masks(
+        tokens=tokens, token_mask=token_mask, cache_length=8
+    )
+
+    # Causal mask (GLOBAL layers): key k visible iff k <= q AND k is not
+    # PAD. Columns 6-7 are the not-yet-written cache slots.
+    expected_attn = [
+        # keys:  4  9 -2 -2 10  P  .  .
+        [1, 0, 0, 0, 0, 0, 0, 0],  # q0: text        sees itself only
+        [1, 1, 0, 0, 0, 0, 0, 0],  # q1: <soi>
+        [1, 1, 1, 0, 0, 0, 0, 0],  # q2: soft token  strictly causal here
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q3: soft token
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q4: <eoi>
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q5: PAD row (PAD key col 5 stays hidden)
+    ]
+    np.testing.assert_array_equal(np.asarray(attn[0], dtype=int), expected_attn)
+
+    # Sliding mask (LOCAL_SLIDING layers): identical, except the two soft
+    # tokens (positions 2 and 3) see each other bidirectionally — the single
+    # added entry is q2 -> k3.
+    expected_sliding = [
+        # keys:  4  9 -2 -2 10  P  .  .
+        [1, 0, 0, 0, 0, 0, 0, 0],  # q0: text
+        [1, 1, 0, 0, 0, 0, 0, 0],  # q1: <soi>
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q2: soft token  <- sees soft k3 (ahead)
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q3: soft token
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q4: <eoi>       causal again
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q5: PAD row
+    ]
+    np.testing.assert_array_equal(
+        np.asarray(sliding[0], dtype=int), expected_sliding
+    )
+
   def test_causal_mask_matches_baseline_helper(self):
     """First output == baseline make_causal_prefill_mask (unchanged rule)."""
     attn, _, token_mask = _masks(self.TOKENS, cache_length=10)

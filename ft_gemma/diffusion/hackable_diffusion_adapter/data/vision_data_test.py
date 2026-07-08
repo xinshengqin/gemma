@@ -29,7 +29,8 @@ SOFT = -2
 
 class ExpandImagePlaceholdersTest(absltest.TestCase):
 
-  def test_expansion_exact_token_sequence(self):
+  def test_canonical_usage(self):
+    """[2, 11, <|image|>, 12] with S_v=3 -> the placeholder becomes a span."""
     transform = vision_data.ExpandImagePlaceholders()
     features = transform.map({
         'prompt': np.array([2, 11, IMG, 12], dtype=np.int32),
@@ -37,6 +38,7 @@ class ExpandImagePlaceholdersTest(absltest.TestCase):
     })
     np.testing.assert_array_equal(
         features['prompt'],
+        #  2   11  \n\n  <soi>  -2    -2    -2   <eoi>  \n\n  12
         [2, 11, NN, SOI, SOFT, SOFT, SOFT, EOI, NN, 12],
     )
 
@@ -53,7 +55,8 @@ class ExpandImagePlaceholdersTest(absltest.TestCase):
 
 class ImageSpanMaskTest(absltest.TestCase):
 
-  def test_single_span_covers_slots_and_markers(self):
+  def test_canonical_usage(self):
+    """The -2 run plus two marker tokens on each side is the span."""
     #          0  1  2   3    4     5     6    7   8  9
     prompt = [2, 5, NN, SOI, SOFT, SOFT, EOI, NN, 6, 0]
     span = vision_data.image_span_mask(np.array(prompt, dtype=np.int32))
@@ -74,6 +77,48 @@ class ImageSpanMaskTest(absltest.TestCase):
 
 
 class VisionSequenceTargetShiftTest(absltest.TestCase):
+
+  def test_canonical_usage(self):
+    """One toy example with the full inputs and outputs written out."""
+    features = vision_data.VisionSequenceTargetShift().map({
+        # position:  0  1  2   3    4     5     6    7   8  9(pad)
+        'prompt': np.array(
+            [2, 5, NN, SOI, SOFT, SOFT, EOI, NN, 6, 0], dtype=np.int32
+        ),
+        # canvas positions 10..13; last slot is an invalid (PAD) canvas slot.
+        'canvas': np.array([7, 8, 1, 0], dtype=np.int32),
+        'canvas_mask': np.array([True, True, True, False]),
+    })
+
+    # Targets: the full sequence (prompt ++ canvas) shifted left by one.
+    np.testing.assert_array_equal(
+        features['encoder_target'],
+        # pos:  0  1   2    3     4     5    6   7  8  9  10 11 12 13
+        [5, NN, SOI, SOFT, SOFT, EOI, NN, 6, 0, 7, 8, 1, 0, 0],
+    )
+
+    # Loss mask: position i supervised iff token i AND token i+1 are valid
+    # (baseline rule) AND neither position i nor i+1 lies in the image span
+    # [2..7] (vision rule).
+    np.testing.assert_array_equal(
+        features['encoder_target_mask'],
+        [
+            1,  # 0: bos(2) -> 5            text before the span
+            0,  # 1: 5 -> \n\n              next position enters the span
+            0,  # 2: \n\n                   in span
+            0,  # 3: <soi>                  in span
+            0,  # 4: -2 soft slot           in span
+            0,  # 5: -2 soft slot           in span
+            0,  # 6: <eoi>                  in span
+            0,  # 7: \n\n                   in span
+            0,  # 8: 6 -> PAD               next token invalid (baseline)
+            0,  # 9: PAD position           invalid (baseline)
+            1,  # 10: canvas 7 -> 8         supervised
+            1,  # 11: canvas 8 -> 1 (eos)   supervised
+            0,  # 12: canvas 1 -> PAD slot  next canvas slot invalid
+            0,  # 13: last position         always masked
+        ],
+    )
 
   def setUp(self):
     super().setUp()
@@ -123,6 +168,46 @@ class VisionSequenceTargetShiftTest(absltest.TestCase):
 class PreprocessAndPatchifyImageTest(absltest.TestCase):
 
   MAX_SOFT_TOKENS = 4  # P_p = 36
+
+  def test_canonical_usage(self):
+    """A solid-white 20x30 image, all outputs written out.
+
+    With a budget of 4 soft tokens (36 patches), the aspect-preserving
+    resize maps 20x30 px -> 48x96 px = a 3-row x 6-column grid of 16x16
+    patches (18 real patches), i.e. S_v = 18 / 9 = 2 soft tokens. A white
+    image stays exactly 1.0 after the [0,1] rescale, so every real patch is
+    all-ones and every padding patch all-zeros.
+    """
+    transform = vision_data.PreprocessAndPatchifyImage(
+        max_soft_tokens=self.MAX_SOFT_TOKENS
+    )
+    white = np.full((20, 30, 3), 255, dtype=np.uint8)
+    features = transform.map({'image': white})
+
+    self.assertEqual(features['soft_token_count'], 2)
+
+    # Patch grid positions, raster order (x fastest), then -1 padding.
+    np.testing.assert_array_equal(
+        features['positions_xy'],
+        [
+            # row 0 of the patch grid
+            [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
+            # row 1
+            [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1],
+            # row 2
+            [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2],
+            # 18 padding slots (P_p = 36)
+            [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1],
+            [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1],
+            [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1],
+        ],
+    )
+
+    # 18 real patches of exactly 1.0 (white), 18 padding patches of 0.0;
+    # each patch is 16*16*3 = 768 values.
+    self.assertEqual(features['patches'].shape, (36, 768))
+    np.testing.assert_array_equal(features['patches'][:18], 1.0)
+    np.testing.assert_array_equal(features['patches'][18:], 0.0)
 
   def test_shapes_padding_and_soft_token_count(self):
     transform = vision_data.PreprocessAndPatchifyImage(

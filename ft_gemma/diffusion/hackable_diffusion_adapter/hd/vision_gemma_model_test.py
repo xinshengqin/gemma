@@ -176,6 +176,47 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
         soft.shape, (2, S_MAX, self.model.config.embed_dim)
     )
 
+  def test_merge_mm_embeddings_canonical_usage(self):
+    """One toy example of the merge contract, slot positions hardcoded.
+
+    Input: an 8-token row whose positions 3 and 4 hold the -2 sentinels,
+    plus one 6x3-patch image (S_v = 2 soft tokens):
+
+        position:  0    1    2      3     4     5      6    7
+        token:     2    5    12    -2    -2    13     7    0
+                  bos  text <soi>  soft  soft  <eoi>  text PAD
+
+    Output: the text embeddings with EXACTLY rows 3 and 4 replaced by the
+    two projected soft tokens — every other row bit-identical. (The row
+    *values* come from network parameters, so this canonical test pins the
+    contract — which rows change — rather than golden numbers, which would
+    only snapshot the random init.)
+    """
+    tokens = jnp.asarray([[2, 5, 12, -2, -2, 13, 7, 0]], dtype=jnp.int32)
+    patches, positions_xy, s_v = vision_test_utils.make_grid_image(6, 3, 0)
+    self.assertEqual(s_v, 2)
+
+    embeddings = self.model.apply(
+        self.variables, tokens, method=lambda m, t: m.embedder.encode(t)
+    )
+    merged = self.model.apply(
+        self.variables,
+        tokens=tokens,
+        embeddings=embeddings,
+        images=(jnp.asarray(patches)[None], jnp.asarray(positions_xy)[None]),
+        method='_merge_mm_embeddings',
+    )
+
+    row_changed = [
+        bool(np.any(np.asarray(merged[0, i]) != np.asarray(embeddings[0, i])))
+        for i in range(8)
+    ]
+    self.assertEqual(
+        row_changed,
+        # 0:bos  1:text 2:<soi> 3:soft 4:soft 5:<eoi> 6:text 7:PAD
+        [False, False, False, True, True, False, False, False],
+    )
+
   def test_merge_changes_only_the_soft_token_slots(self):
     """Merged embeddings differ from text embeddings exactly at the -2 slots
     (padding soft rows are discarded via the slot-0 restore)."""

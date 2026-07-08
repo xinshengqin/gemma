@@ -184,6 +184,52 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
   # Vision prefill contract.
   ##############################################################################
 
+  def test_prefill_kv_cache_with_encoder_canonical_usage(self):
+    """One toy example; all parameter-free outputs written out.
+
+    Input: one 6-token prompt with a 2-slot image span, an 8-slot cache,
+    and one 6x3-patch image (S_v = 2):
+
+        position:  0    1     2     3     4     5
+        token:     2    5    -2    -2     6     0
+                  bos  text  soft  soft  text  PAD
+
+    (Logits and cache K/V values depend on network parameters, so this test
+    pins their shapes and cursor; the design's numeric behavior is covered
+    by the property tests below.)
+    """
+    tokens = jnp.asarray([[2, 5, -2, -2, 6, 0]], dtype=jnp.int32)
+    patches, positions_xy, s_v = vision_test_utils.make_grid_image(6, 3, 0)
+    self.assertEqual(s_v, 2)
+    cache, logits, positions, attn = self._prefill(
+        images=(jnp.asarray(patches)[None], jnp.asarray(positions_xy)[None]),
+        tokens=tokens,
+        cache_length=8,
+    )
+
+    # RoPE positions: cumsum(valid) - 1. The -2 soft slots are non-PAD, so
+    # they advance the counter like normal tokens; the PAD repeats.
+    np.testing.assert_array_equal(positions, [[0, 1, 2, 3, 4, 4]])
+
+    # Returned (causal) attention mask over the 8-slot cache.
+    np.testing.assert_array_equal(
+        np.asarray(attn[0], dtype=int),
+        [
+            # keys:  2  5 -2 -2  6  P  .  .   (cols 6-7: unwritten cache)
+            [1, 0, 0, 0, 0, 0, 0, 0],  # q0: bos
+            [1, 1, 0, 0, 0, 0, 0, 0],  # q1: text
+            [1, 1, 1, 0, 0, 0, 0, 0],  # q2: soft token
+            [1, 1, 1, 1, 0, 0, 0, 0],  # q3: soft token
+            [1, 1, 1, 1, 1, 0, 0, 0],  # q4: text
+            [1, 1, 1, 1, 1, 0, 0, 0],  # q5: PAD row
+        ],
+    )
+
+    # Full-length logits (remove_mm_logits bypassed) and write cursor at 6.
+    self.assertEqual(logits.shape, (1, 6, VOCAB))
+    np.testing.assert_array_equal(np.asarray(cache['layer_0']['end_index']), [6])
+    self.assertEqual(cache['layer_0']['k'].shape, (1, 8, 2, 8))
+
   def test_prefill_with_images_full_length_logits_and_cursor(self):
     cache, logits, positions, attn = self._prefill(
         images=(self.patches, self.positions_xy)

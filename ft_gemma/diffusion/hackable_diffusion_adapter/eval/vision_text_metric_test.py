@@ -38,6 +38,21 @@ class VisionDetokenizeTest(absltest.TestCase):
         prompt='batch.prompt', response='samples', num_texts=2
     )
 
+  def test_canonical_usage(self):
+    """Hardcoded ids in, hardcoded text out.
+
+    The prompt ids spell "Solve the puzzle." with two -2 soft-token
+    placeholders spliced in; the response ids spell " the puzzle". The
+    sentinels are dropped, prompt and response are concatenated.
+    """
+    texts = self.metric.get_state(
+        #                 "Solve"  " the"  " puzzle"  soft  soft  "."
+        prompt=np.array([[2, 76857, 506, 29344, -2, -2, 236761]], np.int32),
+        #                    " the"  " puzzle"  <eos>
+        response=np.array([[506, 29344, 1]], np.int32),
+    ).compute()
+    self.assertEqual(texts, ['Solve the puzzle. the puzzle'])
+
   def test_strips_soft_token_placeholders(self):
     """Decodes an expanded prompt; result == decoding without sentinels."""
     prompt = _prompt_with_placeholders()
