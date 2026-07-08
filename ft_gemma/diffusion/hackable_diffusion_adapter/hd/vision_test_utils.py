@@ -1,9 +1,18 @@
 """Shared fixtures for the ft_gemma vision unit tests.
 
-Builds the tiny model from ``configs/sft_sudoku_vision_full_tiny.py`` and one
-fake visual-sudoku example, folded through the exact data-pipeline
-transforms of ``make_sudoku_vision_ds`` (parse -> format -> tokenize ->
-patchify -> expand placeholder -> pad -> chunk -> shift).
+Two kinds of fixtures:
+
+* Config-based (`make_tiny_model`, `make_fake_batch`): the tiny model from
+  ``configs/sft_sudoku_vision_full_tiny.py`` and one fake visual-sudoku
+  example, folded through the exact data-pipeline transforms of
+  ``make_sudoku_vision_ds``. Uses the real vocab/tokenizer — slower, used by
+  the end-to-end behavior tests.
+
+* Standalone (`make_standalone_config` / `make_standalone_vision_model` /
+  `make_grid_image`): a self-contained micro model (vocab 64, tiny vision
+  budget S_max=4) with hand-built token rows and synthetic patch grids — no
+  tokenizer, no dataset. Used by the fast API-level unit tests of the
+  overridden methods.
 """
 
 import functools
@@ -15,6 +24,10 @@ from ft_gemma.diffusion.hackable_diffusion_adapter.data.sudoku import (
 from ft_gemma.diffusion.hackable_diffusion_adapter.data.sudoku import (
     sudoku_vision_data,
 )
+from ft_gemma.diffusion.hackable_diffusion_adapter.hd import vision_gemma_model
+from gemma.gm.nn.gemma4 import _config
+from gemma.gm.nn.gemma4 import _modules
+from gemma.gm.nn.gemma4.vision import _encoder as gemma_vision
 import jax
 import numpy as np
 
@@ -95,3 +108,138 @@ def model_kwargs_from_batch(batch):
       patches=batch["patches"],
       positions_xy=batch["positions_xy"],
   )
+
+
+################################################################################
+# Standalone micro-model fixtures (no tokenizer / dataset).
+################################################################################
+
+# Micro vision budget: S_max = 4 soft-token slots -> P_p = 4 * 3**2 = 36
+# patches per image, patch dim 16*16*3 = 768.
+STANDALONE_VOCAB = 64
+STANDALONE_S_MAX = 4
+STANDALONE_MAX_PATCHES = STANDALONE_S_MAX * 9
+PATCH_DIM = 768
+
+
+def make_standalone_config() -> _config.TransformerConfig:
+  """Micro Gemma4-MoE config, topologically like 26B_A4B + vision tower."""
+  return _config.TransformerConfig(
+      num_embed=STANDALONE_VOCAB,
+      embed_dim=32,
+      hidden_dim=48,
+      num_heads=4,
+      head_dim=8,
+      num_kv_heads=2,
+      final_logit_softcap=30.0,
+      num_global_kv_heads=1,
+      use_post_attn_norm=True,
+      use_post_ffw_norm=True,
+      qk_norm_with_scale=True,
+      attention_types=[
+          _modules.AttentionType.LOCAL_SLIDING,
+          _modules.AttentionType.LOCAL_SLIDING,
+          _modules.AttentionType.GLOBAL,
+      ],
+      global_key_size=16,
+      k_eq_v_global=True,
+      global_rope_proportion=0.25,
+      local_rope_proportion=1.0,
+      sliding_window_size=1024,
+      per_layer_input_dim=0,
+      enable_moe=True,
+      num_experts=4,
+      expert_dim=16,
+      top_k_experts=2,
+      moe_dense_hidden_dim=48,
+      vision_encoder=gemma_vision.VisionEncoder(
+          d_model=16,
+          num_layers=2,
+          num_heads=2,
+          ffw_hidden=32,
+          output_length=STANDALONE_S_MAX,
+          use_clipped_linears=False,
+          standardize_embeddings=True,
+      ),
+      use_bidirectional_attention="vision",
+  )
+
+
+def make_standalone_vision_model() -> (
+    vision_gemma_model.VisionDiffusionGemma_26B_A4B
+):
+  return vision_gemma_model.VisionDiffusionGemma_26B_A4B(
+      config=make_standalone_config()
+  )
+
+
+def make_grid_image(
+    num_patches_x: int,
+    num_patches_y: int,
+    seed: int = 0,
+    max_patches: int = STANDALONE_MAX_PATCHES,
+):
+  """Builds one synthetic image as a padded patch grid.
+
+  Mirrors ``patchify_and_pad`` output for one image: raster-order patches of
+  an ``num_patches_x x num_patches_y`` grid, padded to ``max_patches`` with
+  ``positions_xy = -1`` on padding. Both grid sides must be multiples of the
+  3x3 pooling kernel; the image yields ``S_v = (x * y) / 9`` soft tokens.
+
+  Args:
+    num_patches_x: Grid width in patches (multiple of 3).
+    num_patches_y: Grid height in patches (multiple of 3).
+    seed: Seed for the patch pixel values.
+    max_patches: Padded patch count P_p.
+
+  Returns:
+    (patches f32[max_patches, PATCH_DIM], positions_xy int32[max_patches, 2],
+    soft_token_count int).
+  """
+  assert num_patches_x % 3 == 0 and num_patches_y % 3 == 0
+  num_real = num_patches_x * num_patches_y
+  assert num_real <= max_patches
+
+  rng = np.random.RandomState(seed)
+  patches = np.zeros((max_patches, PATCH_DIM), dtype=np.float32)
+  patches[:num_real] = rng.uniform(0.0, 1.0, (num_real, PATCH_DIM))
+
+  xs, ys = np.meshgrid(
+      np.arange(num_patches_x), np.arange(num_patches_y), indexing="xy"
+  )
+  positions = np.full((max_patches, 2), -1, dtype=np.int32)
+  positions[:num_real, 0] = xs.reshape(-1)
+  positions[:num_real, 1] = ys.reshape(-1)
+
+  return patches, positions, num_real // 9
+
+
+def make_expanded_prompt(
+    prompt_len: int, soft_token_count: int, text_ids: list[int]
+):
+  """Hand-builds an expanded prompt row: text ++ span ++ text ++ PAD.
+
+  Layout mirrors the data pipeline's expansion,
+  ``[text..., nn, soi, -2 x S_v, eoi, nn, text..., 0...]``, with arbitrary
+  small ids standing in for the marker tokens (the model only special-cases
+  PAD=0 and the -2 sentinel).
+
+  Args:
+    prompt_len: Padded prompt length P.
+    soft_token_count: Number of -2 soft-token slots S_v.
+    text_ids: Small token ids; first half goes before the span, second half
+      after.
+
+  Returns:
+    int32[prompt_len] token row.
+  """
+  half = len(text_ids) // 2
+  row = (
+      text_ids[:half]
+      + [11, 12]  # stand-ins for \n\n <start_of_image>
+      + [-2] * soft_token_count
+      + [13, 11]  # stand-ins for <end_of_image> \n\n
+      + text_ids[half:]
+  )
+  assert len(row) <= prompt_len
+  return np.array(row + [0] * (prompt_len - len(row)), dtype=np.int32)
