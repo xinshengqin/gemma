@@ -275,15 +275,12 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
     np.testing.assert_array_equal(
         np.asarray(merged[1, 5]), np.asarray(soft[1, 2].astype(merged.dtype))
     )
-    # The PADDING soft rows (two for example 0, one for example 1) were
-    # discarded: they scattered onto slot 0, which was restored to the bos
-    # embedding afterwards — in BOTH examples.
-    np.testing.assert_array_equal(
-        np.asarray(merged[0, 0]), np.asarray(embeddings[0, 0])
-    )
-    np.testing.assert_array_equal(
-        np.asarray(merged[1, 0]), np.asarray(embeddings[1, 0])
-    )
+    # NOTE: the PADDING soft rows being discarded is already asserted by the
+    # False entries in row_changed above (slot 0 is where they would leak:
+    # they scatter onto it and it is restored). This last check only guards
+    # the TEST's validity, not the merge: it confirms a padding soft row is
+    # distinguishable from the bos embedding, so the False at position 0
+    # genuinely witnesses the restore rather than passing vacuously.
     self.assertTrue(
         np.any(
             np.asarray(merged[0, 0])
