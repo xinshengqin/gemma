@@ -106,6 +106,85 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
     )
 
   ##############################################################################
+  # encoder_call: canonical usage.
+  ##############################################################################
+
+  def test_encoder_call_canonical_usage(self):
+    """One toy example of the override's full input contract, written out.
+
+    ``encoder_call`` takes the tokens plus ONE conditioning dict; the two
+    vision keys (``images``, ``sliding_attention_mask``) are what the
+    override adds over the baseline wrapper:
+
+        x (position 0..5):   2    5    -2    -2     6     0
+                            bos  text  soft  soft  text  PAD
+
+        conditioning_embeddings = {
+          'kv_cache':               zero-initialized cache, 8 slots
+          'positions':              [[0, 1, 2, 3, 4, 4]]
+          'attention_mask':         causal mask below      (GLOBAL layers)
+          'sliding_attention_mask': sliding mask below     (LOCAL layers)
+          'images':                 (patches [1, 36, 768],
+                                     positions_xy [1, 36, 2])   # S_v = 2
+        }
+
+    Output: a Transformer ``Output`` whose logits cover every input position
+    (remove_mm_logits bypassed) and whose cache now holds the written
+    prompt K/V — image slots included — with the cursor at 6.
+    """
+    tokens = jnp.asarray([[2, 5, -2, -2, 6, 0]], dtype=jnp.int32)
+    patches, positions_xy, s_v = vision_test_utils.make_grid_image(6, 3, 0)
+    self.assertEqual(s_v, 2)
+
+    positions = jnp.asarray([[0, 1, 2, 3, 4, 4]], dtype=jnp.int32)
+    attention_mask = jnp.asarray([[
+        # keys:  2  5 -2 -2  6  P  .  .   (cols 6-7: unwritten cache)
+        [1, 0, 0, 0, 0, 0, 0, 0],  # q0: bos
+        [1, 1, 0, 0, 0, 0, 0, 0],  # q1: text
+        [1, 1, 1, 0, 0, 0, 0, 0],  # q2: soft token (causal on GLOBAL layers)
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q3: soft token
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q4: text
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q5: PAD row
+    ]], dtype=jnp.bool_)
+    sliding_attention_mask = jnp.asarray([[
+        # keys:  2  5 -2 -2  6  P  .  .
+        [1, 0, 0, 0, 0, 0, 0, 0],  # q0: bos
+        [1, 1, 0, 0, 0, 0, 0, 0],  # q1: text
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q2: soft token <- sees soft k3 (ahead)
+        [1, 1, 1, 1, 0, 0, 0, 0],  # q3: soft token
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q4: text
+        [1, 1, 1, 1, 1, 0, 0, 0],  # q5: PAD row
+    ]], dtype=jnp.bool_)
+
+    output = self.net.apply(
+        self.variables,
+        x=tokens,
+        conditioning_embeddings={
+            'kv_cache': self._make_cache(cache_length=8),
+            'positions': positions,
+            'attention_mask': attention_mask,
+            'sliding_attention_mask': sliding_attention_mask,
+            'images': (
+                jnp.asarray(patches)[None],
+                jnp.asarray(positions_xy)[None],
+            ),
+        },
+        method=self.net.encoder_call,
+    )
+
+    # Full-length AR logits: one row per input position.
+    self.assertEqual(output.logits.shape, (1, 6, VOCAB))
+    # The cache came back written up to the cursor at 6; slots 0-5 hold the
+    # prompt K/V (2-3 = image-derived, 5 = masked-out PAD garbage), 6-7 empty.
+    np.testing.assert_array_equal(
+        np.asarray(output.cache['layer_0']['end_index']), [6]
+    )
+    k = np.asarray(output.cache['layer_0']['k'], dtype=np.float32)
+    for slot in (0, 1, 2, 3, 4, 5):
+      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
+    np.testing.assert_array_equal(k[0, 6:], 0.0)
+
+  ##############################################################################
   # Baseline equivalence when no vision conditioning is present.
   ##############################################################################
 
