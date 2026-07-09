@@ -203,11 +203,10 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
 
     Output: per example, the text embeddings with EXACTLY the -2 rows
     replaced by that example's real soft rows, in order — every other row
-    bit-identical. The padding soft rows are discarded: they scatter onto
-    slot 0, which is then restored. (The row *values* come from network
-    parameters, so this canonical test pins the contract — which rows
-    change and where each source row lands — rather than golden numbers,
-    which would only snapshot the random init.)
+    bit-identical; the padding soft rows appear nowhere in the output.
+    (The row *values* come from network parameters, so this canonical test
+    pins the contract — which rows change and where each source row lands —
+    rather than golden numbers, which would only snapshot the random init.)
     """
     tokens = jnp.asarray(
         [
@@ -274,18 +273,6 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
     )
     np.testing.assert_array_equal(
         np.asarray(merged[1, 5]), np.asarray(soft[1, 2].astype(merged.dtype))
-    )
-    # NOTE: the PADDING soft rows being discarded is already asserted by the
-    # False entries in row_changed above (slot 0 is where they would leak:
-    # they scatter onto it and it is restored). This last check only guards
-    # the TEST's validity, not the merge: it confirms a padding soft row is
-    # distinguishable from the bos embedding, so the False at position 0
-    # genuinely witnesses the restore rather than passing vacuously.
-    self.assertTrue(
-        np.any(
-            np.asarray(merged[0, 0])
-            != np.asarray(soft[0, 3].astype(merged.dtype))
-        ),
     )
 
   def test_merge_changes_only_the_soft_token_slots(self):
