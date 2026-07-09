@@ -104,10 +104,11 @@ class VisionDiffusionGemmaTest(absltest.TestCase):
           self.tokens[b : b + 1],
           images=(self.patches[b : b + 1], self.positions_xy[b : b + 1]),
       )
-      np.testing.assert_allclose(
-          np.asarray(self.output.logits[b], dtype=np.float32),
-          np.asarray(single.logits[0], dtype=np.float32),
-          atol=1e-5,
+      # Bitwise equality: every per-example computation is independent
+      # along the batch axis (measured max difference 0.0 on CPU).
+      np.testing.assert_array_equal(
+          np.asarray(self.output.logits[b]),
+          np.asarray(single.logits[0]),
           err_msg=f'batched logits row {b} != individual run of example {b}',
       )
 

@@ -28,7 +28,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+# Padded prompt length P used by these micro tests: token rows are
+# right-padded to this many positions before entering the encoder.
 P = 16
+# Micro-model vocabulary size V — the last dimension of the returned logits.
 VOCAB = vision_test_utils.STANDALONE_VOCAB
 
 
