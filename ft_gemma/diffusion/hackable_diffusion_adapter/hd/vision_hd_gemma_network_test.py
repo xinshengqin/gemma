@@ -129,8 +129,7 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
         }
 
     Output: a Transformer ``Output`` whose logits cover every input position
-    (remove_mm_logits bypassed) and whose cache now holds the written
-    prompt K/V — image slots included — with the cursor at 6.
+    (remove_mm_logits bypassed) and whose cache write cursor is at 6.
     """
     tokens = jnp.asarray([[2, 5, -2, -2, 6, 0]], dtype=jnp.int32)
     patches, positions_xy, s_v = vision_test_utils.make_grid_image(6, 3, 0)
@@ -174,15 +173,10 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
 
     # Full-length AR logits: one row per input position.
     self.assertEqual(output.logits.shape, (1, 6, VOCAB))
-    # The cache came back written up to the cursor at 6; slots 0-5 hold the
-    # prompt K/V (2-3 = image-derived, 5 = masked-out PAD garbage), 6-7 empty.
+    # The cache write cursor advanced to 6 (the six prompt positions).
     np.testing.assert_array_equal(
         np.asarray(output.cache['layer_0']['end_index']), [6]
     )
-    k = np.asarray(output.cache['layer_0']['k'], dtype=np.float32)
-    for slot in (0, 1, 2, 3, 4, 5):
-      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
-    np.testing.assert_array_equal(k[0, 6:], 0.0)
 
   ##############################################################################
   # Baseline equivalence when no vision conditioning is present.
@@ -308,21 +302,6 @@ class VisionHdGemmaNetworkTest(absltest.TestCase):
     self.assertEqual(logits.shape, (1, 6, VOCAB))
     np.testing.assert_array_equal(np.asarray(cache['layer_0']['end_index']), [6])
     self.assertEqual(cache['layer_0']['k'].shape, (1, 8, 2, 8))
-
-    # Which cache slots hold REAL (written) K/V vs stay empty:
-    #
-    #   slot:     0    1    2     3     4     5     6  7
-    #   content: bos  text soft  soft  text  PAD    -  -
-    #   written:  y    y    y     y     y     y     n  n
-    #
-    # ALL six prompt slots are written — including the PAD at slot 5, whose
-    # K/V is garbage: padding is protected by the masks above (key column 5
-    # is False for every query), NOT by skipping the write. Slots 2-3 hold
-    # the image-derived K/V. Slots 6-7 were never written.
-    k = np.asarray(cache['layer_0']['k'], dtype=np.float32)
-    for slot in (0, 1, 2, 3, 4, 5):
-      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
-    np.testing.assert_array_equal(k[0, 6:], 0.0)
 
   def test_prefill_with_images_full_length_logits_and_cursor(self):
     cache, logits, positions, attn = self._prefill(

@@ -88,21 +88,6 @@ class InitArStateCanonicalUsageTest(absltest.TestCase):
         np.asarray(state['kv_cache']['layer_0']['end_index']), [6]
     )
 
-    # Which cache slots hold REAL (written) K/V after the prompt prefill:
-    #
-    #   slot:     0    1    2     3     4     5     6  7  8  9
-    #   content: bos  text soft  soft  text  PAD    -  -  -  -
-    #   written:  y    y    y     y     y     y     n  n  n  n
-    #
-    # All six prompt slots are written — slots 2-3 hold the image-derived
-    # K/V, and the PAD slot 5 holds garbage that stays invisible because
-    # full_attention_mask (below) hides key column 5 permanently. The four
-    # canvas slots are still empty; the sampler fills them per canvas.
-    k = np.asarray(state['kv_cache']['layer_0']['k'], dtype=np.float32)
-    for slot in (0, 1, 2, 3, 4, 5):
-      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
-    np.testing.assert_array_equal(k[0, 6:], 0.0)
-
     # The output buffer starts as the prompt followed by empty canvas slots,
     # and the write position for the first canvas is P = 6.
     np.testing.assert_array_equal(

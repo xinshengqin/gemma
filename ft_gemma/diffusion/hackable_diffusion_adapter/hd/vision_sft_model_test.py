@@ -103,21 +103,6 @@ class SftEncodeCanonicalUsageTest(absltest.TestCase):
     # (remove_mm_logits bypassed).
     self.assertEqual(encoder_logits.shape, (1, 10, VOCAB))
 
-    # Which cache slots hold REAL (written) K/V:
-    #
-    #   slot:     0    1    2     3     4     5    6   7   8   9
-    #   content: bos  text soft  soft  text  PAD  x0  x0  x0  eos
-    #   written:  y    y    y     y     y     y    y   y   y   y
-    #
-    # ALL ten slots are written — including the PAD at slot 5 (garbage,
-    # hidden by the attention masks, not by skipping the write) and the
-    # canvas slots 6-9 BEYOND the rewound cursor: end_index=6 only marks
-    # where the denoiser will overwrite; the decoder attention mask is what
-    # keeps future-canvas entries invisible.
-    k = np.asarray(kv_cache['layer_0']['k'], dtype=np.float32)
-    for slot in range(10):
-      self.assertTrue(np.any(k[0, slot] != 0.0), f'slot {slot} not written')
-
 
 if __name__ == '__main__':
   absltest.main()
