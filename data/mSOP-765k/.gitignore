@@ -1,0 +1,5 @@
+# Raw source mirror and generated datasets: large, and the upstream data and
+# reference code are CC BY-NC-ND 4.0, so they must not be redistributed here.
+mirror/
+out/
+reference/
