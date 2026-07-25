@@ -96,6 +96,59 @@ Measured overhead of default compression on incompressible data: **46 bytes per
 paper's released code, which is CC BY-NC-ND 4.0 (NonCommercial, NoDerivatives)
 and must not be redistributed from this Apache-2.0 repository.
 
+## The answer: `target_json`
+
+`target_json` is the response an SFT model should generate for the stored
+`prompt`. It carries **8 keys = 7 targets** — exactly the targets the paper
+scores in its zero-shot evaluation (Tables 4 and 5):
+
+```
+brand · weight_number · weight_unit · different_types
+price · regular_price · relative_discount · absolute_discount
+```
+
+`product_category` and `GTINs` are deliberately excluded. The paper states both
+are not present in the advertisement images, generates no zero-shot prediction
+for either, and reports no score for them; training a prompt-only model to emit
+them from pixels teaches confident invention. There is no flag for this — the
+grounded view is the only output.
+
+Two consequences worth knowing:
+
+* Key order matches Table 5's cumulative union, which accumulates targets left
+  to right, so the metric can be computed in the stored order.
+* Both excluded fields remain as **per-field features** on every record, so a
+  different view can be rebuilt by an online preprocessor with no re-conversion
+  and no re-download.
+
+The 9 / 10 / 7 counts in the source, this file, and the paper all describe the
+same data: the parquet has 9 target columns; `product_weight` splits into
+`weight_number` + `weight_unit`, giving 10 field keys; dropping the 2 lookup
+fields leaves 8 keys, which is 7 targets.
+
+## Golden test
+
+`convert_msop765k_test.py` runs the real pipeline end to end over a **synthetic
+mirror** and compares the resulting Bagz record against
+`testdata/golden_record.json`. Any unintended change to the record layout, the
+prompt, or a normalization fails the test.
+
+* The mirror is synthetic so the test is offline and deterministic, and so no
+  image from the CC BY-NC-ND source is redistributed here. Its single row still
+  exercises the awkward cases: multi-valued GTINs, a comma-bearing brand, a NaN
+  `different_types`, a float discount, and absent promotion fields.
+* The image is a checked-in fixture (`testdata/synthetic_ad.jpg`) rather than
+  generated at test time, so the golden hash does not move when Pillow changes
+  its JPEG encoding.
+* The record's image is embedded verbatim in the golden, base64-encoded because
+  JSON cannot hold raw bytes, so the golden pins the exact bytes the pipeline
+  emitted rather than a digest of them.
+* Regenerate after an intended change with `--update_golden`, then review the
+  diff.
+
+Verified that the golden actually bites: reverting the null wording in the
+golden file makes the test fail with a readable diff.
+
 ## Open issues
 
 These are known divergences and unresolved choices, not defects to fix blindly.
@@ -106,20 +159,22 @@ These are known divergences and unresolved choices, not defects to fix blindly.
    continuations) and a stray double period. The authors' own artifacts
    disagree three ways: `"Extract all targets."` (zero-shot, fine-tuning),
    `"Extract all features."` (RAG), `"Extract the features."` (paper §4).
-2. **`null` vs `NaN`.** The prompt instructs "return NaN" while `target_json`
-   emits `null`. The paper's schema has the same contradiction. Pick one.
-3. **Target view.** `target_json` currently carries all 10 keys. The paper's
-   zero-shot evaluation scores only 7 targets — `product_category` and `GTINs`
-   are unanswerable from the image and were never evaluated. A `--target_view
-   {vlm7,full9}` flag is proposed but not implemented.
-4. **Key order** follows Figure 2b (product fields, then promotion); the
+2. **Deliberate deviation: `null`, not `NaN`.** The paper's prompt says "return
+   NaN" while its schema serializes an absent value to `null`. The stored
+   prompt says `null` so instruction and supervision agree. This is a knowing
+   divergence from the published wording.
+3. **Key order** follows Figure 2b (product fields, then promotion); the
    paper's schema declares a different order. Matters for SFT, not for scoring.
-5. **Types.** All values are strings here; the paper's schema is typed
+4. **Types.** All values are strings here; the paper's schema is typed
    (`float`, `int`, enums).
-6. **Nullability.** Every field may be null here. The paper's schema makes
-   brand, category, price, GTINs, weight and different_types *required*.
-7. **`different_types` NaN→"no" is unverified** against the authors'
+5. **Nullability.** Every field may be null here. The paper's schema makes
+   brand, price, weight and different_types *required*.
+6. **`different_types` NaN→"no" is unverified** against the authors'
    evaluation notebook.
+7. **Comparability is not settled by the data alone.** Matching Tables 4 and 5
+   also requires the full 36,571-row test split and a faithful implementation
+   of the paper's `custom_acc` and `⋃_test` metrics. Neither is in this
+   directory; the eval side is where the remaining fidelity risk sits.
 
 ## Verified on the toy run
 
@@ -130,3 +185,6 @@ These are known divergences and unresolved choices, not defects to fix blindly.
 normalization behaves as specified; prompt constant across records; key set
 matches the schema; sharded spec and random access stable; sample fill-rates
 within 2σ of the full split.
+
+`doc/msop765k_test_samples.html` is the checked-in render of 5 sampled records
+from that run, regenerated with `inspect_msop765k.py --k 5`.

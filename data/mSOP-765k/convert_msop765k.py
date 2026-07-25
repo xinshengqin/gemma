@@ -52,18 +52,39 @@ _HF_BASE = (
 )
 _IMAGE_DIR = "rpp-765k_512"
 
-# Prompt wording is quoted verbatim from the paper (Section 4, "Prompts and
-# Structured Output Schemata") so the stored beta prompt matches the published
-# zero-shot protocol.
+# Prompt wording follows the paper (Section 4, "Prompts and Structured Output
+# Schemata"), except that a missing target is called `null` rather than `NaN`:
+# JSON has no NaN literal, and the paper's own schema serializes an absent value
+# to `null` despite its wording. Instructing NaN while supervising null would
+# train the model against its own instructions.
 _PROMPT_SYSTEM = "You are an assistant for question-answering tasks."
 _PROMPT_USER = (
     "Do the user-provided task on the input image. The answer must be provided"
     ' in JSON format. The task is: "Extract the features.". If there is no'
-    " information of a target, return NaN."
+    " information of a target, return null."
 )
 
-# Target key order follows Figure 2b: product data, then promotion data.
+# Keys serialized into `target_json`: the seven targets the paper evaluates in
+# its zero-shot setting (Tables 4 and 5), with product weight split into number
+# and unit as the paper does. `product_category` and `GTINs` are deliberately
+# absent: neither is present in the advertisement image, so the paper generates
+# no zero-shot prediction for them and reports no score. Order matches Table 5's
+# cumulative union, which accumulates targets left to right.
 _TARGET_KEYS = (
+    "brand",
+    "weight_number",
+    "weight_unit",
+    "different_types",
+    "price",
+    "regular_price",
+    "relative_discount",
+    "absolute_discount",
+)
+
+# Every field kept as its own feature, including the two omitted from
+# `target_json`. Keeping them means a different target view can be rebuilt from
+# a record without re-running this pipeline.
+_FIELD_KEYS = (
     "brand",
     "product_category",
     "GTINs",
@@ -266,7 +287,7 @@ def build_features(row, image_bytes: bytes) -> dict[str, bytes]:
   }
   # Per-field copies let an online preprocessor rebuild a different prompt or
   # target view without re-running this pipeline. Absent values are empty.
-  for key in _TARGET_KEYS:
+  for key in _FIELD_KEYS:
     value = target[key]
     if value is None:
       encoded = b""
@@ -388,6 +409,7 @@ def main(argv):
       "prompt_system": _PROMPT_SYSTEM,
       "prompt": _PROMPT_USER,
       "target_keys": list(_TARGET_KEYS),
+      "field_keys": list(_FIELD_KEYS),
       "source": f"{_HF_BASE}/",
   }
   metadata_path = os.path.join(output_dir, f"msop765k_{split}.metadata.json")
