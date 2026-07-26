@@ -128,10 +128,18 @@ fields leaves 8 keys, which is 7 targets.
 
 ## Golden test
 
-`convert_msop765k_test.py` runs the real pipeline end to end over a **synthetic
-mirror** and compares the Bagz file it produces against `testdata/golden.bagz`,
-which is itself a pipeline output. `testdata/` holds that one file and nothing
-else.
+The guiding principle is that the test is **a production run at the smallest
+possible scale**, not a reimplementation of one. `convert_msop765k_test.py`
+invokes `convert.main`, the same entry point the CLI uses, against a mirror
+holding one image shard in the real on-disk layout, and compares the Bagz file
+that comes out against `testdata/golden.bagz`.
+
+`testdata/` holds the miniature mirror and the golden:
+
+```
+testdata/golden.bagz                              expected output
+testdata/mirror/rpp-765k_512/test/10000.tar.gz    input, real shard layout
+```
 
 Comparison is **semantic, not byte-wise**: both files are decoded and checked
 record by record for an identical feature set and identical feature values. A
@@ -139,24 +147,31 @@ byte comparison would couple the test to the bagz container, the compression
 setting and protobuf map ordering, and would report only that two binaries
 differ.
 
-* The mirror is synthetic so the test is offline and deterministic, and so no
-  image from the CC BY-NC-ND source is redistributed here. Its single row still
-  exercises the awkward cases: multi-valued GTINs, a comma-bearing brand, a NaN
-  `different_types`, a float discount, and absent promotion fields.
-* The input image is read back **out of the golden**, so fixture and golden
-  cannot drift and a Pillow upgrade cannot move the image. An encoder is needed
-  only to bootstrap a golden from nothing.
+* Nothing is stubbed. `ensure_parquet` and `ensure_shards` run for real and take
+  their cache-hit path because the mirror is pre-populated — the same path every
+  rerun of a real conversion takes.
+* The image shard is checked in rather than generated, so the input is a fixed
+  artifact and no encoder version can move it. It is synthetic, so the test
+  stays offline and redistributes no source imagery.
+* The parquet is written from `_ROW` at run time so the field values stay
+  readable in source; the pipeline reads it with the same `pd.read_parquet` call
+  it uses in production.
 * Failure messages print text features in full — the prompt and `target_json`
   are the likeliest things to drift, and a digest of them says nothing. Only
   undecodable payloads such as the image collapse to a digest.
 * A separate case asserts the golden opens with a bare `bagz.Reader(path)`,
   guarding the container: this is what a no-compression regression would trip.
+  Another asserts the metadata sidecar `main` writes.
 * Regenerate after an intended change with `--update_golden`, then review the
   reported diff.
 
 Verified the comparison actually bites, across all five drift modes: a changed
 text feature, changed image bytes, a removed feature, an added feature, and a
 changed record count.
+
+What one record cannot cover, and stays untested here: the download branches of
+`ensure_parquet` and `ensure_shards`, the `--max_records` sampling path, and
+multi-shard output. All three only engage above this scale.
 
 ## Open issues
 

@@ -14,20 +14,24 @@
 
 """Golden end-to-end test for the mSOP-765k conversion pipeline.
 
-Runs the real pipeline over a synthetic mirror and compares the Bagz file it
-produces against `testdata/golden.bagz`, record by record and feature by
-feature, so an unintended change to the record layout, the prompt, or any field
-normalization fails loudly.
+The test is a production run at the smallest possible scale: it invokes
+`convert.main`, the same entry point the CLI uses, against a mirror holding one
+image shard in the real on-disk layout, and compares the Bagz file that comes
+out against `testdata/golden.bagz` record by record and feature by feature.
 
-The mirror is synthetic on purpose: the test stays offline and deterministic,
-and no image from the CC BY-NC-ND source dataset is redistributed here. The
-single row still exercises the awkward cases in the real data — a multi-valued
-GTIN list, a brand containing a comma, a NaN `different_types`, a float
-discount, and absent promotion fields.
+Nothing about the pipeline is stubbed or reimplemented here. The only departure
+from a full run is that the mirror is pre-populated, so `ensure_parquet` and
+`ensure_shards` take their cache-hit path and no network call is made — which is
+the same path every rerun of a real conversion takes.
 
-The pipeline's input image is read back out of the golden rather than generated,
-so the two cannot drift apart and a Pillow upgrade cannot move the fixture. Only
-regenerating the golden from scratch needs an encoder.
+`testdata/mirror/` is a miniature of a real mirror: the image shard is checked
+in, in the exact `{split}/{label}.tar.gz` layout the downloader produces. It is
+synthetic, so the test stays offline and no image from the CC BY-NC-ND source
+dataset is redistributed here. The parquet is written from `_ROW` at run time so
+the field values stay readable in source; the pipeline reads it with the same
+`pd.read_parquet` call it uses in production. That single row still exercises the
+awkward cases in the real data: a multi-valued GTIN list, a brand containing a
+comma, a NaN `different_types`, a float discount, and absent promotion fields.
 
 Regenerate after an intended change, then review the reported diff:
 
@@ -35,15 +39,14 @@ Regenerate after an intended change, then review the reported diff:
 """
 
 import hashlib
-import io
 import json
 import os
 import shutil
-import tarfile
 import tempfile
 
 from absl import flags
 from absl.testing import absltest
+from absl.testing import flagsaver
 import bagz
 import pandas as pd
 import tensorflow as tf
@@ -56,15 +59,16 @@ _UPDATE_GOLDEN = flags.DEFINE_bool(
 
 _TESTDATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "testdata")
 _GOLDEN_PATH = os.path.join(_TESTDATA, "golden.bagz")
+_FIXTURE_MIRROR = os.path.join(_TESTDATA, "mirror")
 
 _SPLIT = "test"
-_LABEL = "10000"
-_FILENAME = "119.jpg"
 
 # One row shaped like the real parquet, chosen to cover every normalization.
+# `label` and `filename` must match the checked-in shard under the fixture
+# mirror, exactly as they match a downloaded shard in production.
 _ROW = {
-    "label": _LABEL,
-    "filename": _FILENAME,
+    "label": "10000",
+    "filename": "119.jpg",
     "brand": "Nescafé, Dolce Gusto",
     "price": 1.29,
     "regular_price": None,
@@ -78,7 +82,7 @@ _ROW = {
 
 
 ################################################################################
-# MARK: Bagz helpers
+# MARK: Helpers
 ################################################################################
 
 
@@ -113,39 +117,6 @@ def _show(value: bytes) -> str:
   return repr(text)
 
 
-def _generate_jpeg() -> bytes:
-  """Encode a stand-in advertisement crop. Only used to bootstrap a golden."""
-  from PIL import Image  # pylint: disable=g-import-not-at-top
-
-  image = Image.new("RGB", (512, 384), (240, 240, 240))
-  for x in range(0, 512, 64):
-    for y in range(0, 384, 64):
-      if (x // 64 + y // 64) % 2:
-        image.paste((90, 110, 140), (x, y, x + 64, y + 64))
-  buffer = io.BytesIO()
-  image.save(buffer, format="JPEG", quality=90, optimize=False)
-  return buffer.getvalue()
-
-
-def _fixture_image() -> bytes:
-  """The image fed to the pipeline, taken from the golden when one exists."""
-  if os.path.exists(_GOLDEN_PATH):
-    return read_records(_GOLDEN_PATH)[0]["image/encoded"]
-  return _generate_jpeg()
-
-
-def _build_mirror(root: str, image_bytes: bytes) -> pd.DataFrame:
-  """Write a one-row parquet and its matching image tarball into `root`."""
-  frame = pd.DataFrame([_ROW]).astype({"label": str, "filename": str})
-  shard = convert.shard_path(root, _SPLIT, _LABEL)
-  os.makedirs(os.path.dirname(shard), exist_ok=True)
-  with tarfile.open(shard, "w:gz") as tar:
-    info = tarfile.TarInfo(f"{_LABEL}/{_FILENAME}")
-    info.size = len(image_bytes)
-    tar.addfile(info, io.BytesIO(image_bytes))
-  return frame
-
-
 ################################################################################
 # MARK: Test
 ################################################################################
@@ -153,23 +124,28 @@ def _build_mirror(root: str, image_bytes: bytes) -> pd.DataFrame:
 
 class GoldenEndToEndTest(absltest.TestCase):
 
-  def _run_pipeline(self, destination: str) -> str:
-    """Run the real conversion into `destination`; return the shard path."""
-    with tempfile.TemporaryDirectory() as tmp:
-      mirror = os.path.join(tmp, "mirror")
-      frame = _build_mirror(mirror, _fixture_image())
-      written, num_shards = convert.write_records(
-          frame, mirror, _SPLIT, destination
-      )
-      self.assertEqual(written, 1)
-      self.assertEqual(num_shards, 1)
-    return os.path.join(
-        destination, f"msop765k_{_SPLIT}-00000-of-00001.bagz"
+  def _convert(self, workdir: str) -> str:
+    """Run the production entry point over a tiny mirror; return the shard."""
+    mirror = os.path.join(workdir, "mirror")
+    output = os.path.join(workdir, "out")
+    # Copy so a run can never mutate the checked-in fixture.
+    shutil.copytree(_FIXTURE_MIRROR, mirror)
+    pd.DataFrame([_ROW]).astype({"label": str, "filename": str}).to_parquet(
+        os.path.join(mirror, f"{_SPLIT}.parquet"), index=False
     )
+
+    with flagsaver.flagsaver(
+        split=_SPLIT, mirror_dir=mirror, output_dir=output, max_records=-1
+    ):
+      convert.main(["convert_msop765k"])
+
+    shard = os.path.join(output, f"msop765k_{_SPLIT}-00000-of-00001.bagz")
+    self.assertTrue(os.path.exists(shard), f"pipeline wrote no shard at {shard}")
+    return shard
 
   def _produced_records(self) -> list[dict[str, bytes]]:
     with tempfile.TemporaryDirectory() as tmp:
-      return read_records(self._run_pipeline(tmp))
+      return read_records(self._convert(tmp))
 
   def assertRecordsEqual(
       self,
@@ -207,7 +183,7 @@ class GoldenEndToEndTest(absltest.TestCase):
     if _UPDATE_GOLDEN.value:
       os.makedirs(_TESTDATA, exist_ok=True)
       with tempfile.TemporaryDirectory() as tmp:
-        shutil.copyfile(self._run_pipeline(tmp), _GOLDEN_PATH)
+        shutil.copyfile(self._convert(tmp), _GOLDEN_PATH)
       self.skipTest(f"golden rewritten: {_GOLDEN_PATH}")
 
     self.assertRecordsEqual(self._produced_records(), read_records(_GOLDEN_PATH))
@@ -218,10 +194,24 @@ class GoldenEndToEndTest(absltest.TestCase):
     self.assertLen(reader, 1)
     self.assertNotEmpty(reader[0])
 
+  def test_writes_metadata_alongside_the_shard(self):
+    """`main` emits the sidecar describing the run, as production does."""
+    with tempfile.TemporaryDirectory() as tmp:
+      shard = self._convert(tmp)
+      with open(
+          os.path.join(os.path.dirname(shard), f"msop765k_{_SPLIT}.metadata.json")
+      ) as handle:
+        metadata = json.load(handle)
+    self.assertEqual(metadata["num_records"], 1)
+    self.assertEqual(metadata["num_shards"], 1)
+    self.assertEqual(metadata["split"], _SPLIT)
+    self.assertEqual(metadata["target_keys"], list(convert._TARGET_KEYS))
+
   def test_target_json_excludes_lookup_fields(self):
     """The two fields absent from the image stay out of the answer."""
-    record = self._produced_records()[0]
-    target = json.loads(record["target_json"].decode("utf-8"))
+    target = json.loads(
+        self._produced_records()[0]["target_json"].decode("utf-8")
+    )
     self.assertNotIn("product_category", target)
     self.assertNotIn("GTINs", target)
     self.assertEqual(tuple(target), convert._TARGET_KEYS)
