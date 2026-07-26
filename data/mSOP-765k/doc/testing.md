@@ -15,9 +15,7 @@ are added, removed or renamed.**
 4. **Records are compared on content, not bytes** — same feature set, same value
    per feature. Storage order is not part of the contract, and byte equality
    would pin the container and its compression as well as the data.
-5. **The golden changes only with human review.** That is what lets principle 2
-   be applied: anything the golden already covers needs no second test, because
-   a regression cannot be laundered by regenerating it.
+5. **The golden changes only with human review.**
 
 ## Running them
 
