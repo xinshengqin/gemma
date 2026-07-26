@@ -343,7 +343,11 @@ def write_records(
             # this keeps shards readable by a plain `bagz.Reader(path)`, which
             # `CompressionNone` does not.
             writer = bagz.Writer(path)
-          writer.write(example.SerializeToString())
+          # Deterministic serialization sorts the feature map. Without it,
+          # protobuf emits map entries in an order that varies per process, so
+          # two runs over identical input produce different bytes and the output
+          # is not reproducible.
+          writer.write(example.SerializeToString(deterministic=True))
           written += 1
   finally:
     if writer is not None:

@@ -24,14 +24,25 @@ from a full run is that the mirror is pre-populated, so `ensure_parquet` and
 `ensure_shards` take their cache-hit path and no network call is made — which is
 the same path every rerun of a real conversion takes.
 
-`testdata/mirror/` is a miniature of a real mirror: the image shard is checked
-in, in the exact `{split}/{label}.tar.gz` layout the downloader produces. It is
-synthetic, so the test stays offline and no image from the CC BY-NC-ND source
-dataset is redistributed here. The parquet is written from `_ROW` at run time so
-the field values stay readable in source; the pipeline reads it with the same
-`pd.read_parquet` call it uses in production. That single row still exercises the
-awkward cases in the real data: a multi-valued GTIN list, a brand containing a
-comma, a NaN `different_types`, a float discount, and absent promotion fields.
+`testdata/mirror/` is a complete miniature mirror, holding everything a run
+reads and nothing the test invents: the parquet, with the source's own column
+order and dtypes, and one image shard in the `{split}/{label}.tar.gz` layout the
+downloader produces. It is synthetic, so the test stays offline and no image
+from the CC BY-NC-ND source dataset is redistributed here.
+
+Because the fixture is a real input, the golden is reproducible straight from
+the command line:
+
+    python convert_msop765k.py --split test \\
+        --mirror_dir testdata/mirror --output_dir /tmp/out
+
+That writes a Bagz file matching `testdata/golden.bagz`.
+
+Its single row exercises the awkward cases in the real data: a multi-valued GTIN
+list (`04012839567131, 04012839567148`), a brand containing a comma
+(`Nescafé, Dolce Gusto`), a NaN `different_types`, a float `relative_discount`
+of `13.0`, a `product_weight` of `120.0 Gramm`, and absent `regular_price` and
+`absolute_discount`.
 
 Regenerate after an intended change, then review the reported diff:
 
@@ -48,7 +59,6 @@ from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 import bagz
-import pandas as pd
 import tensorflow as tf
 
 import convert_msop765k as convert
@@ -62,23 +72,6 @@ _GOLDEN_PATH = os.path.join(_TESTDATA, "golden.bagz")
 _FIXTURE_MIRROR = os.path.join(_TESTDATA, "mirror")
 
 _SPLIT = "test"
-
-# One row shaped like the real parquet, chosen to cover every normalization.
-# `label` and `filename` must match the checked-in shard under the fixture
-# mirror, exactly as they match a downloaded shard in production.
-_ROW = {
-    "label": "10000",
-    "filename": "119.jpg",
-    "brand": "Nescafé, Dolce Gusto",
-    "price": 1.29,
-    "regular_price": None,
-    "relative_discount": 13.0,
-    "absolute_discount": None,
-    "product_category": "Scombermix, Scomber Mix",
-    "GTINs": "04012839567131, 04012839567148",
-    "product_weight": "120.0 Gramm",
-    "different_types": None,
-}
 
 
 ################################################################################
@@ -124,18 +117,17 @@ def _show(value: bytes) -> str:
 
 class GoldenEndToEndTest(absltest.TestCase):
 
-  def _convert(self, workdir: str) -> str:
-    """Run the production entry point over a tiny mirror; return the shard."""
-    mirror = os.path.join(workdir, "mirror")
-    output = os.path.join(workdir, "out")
-    # Copy so a run can never mutate the checked-in fixture.
-    shutil.copytree(_FIXTURE_MIRROR, mirror)
-    pd.DataFrame([_ROW]).astype({"label": str, "filename": str}).to_parquet(
-        os.path.join(mirror, f"{_SPLIT}.parquet"), index=False
-    )
+  def _convert(self, output: str) -> str:
+    """Run the production entry point over the fixture; return the shard.
 
+    The mirror is the checked-in fixture itself, read exactly as a real run
+    reads a populated mirror. Nothing is constructed here.
+    """
     with flagsaver.flagsaver(
-        split=_SPLIT, mirror_dir=mirror, output_dir=output, max_records=-1
+        split=_SPLIT,
+        mirror_dir=_FIXTURE_MIRROR,
+        output_dir=output,
+        max_records=-1,
     ):
       convert.main(["convert_msop765k"])
 
@@ -187,6 +179,27 @@ class GoldenEndToEndTest(absltest.TestCase):
       self.skipTest(f"golden rewritten: {_GOLDEN_PATH}")
 
     self.assertRecordsEqual(self._produced_records(), read_records(_GOLDEN_PATH))
+
+  def test_output_is_byte_identical_to_golden(self):
+    """A run over the fixture reproduces the golden file exactly.
+
+    Holds only because records are serialized deterministically; protobuf
+    otherwise orders the feature map differently in every process. Kept
+    separate from the semantic comparison because it also pins the container,
+    so a bagz or zstd upgrade can move it while the records are unchanged.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+      with open(self._convert(tmp), "rb") as handle:
+        produced = handle.read()
+    with open(_GOLDEN_PATH, "rb") as handle:
+      expected = handle.read()
+    self.assertEqual(
+        produced,
+        expected,
+        f"output is no longer byte-identical to the golden"
+        f" ({len(produced)} bytes produced, {len(expected)} golden). If the"
+        " records still match, the container or its compression changed.",
+    )
 
   def test_golden_is_readable_by_a_plain_reader(self):
     """Guards the container itself: no reader-side options may be required."""
