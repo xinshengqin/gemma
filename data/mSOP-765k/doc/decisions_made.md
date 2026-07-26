@@ -129,25 +129,34 @@ fields leaves 8 keys, which is 7 targets.
 ## Golden test
 
 `convert_msop765k_test.py` runs the real pipeline end to end over a **synthetic
-mirror** and compares the resulting Bagz record against
-`testdata/golden_record.json`. Any unintended change to the record layout, the
-prompt, or a normalization fails the test.
+mirror** and compares the Bagz file it produces against `testdata/golden.bagz`,
+which is itself a pipeline output. `testdata/` holds that one file and nothing
+else.
+
+Comparison is **semantic, not byte-wise**: both files are decoded and checked
+record by record for an identical feature set and identical feature values. A
+byte comparison would couple the test to the bagz container, the compression
+setting and protobuf map ordering, and would report only that two binaries
+differ.
 
 * The mirror is synthetic so the test is offline and deterministic, and so no
   image from the CC BY-NC-ND source is redistributed here. Its single row still
   exercises the awkward cases: multi-valued GTINs, a comma-bearing brand, a NaN
   `different_types`, a float discount, and absent promotion fields.
-* The image is a checked-in fixture (`testdata/synthetic_ad.jpg`) rather than
-  generated at test time, so the golden hash does not move when Pillow changes
-  its JPEG encoding.
-* The record's image is embedded verbatim in the golden, base64-encoded because
-  JSON cannot hold raw bytes, so the golden pins the exact bytes the pipeline
-  emitted rather than a digest of them.
+* The input image is read back **out of the golden**, so fixture and golden
+  cannot drift and a Pillow upgrade cannot move the image. An encoder is needed
+  only to bootstrap a golden from nothing.
+* Failure messages print text features in full — the prompt and `target_json`
+  are the likeliest things to drift, and a digest of them says nothing. Only
+  undecodable payloads such as the image collapse to a digest.
+* A separate case asserts the golden opens with a bare `bagz.Reader(path)`,
+  guarding the container: this is what a no-compression regression would trip.
 * Regenerate after an intended change with `--update_golden`, then review the
-  diff.
+  reported diff.
 
-Verified that the golden actually bites: reverting the null wording in the
-golden file makes the test fail with a readable diff.
+Verified the comparison actually bites, across all five drift modes: a changed
+text feature, changed image bytes, a removed feature, an added feature, and a
+changed record count.
 
 ## Open issues
 

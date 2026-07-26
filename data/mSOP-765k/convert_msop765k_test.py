@@ -14,25 +14,31 @@
 
 """Golden end-to-end test for the mSOP-765k conversion pipeline.
 
-Runs the real pipeline over a synthetic mirror and compares the resulting Bagz
-record against a checked-in golden file, so an unintended change to the record
-layout, the prompt, or any field normalization fails loudly.
+Runs the real pipeline over a synthetic mirror and compares the Bagz file it
+produces against `testdata/golden.bagz`, record by record and feature by
+feature, so an unintended change to the record layout, the prompt, or any field
+normalization fails loudly.
 
 The mirror is synthetic on purpose: the test stays offline and deterministic,
-and no image from the CC BY-NC-ND source dataset is redistributed in this
-repository. The row values still exercise the awkward cases in the real data —
-a multi-valued GTIN list, a brand containing a comma, a NaN `different_types`,
-a float discount, and absent promotion fields.
+and no image from the CC BY-NC-ND source dataset is redistributed here. The
+single row still exercises the awkward cases in the real data — a multi-valued
+GTIN list, a brand containing a comma, a NaN `different_types`, a float
+discount, and absent promotion fields.
 
-Regenerate the golden after an intended change:
+The pipeline's input image is read back out of the golden rather than generated,
+so the two cannot drift apart and a Pillow upgrade cannot move the fixture. Only
+regenerating the golden from scratch needs an encoder.
+
+Regenerate after an intended change, then review the reported diff:
 
     python convert_msop765k_test.py --update_golden
 """
 
-import base64
+import hashlib
 import io
 import json
 import os
+import shutil
 import tarfile
 import tempfile
 
@@ -45,12 +51,11 @@ import tensorflow as tf
 import convert_msop765k as convert
 
 _UPDATE_GOLDEN = flags.DEFINE_bool(
-    "update_golden", False, "Rewrite the golden file from this run's output."
+    "update_golden", False, "Rewrite the golden Bagz from this run's output."
 )
 
 _TESTDATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "testdata")
-_GOLDEN_PATH = os.path.join(_TESTDATA, "golden_record.json")
-_IMAGE_PATH = os.path.join(_TESTDATA, "synthetic_ad.jpg")
+_GOLDEN_PATH = os.path.join(_TESTDATA, "golden.bagz")
 
 _SPLIT = "test"
 _LABEL = "10000"
@@ -72,23 +77,68 @@ _ROW = {
 }
 
 
-def _synthetic_jpeg() -> bytes:
-  """The checked-in 512px stand-in for an advertisement crop.
+################################################################################
+# MARK: Bagz helpers
+################################################################################
 
-  Read from disk rather than regenerated, so the golden hash does not move when
-  the Pillow version changes its JPEG encoding.
+
+def read_records(path: str) -> list[dict[str, bytes]]:
+  """Decode every record in a Bagz file into its feature mapping."""
+  reader = bagz.Reader(path)
+  records = []
+  for index in range(len(reader)):
+    example = tf.train.Example()
+    example.ParseFromString(reader[index])
+    records.append({
+        key: value.bytes_list.value[0]
+        for key, value in example.features.feature.items()
+    })
+  return records
+
+
+def _show(value: bytes) -> str:
+  """Render a feature for a failure message.
+
+  Text is shown as text, however long, because the prompt and the target are
+  the features most likely to drift and a digest of them says nothing. Only
+  undecodable payloads such as the image collapse to a digest.
   """
-  with open(_IMAGE_PATH, "rb") as handle:
-    return handle.read()
+  try:
+    text = value.decode("utf-8")
+  except UnicodeDecodeError:
+    digest = hashlib.sha256(value).hexdigest()[:16]
+    return f"<{len(value)} bytes, sha256:{digest}>"
+  if len(text) > 400:
+    text = f"{text[:400]}… (+{len(text) - 400} chars)"
+  return repr(text)
 
 
-def _build_mirror(root: str) -> pd.DataFrame:
+def _generate_jpeg() -> bytes:
+  """Encode a stand-in advertisement crop. Only used to bootstrap a golden."""
+  from PIL import Image  # pylint: disable=g-import-not-at-top
+
+  image = Image.new("RGB", (512, 384), (240, 240, 240))
+  for x in range(0, 512, 64):
+    for y in range(0, 384, 64):
+      if (x // 64 + y // 64) % 2:
+        image.paste((90, 110, 140), (x, y, x + 64, y + 64))
+  buffer = io.BytesIO()
+  image.save(buffer, format="JPEG", quality=90, optimize=False)
+  return buffer.getvalue()
+
+
+def _fixture_image() -> bytes:
+  """The image fed to the pipeline, taken from the golden when one exists."""
+  if os.path.exists(_GOLDEN_PATH):
+    return read_records(_GOLDEN_PATH)[0]["image/encoded"]
+  return _generate_jpeg()
+
+
+def _build_mirror(root: str, image_bytes: bytes) -> pd.DataFrame:
   """Write a one-row parquet and its matching image tarball into `root`."""
   frame = pd.DataFrame([_ROW]).astype({"label": str, "filename": str})
-
   shard = convert.shard_path(root, _SPLIT, _LABEL)
   os.makedirs(os.path.dirname(shard), exist_ok=True)
-  image_bytes = _synthetic_jpeg()
   with tarfile.open(shard, "w:gz") as tar:
     info = tarfile.TarInfo(f"{_LABEL}/{_FILENAME}")
     info.size = len(image_bytes)
@@ -96,84 +146,99 @@ def _build_mirror(root: str) -> pd.DataFrame:
   return frame
 
 
-def _record_to_dict(record: bytes) -> dict[str, object]:
-  """Decode a Bagz record in full.
-
-  The image is carried verbatim, base64-encoded because JSON cannot hold raw
-  bytes, so the golden pins the exact image the pipeline emitted rather than a
-  digest of it. This is the synthetic fixture, not dataset imagery.
-  """
-  example = tf.train.Example()
-  example.ParseFromString(record)
-  features = {
-      key: value.bytes_list.value[0]
-      for key, value in example.features.feature.items()
-  }
-  image = features.pop("image/encoded")
-  decoded = {
-      key: value.decode("utf-8") for key, value in sorted(features.items())
-  }
-  decoded["image/encoded.base64"] = base64.b64encode(image).decode("ascii")
-  return decoded
+################################################################################
+# MARK: Test
+################################################################################
 
 
 class GoldenEndToEndTest(absltest.TestCase):
 
-  def _run_pipeline(self) -> dict[str, object]:
+  def _run_pipeline(self, destination: str) -> str:
+    """Run the real conversion into `destination`; return the shard path."""
     with tempfile.TemporaryDirectory() as tmp:
       mirror = os.path.join(tmp, "mirror")
-      output = os.path.join(tmp, "out")
-      frame = _build_mirror(mirror)
-
-      written, num_shards = convert.write_records(frame, mirror, _SPLIT, output)
+      frame = _build_mirror(mirror, _fixture_image())
+      written, num_shards = convert.write_records(
+          frame, mirror, _SPLIT, destination
+      )
       self.assertEqual(written, 1)
       self.assertEqual(num_shards, 1)
+    return os.path.join(
+        destination, f"msop765k_{_SPLIT}-00000-of-00001.bagz"
+    )
 
-      reader = bagz.Reader(
-          os.path.join(output, f"msop765k_{_SPLIT}@{num_shards}.bagz")
+  def _produced_records(self) -> list[dict[str, bytes]]:
+    with tempfile.TemporaryDirectory() as tmp:
+      return read_records(self._run_pipeline(tmp))
+
+  def assertRecordsEqual(
+      self,
+      actual: list[dict[str, bytes]],
+      expected: list[dict[str, bytes]],
+  ) -> None:
+    """Every record must carry the same feature set and the same values."""
+    self.assertEqual(
+        len(actual),
+        len(expected),
+        f"record count changed: {len(actual)} produced, {len(expected)} golden",
+    )
+    for index, (got, want) in enumerate(zip(actual, expected)):
+      missing = sorted(set(want) - set(got))
+      added = sorted(set(got) - set(want))
+      self.assertFalse(
+          missing or added,
+          f"record {index} feature set changed:"
+          f" missing={missing} unexpected={added}",
       )
-      self.assertLen(reader, 1)
-      return _record_to_dict(reader[0])
+      differing = [key for key in sorted(want) if got[key] != want[key]]
+      if differing:
+        detail = "\n".join(
+            f"  {key}:\n    golden:   {_show(want[key])}"
+            f"\n    produced: {_show(got[key])}"
+            for key in differing
+        )
+        self.fail(
+            f"record {index} differs from the golden in"
+            f" {len(differing)} feature(s):\n{detail}\n"
+            "If the change was intended, rerun with --update_golden."
+        )
 
-  def test_record_matches_golden(self):
-    actual = self._run_pipeline()
-
+  def test_matches_golden(self):
     if _UPDATE_GOLDEN.value:
-      os.makedirs(os.path.dirname(_GOLDEN_PATH), exist_ok=True)
-      with open(_GOLDEN_PATH, "w") as handle:
-        json.dump(actual, handle, indent=2, ensure_ascii=False, sort_keys=True)
-        handle.write("\n")
+      os.makedirs(_TESTDATA, exist_ok=True)
+      with tempfile.TemporaryDirectory() as tmp:
+        shutil.copyfile(self._run_pipeline(tmp), _GOLDEN_PATH)
       self.skipTest(f"golden rewritten: {_GOLDEN_PATH}")
 
-    with open(_GOLDEN_PATH) as handle:
-      expected = json.load(handle)
+    self.assertRecordsEqual(self._produced_records(), read_records(_GOLDEN_PATH))
 
-    self.assertEqual(
-        actual,
-        expected,
-        "Converted record no longer matches the golden file. If the change was"
-        " intended, rerun with --update_golden and review the diff.",
-    )
+  def test_golden_is_readable_by_a_plain_reader(self):
+    """Guards the container itself: no reader-side options may be required."""
+    reader = bagz.Reader(_GOLDEN_PATH)
+    self.assertLen(reader, 1)
+    self.assertNotEmpty(reader[0])
 
   def test_target_json_excludes_lookup_fields(self):
     """The two fields absent from the image stay out of the answer."""
-    target = json.loads(self._run_pipeline()["target_json"])
+    record = self._produced_records()[0]
+    target = json.loads(record["target_json"].decode("utf-8"))
     self.assertNotIn("product_category", target)
     self.assertNotIn("GTINs", target)
     self.assertEqual(tuple(target), convert._TARGET_KEYS)
 
   def test_lookup_fields_remain_available_as_features(self):
     """They are still carried per-field, so another view needs no re-convert."""
-    record = self._run_pipeline()
-    self.assertEqual(record["GTINs"], "04012839567131, 04012839567148")
-    self.assertEqual(record["product_category"], "Scombermix, Scomber Mix")
+    record = self._produced_records()[0]
+    self.assertEqual(record["GTINs"], b"04012839567131, 04012839567148")
+    self.assertEqual(record["product_category"], b"Scombermix, Scomber Mix")
 
   def test_prompt_and_target_agree_on_missing_values(self):
     """The prompt names the same sentinel the target actually uses."""
-    record = self._run_pipeline()
-    target = json.loads(record["target_json"])
-    self.assertIn("return null", record["prompt"])
-    self.assertNotIn("NaN", record["prompt"])
+    record = self._produced_records()[0]
+    prompt = record["prompt"].decode("utf-8")
+    target = json.loads(record["target_json"].decode("utf-8"))
+    self.assertIn("return null", prompt)
+    self.assertNotIn("NaN", prompt)
     self.assertIsNone(target["regular_price"])
 
 
