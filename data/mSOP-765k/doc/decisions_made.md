@@ -4,7 +4,7 @@ Context for reviewing `convert_msop765k.py` and `inspect_msop765k.py`. Records
 what was decided and why, plus the choices still open.
 
 Source: [mSOP-765k](https://www.msop-765k.org/) (Lamm & Keuper, TMLR 01/2026),
-built on Retail-786k. Data and reference code are CC BY-NC-ND 4.0.
+built on Retail-786k.
 
 ## Scope
 
@@ -90,11 +90,10 @@ Measured overhead of default compression on incompressible data: **46 bytes per
 200 KB (0.02%)**. Switched to plain `bagz.Writer(path)`, matching
 `convert_sudoku.py`. Interoperability beats a 0.02% size saving.
 
-## Licensing
+## What is not checked in
 
-`mirror/`, `out/` and `reference/` are gitignored. `reference/` holds the
-paper's released code, which is CC BY-NC-ND 4.0 (NonCommercial, NoDerivatives)
-and must not be redistributed from this Apache-2.0 repository.
+`mirror/`, `out/` and `reference/` are gitignored: they are large, and they are
+downloaded artifacts rather than source.
 
 ## The answer: `target_json`
 
@@ -138,7 +137,8 @@ that comes out against `testdata/golden.bagz`.
 
 ```
 testdata/golden.bagz                              expected output
-testdata/mirror/rpp-765k_512/test/10000.tar.gz    input, real shard layout
+testdata/mirror/test.parquet                      one real row, source schema
+testdata/mirror/rpp-765k_512/test/10068.tar.gz    the real shard, byte for byte
 ```
 
 Comparison is **on record content, not bytes**: both files are decoded and
@@ -159,18 +159,17 @@ worth having on its own; the test does not depend on it.
 * Nothing is stubbed. `ensure_parquet` and `ensure_shards` run for real and take
   their cache-hit path because the mirror is pre-populated — the same path every
   rerun of a real conversion takes.
-* The image shard is checked in rather than generated, so the input is a fixed
-  artifact and no encoder version can move it. It is synthetic, so the test
-  stays offline and redistributes no source imagery.
-* The parquet is written from `_ROW` at run time so the field values stay
-  readable in source; the pipeline reads it with the same `pd.read_parquet` call
-  it uses in production.
+* The fixture is a real subset of the source, never fabricated: one row lifted
+  verbatim from `test.parquet` and its label's actual shard copied byte for
+  byte. The row is `10068/34468.jpg`, which happens to hit every awkward case at
+  once — brand `Herta, Genuss Momente`, four GTINs, commas in
+  `product_category`, a NaN `different_types`, a float discount, and two absent
+  promotion fields.
 * Failure messages print text features in full — the prompt and `target_json`
   are the likeliest things to drift, and a digest of them says nothing. Only
   undecodable payloads such as the image collapse to a digest.
-* A separate case asserts the golden opens with a bare `bagz.Reader(path)`,
-  guarding the container: this is what a no-compression regression would trip.
-  Another asserts the metadata sidecar `main` writes.
+* A separate case asserts the metadata sidecar `main` writes, which the golden
+  does not cover; another asserts `_TARGET_KEYS` still governs `target_json`.
 * Regenerate after an intended change with `--update_golden`, then review the
   reported diff.
 

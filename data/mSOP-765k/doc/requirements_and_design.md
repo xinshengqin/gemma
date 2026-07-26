@@ -36,8 +36,7 @@ that feeds the model, and the evaluation metrics all live elsewhere.
 | N1 | **Re-runnable offline.** Fetching is separate from converting; the mirror is an incremental cache, so a re-run costs no downloads. |
 | N2 | **Reproducible.** Converting the same mirror twice produces identical files. |
 | N3 | **Bounded memory.** 765k records and ~73 GB of images must stream, never accumulate. |
-| N4 | **No redistribution.** The source is CC BY-NC-ND 4.0; neither it nor its images may be committed here. |
-| N5 | **Regression-guarded.** An end-to-end test pins the output against a reviewed golden. |
+| N4 | **Regression-guarded.** An end-to-end test pins the output against a reviewed golden. |
 
 ## Design
 

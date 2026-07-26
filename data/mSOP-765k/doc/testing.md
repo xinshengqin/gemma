@@ -12,10 +12,13 @@ are added, removed or renamed.**
    covering behaviour no other case does.
 3. **Test data is a complete production input.** Pointing the production CLI at
    `testdata/mirror` reproduces the golden, so the test constructs nothing.
-4. **Records are compared on content, not bytes** — same feature set, same value
+4. **The end-to-end test uses a real subset of the production input**, never
+   fabricated data. One real row and its real image shard, taken verbatim from
+   the source.
+5. **Records are compared on content, not bytes** — same feature set, same value
    per feature. Storage order is not part of the contract, and byte equality
    would pin the container and its compression as well as the data.
-5. **The golden changes only with human review.**
+6. **The golden changes only with human review.**
 
 ## Running them
 
@@ -53,8 +56,8 @@ constructs nothing.
 
 ```
 testdata/golden.bagz                              expected output
-testdata/mirror/test.parquet                      source column order and dtypes
-testdata/mirror/rpp-765k_512/test/10000.tar.gz    real shard layout
+testdata/mirror/test.parquet                      one real row, source schema
+testdata/mirror/rpp-765k_512/test/10068.tar.gz    the real shard, byte for byte
 ```
 
 Because the fixture is a real mirror, the golden is reproducible from the
@@ -72,11 +75,11 @@ ends to `testdata/visualization/`:
 scripts/visualize_e2e_test_input_output.sh
 ```
 
-Its single row covers the awkward cases in the real data: a multi-valued GTIN
-list, a brand containing a comma (`Nescafé, Dolce Gusto`), a NaN
-`different_types`, a float `relative_discount`, and absent `regular_price` and
-`absolute_discount`. The image is synthetic, so no CC BY-NC-ND source imagery is
-redistributed here.
+The row is `10068/34468.jpg`, chosen because one real record happens to hit
+every awkward case at once: brand `Herta, Genuss Momente`, whose comma must not
+be read as a list separator; four GTINs; commas in `product_category`; a NaN
+`different_types`; a float `relative_discount`; and absent `regular_price` and
+`absolute_discount`.
 
 ## What is comparison, and what is not
 
@@ -101,4 +104,4 @@ green suite:
 | `--max_records` sampling and the seeded permutation | Selection is a no-op when the split holds one row |
 | Multi-shard output and `--records_per_shard` | One record always lands in a single shard |
 | `inspect_msop765k.py` | The viewer has no tests |
-| Anything about the real dataset | The fixture is synthetic; correctness against the true source was checked by the toy-run verification described in `decisions_made.md`, which is not automated |
+| Breadth across the real dataset | The fixture is one real record, so field combinations it does not contain go unchecked; the toy-run verification in `decisions_made.md` covers 200 records but is not automated |

@@ -341,8 +341,8 @@ def main(argv):
         <code>{html.escape(source)}</code>.</p>
       </header>
       <main>{cards}</main>
-      <footer>Source: retail-product-promotion/mSOP-765k (TMLR 01/2026),
-      CC BY-NC-ND 4.0.</footer>
+      <footer>Source: retail-product-promotion/mSOP-765k
+      (Lamm &amp; Keuper, TMLR 01/2026).</footer>
       """)
   with open(html_path, "w") as handle:
     handle.write(document)

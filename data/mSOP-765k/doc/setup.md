@@ -2,7 +2,7 @@
 
 Reproducing this on another machine. A clone gets the code and the test fixture
 but **no dataset**: `mirror/`, `out/` and `reference/` are gitignored, because
-the source is CC BY-NC-ND 4.0 and runs to ~73 GB.
+the source runs to ~73 GB.
 
 ## Quick start
 

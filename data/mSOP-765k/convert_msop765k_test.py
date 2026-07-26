@@ -34,11 +34,10 @@ from a full run is that the mirror is pre-populated, so `ensure_parquet` and
 `ensure_shards` take their cache-hit path and no network call is made — which is
 the same path every rerun of a real conversion takes.
 
-`testdata/mirror/` is a complete miniature mirror, holding everything a run
-reads and nothing the test invents: the parquet, with the source's own column
-order and dtypes, and one image shard in the `{split}/{label}.tar.gz` layout the
-downloader produces. It is synthetic, so the test stays offline and no image
-from the CC BY-NC-ND source dataset is redistributed here.
+`testdata/mirror/` is a complete miniature mirror holding real data: one row
+lifted verbatim from `test.parquet`, with the source's own column order and
+dtypes, and the label's actual `.tar.gz` shard copied byte for byte from the
+download. Nothing about the input is fabricated.
 
 Because the fixture is a real input, the golden can be reproduced straight from
 the command line:
@@ -48,11 +47,11 @@ the command line:
 
 That writes a Bagz file whose records match `testdata/golden.bagz`.
 
-Its single row exercises the awkward cases in the real data: a multi-valued GTIN
-list (`04012839567131, 04012839567148`), a brand containing a comma
-(`Nescafé, Dolce Gusto`), a NaN `different_types`, a float `relative_discount`
-of `13.0`, a `product_weight` of `120.0 Gramm`, and absent `regular_price` and
-`absolute_discount`.
+The row was picked because it happens to hit every awkward case at once:
+`10068/34468.jpg`, brand `Herta, Genuss Momente` (a comma that must not be
+treated as a list separator), four GTINs, commas in `product_category`, a NaN
+`different_types`, a float `relative_discount` of `10.0`, a `product_weight` of
+`100.0 Gramm`, and absent `regular_price` and `absolute_discount`.
 
 Regenerate after an intended change, then review the reported diff:
 

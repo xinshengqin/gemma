@@ -1,7 +1,6 @@
-# Raw source mirror and generated datasets: large, and the upstream data and
-# reference code are CC BY-NC-ND 4.0, so they must not be redistributed here.
-# Anchored to this directory: an unanchored `mirror/` would also swallow the
-# checked-in test fixture at testdata/mirror/.
+# Raw source mirror and generated datasets: large, and downloaded rather than
+# authored. Anchored to this directory: an unanchored `mirror/` would also
+# swallow the checked-in test fixture at testdata/mirror/.
 /mirror/
 /out/
 /reference/
