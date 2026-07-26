@@ -14,9 +14,17 @@
 
 """Visualize records from a converted mSOP-765k Bagz dataset.
 
-Reads the sharded Bagz collection produced by ``convert_msop765k.py``, samples
-``--k`` records and renders them to a self-contained HTML page: the decoded
-advertisement image next to every stored feature.
+Samples ``--k`` examples and renders them to a self-contained HTML page: the
+decoded advertisement image next to every field.
+
+Either end of the pipeline can be inspected:
+
+* ``--stage output`` reads the Bagz produced by ``convert_msop765k.py``, either
+  from ``--bagz`` directly or from ``--output_dir``/``--split`` via the metadata
+  sidecar, and shows the stored features.
+* ``--stage input`` reads the raw mirror — the parquet and the per-label image
+  tarballs — and shows the untransformed source fields, so the two pages can be
+  compared side by side to see what the conversion did.
 """
 
 import base64
@@ -24,30 +32,46 @@ import html
 import io
 import json
 import os
+import tarfile
 import textwrap
 
 from absl import app
 from absl import flags
 from absl import logging
 import numpy as np
+import pandas as pd
 from PIL import Image
 import tensorflow as tf
 
 import bagz
 
+import layout
+
 ################################################################################
 # MARK: Flags
 ################################################################################
 
+_STAGE = flags.DEFINE_enum(
+    "stage",
+    "output",
+    ["input", "output"],
+    "Which end of the pipeline to render.",
+)
+_BAGZ = flags.DEFINE_string(
+    "bagz",
+    "",
+    "stage=output: path or `name@N.bagz` spec to read. Overrides --output_dir.",
+)
 _OUTPUT_DIR = flags.DEFINE_string(
-    "output_dir", "out", "Directory holding the converted Bagz shards."
+    "output_dir", "out", "stage=output: directory holding the converted shards."
+)
+_MIRROR_DIR = flags.DEFINE_string(
+    "mirror_dir", "mirror", "stage=input: directory holding the raw mirror."
 )
 _SPLIT = flags.DEFINE_enum("split", "test", ["test", "train"], "Split to read.")
-_K = flags.DEFINE_integer("k", 5, "Number of records to visualize.")
-_SEED = flags.DEFINE_integer("seed", 0, "Seed for record sampling.")
-_HTML = flags.DEFINE_string(
-    "html", "", "Output HTML path. Defaults to <output_dir>/<split>_samples.html"
-)
+_K = flags.DEFINE_integer("k", 5, "Number of examples to visualize.")
+_SEED = flags.DEFINE_integer("seed", 0, "Seed for sampling.")
+_HTML = flags.DEFINE_string("html", "", "Output HTML path.")
 
 # Rendered before the remaining features, so the image-derived answer is easy to
 # compare against the picture.
@@ -136,46 +160,77 @@ def _row(key: str, value: str) -> str:
   return f"<tr><th>{html.escape(key)}</th><td>{shown}</td></tr>"
 
 
-def render_card(index: int, features: dict[str, bytes]) -> str:
-  """Render one record: image on the left, every stored feature on the right."""
-  image_bytes = features.get("image/encoded", b"")
+def _card(
+    index: int,
+    ident: str,
+    image_bytes: bytes,
+    rows: list[tuple[str, str]],
+    blocks: list[tuple[str, str]],
+) -> str:
+  """Render one example: image on the left, fields and text blocks right."""
   with Image.open(io.BytesIO(image_bytes)) as image:
     width, height = image.size
-    mode = image.format
+    fmt = image.format
   encoded = base64.b64encode(image_bytes).decode()
+  table = "".join(_row(key, value) for key, value in rows)
+  sections = "".join(
+      f'<div class="sec">{html.escape(label)}</div>'
+      f"<pre>{html.escape(text)}</pre>"
+      for label, text in blocks
+  )
+  return f"""<article class="card">
+  <div class="imgwrap">
+    <img src="data:image/jpeg;base64,{encoded}" alt="advertisement">
+  </div>
+  <div class="meta">
+    <div class="rid">example {index} &middot;
+      <code>{html.escape(ident)}</code>
+      &middot; {fmt} {width}&times;{height}px &middot;
+      {len(image_bytes) / 1024:.0f} KB</div>
+    <table>{table}</table>
+    {sections}
+  </div>
+</article>"""
 
+
+def render_output_card(index: int, features: dict[str, bytes]) -> str:
+  """A converted record: every stored feature, verbatim."""
+  image_bytes = features.get("image/encoded", b"")
   decoded = {
       key: value.decode("utf-8", errors="replace")
       for key, value in features.items()
       if key != "image/encoded"
   }
   target_json = decoded.pop("target_json", "")
-  prompt_system = decoded.pop("prompt_system", "")
-  prompt = decoded.pop("prompt", "")
-
-  lead = [_row(k, decoded.pop(k, "")) for k in _LEAD_KEYS if k in features]
-  rest = [_row(k, decoded[k]) for k in sorted(decoded)]
-
+  blocks = [
+      ("prompt_system", decoded.pop("prompt_system", "")),
+      ("prompt", decoded.pop("prompt", "")),
+  ]
   try:
-    pretty = json.dumps(json.loads(target_json), indent=2, ensure_ascii=False)
+    blocks.append(
+        ("target_json", json.dumps(json.loads(target_json), indent=2,
+                                   ensure_ascii=False))
+    )
   except json.JSONDecodeError:
-    pretty = target_json
+    blocks.append(("target_json", target_json))
 
-  return f"""<article class="card">
-  <div class="imgwrap">
-    <img src="data:image/jpeg;base64,{encoded}" alt="advertisement">
-  </div>
-  <div class="meta">
-    <div class="rid">record {index} &middot;
-      <code>{html.escape(decoded.get('id', str(index)))}</code>
-      &middot; {mode} {width}&times;{height}px &middot;
-      {len(image_bytes) / 1024:.0f} KB</div>
-    <table>{''.join(lead)}{''.join(rest)}</table>
-    <div class="sec">prompt_system</div><pre>{html.escape(prompt_system)}</pre>
-    <div class="sec">prompt</div><pre>{html.escape(prompt)}</pre>
-    <div class="sec">target_json</div><pre>{html.escape(pretty)}</pre>
-  </div>
-</article>"""
+  ident = decoded.get("id", str(index))
+  lead = [(k, decoded.pop(k)) for k in _LEAD_KEYS if k in decoded]
+  rest = [(k, decoded[k]) for k in sorted(decoded)]
+  return _card(index, ident, image_bytes, lead + rest, blocks)
+
+
+def render_input_card(index: int, row, image_bytes: bytes) -> str:
+  """A raw source row: parquet columns exactly as they are stored."""
+  fields = []
+  for column in row.index:
+    value = row[column]
+    fields.append((
+        column,
+        "" if pd.isna(value) else str(value),
+    ))
+  ident = f"{row['label']}/{row['filename']}"
+  return _card(index, ident, image_bytes, fields, [])
 
 
 ################################################################################
@@ -183,49 +238,109 @@ def render_card(index: int, features: dict[str, bytes]) -> str:
 ################################################################################
 
 
-def main(argv):
-  """Sample k records from a converted split and write an HTML preview."""
-  if len(argv) > 1:
-    raise app.UsageError("Too many command-line arguments.")
+def _sample(total: int, count: int) -> list[int]:
+  """Pick indices without replacement; records are label-grouped on disk."""
+  return sorted(
+      int(i)
+      for i in np.random.default_rng(_SEED.value).choice(
+          total, min(count, total), replace=False
+      )
+  )
 
-  split = _SPLIT.value
-  spec, metadata = bagz_spec(_OUTPUT_DIR.value, split)
+
+def _render_output(split: str) -> tuple[str, str, str]:
+  """Returns (cards, source label, subtitle) for the converted Bagz."""
+  if _BAGZ.value:
+    spec, note = _BAGZ.value, ""
+  else:
+    spec, metadata = bagz_spec(_OUTPUT_DIR.value, split)
+    note = (
+        f" in {metadata['num_shards']} shard(s), drawn from"
+        f" {metadata['source_records_in_split']} in the source split"
+    )
   reader = bagz.Reader(spec)
   total = len(reader)
   logging.info("Opened %s: %d records", spec, total)
 
-  count = min(_K.value, total)
-  # Records are grouped by label on disk, so sample rather than take a prefix.
-  indices = sorted(
-      np.random.default_rng(_SEED.value).choice(total, count, replace=False)
+  cards = []
+  for index in _sample(total, _K.value):
+    features = parse_record(reader[index])
+    cards.append(render_output_card(index, features))
+    print(f"[{index}] {features.get('id', b'').decode()}")
+  subtitle = (
+      f"{len(cards)} of {total} record(s){note}. Every stored feature is shown"
+      " verbatim."
+  )
+  return "".join(cards), os.path.basename(spec), subtitle
+
+
+def _render_input(split: str) -> tuple[str, str, str]:
+  """Returns (cards, source label, subtitle) for the raw mirror."""
+  mirror = _MIRROR_DIR.value
+  frame = pd.read_parquet(layout.parquet_path(mirror, split))
+  frame = frame.astype({"label": str, "filename": str})
+  total = len(frame)
+
+  # The mirror is an incremental cache, so it usually holds shards for only
+  # some labels. Sampling the whole parquet would keep landing on rows whose
+  # image has not been fetched, so restrict to what is actually present.
+  shard_dir = os.path.join(mirror, layout.IMAGE_DIR, split)
+  mirrored = {
+      name.removesuffix(".tar.gz")
+      for name in os.listdir(shard_dir)
+      if name.endswith(".tar.gz")
+  }
+  frame = frame[frame["label"].isin(mirrored)].reset_index(drop=True)
+  if frame.empty:
+    raise app.UsageError(
+        f"no rows in {split}.parquet have a mirrored shard under {shard_dir}"
+    )
+  logging.info(
+      "Read %s: %d of %d rows have a mirrored image",
+      layout.parquet_path(mirror, split),
+      len(frame),
+      total,
   )
 
   cards = []
-  for index in indices:
-    features = parse_record(reader[int(index)])
-    cards.append(render_card(int(index), features))
-    summary = {
-        key: features[key].decode("utf-8", errors="replace")
-        for key in ("id", "brand", "price", "different_types")
-        if key in features
-    }
-    print(f"[{index}] {summary}")
-
-  html_path = _HTML.value or os.path.join(
-      _OUTPUT_DIR.value, f"msop765k_{split}_samples.html"
+  for index in _sample(len(frame), _K.value):
+    row = frame.iloc[index]
+    shard = layout.shard_path(mirror, split, row["label"])
+    with tarfile.open(shard, "r:gz") as tar:
+      member = tar.extractfile(f"{row['label']}/{row['filename']}")
+      image_bytes = member.read()
+    cards.append(render_input_card(index, row, image_bytes))
+    print(f"[{index}] {row['label']}/{row['filename']}")
+  subtitle = (
+      f"{len(cards)} of {len(frame)} mirrored row(s) &mdash; {total} in"
+      f" <code>{split}.parquet</code> overall &mdash; each image read from its"
+      " label tarball. Fields are the untransformed source values."
   )
+  return "".join(cards), f"{os.path.basename(mirror)}/{split}.parquet", subtitle
+
+
+def main(argv):
+  """Sample k examples from one end of the pipeline and write an HTML page."""
+  if len(argv) > 1:
+    raise app.UsageError("Too many command-line arguments.")
+
+  split, stage = _SPLIT.value, _STAGE.value
+  cards, source, subtitle = (
+      _render_input(split) if stage == "input" else _render_output(split)
+  )
+
+  html_path = _HTML.value or f"msop765k_{split}_{stage}.html"
+  os.makedirs(os.path.dirname(os.path.abspath(html_path)), exist_ok=True)
   document = textwrap.dedent(f"""\
-      <title>mSOP-765k {split} &mdash; {count} sampled records</title>
+      <title>mSOP-765k {split} &mdash; pipeline {stage}</title>
       <style>{_STYLE}</style>
       <header>
-        <h1>mSOP-765k &mdash; <code>{split}</code> split</h1>
-        <p class="lede">{count} record(s) sampled with seed
-        {_SEED.value} from <code>{html.escape(os.path.basename(spec))}</code>
-        &mdash; {total} record(s) in {metadata['num_shards']} shard(s),
-        drawn from {metadata['source_records_in_split']} in the source split.
-        Images are 512px; every stored feature is shown verbatim.</p>
+        <h1>mSOP-765k &mdash; pipeline {stage} &middot;
+        <code>{html.escape(split)}</code></h1>
+        <p class="lede">{subtitle} Sampled with seed {_SEED.value} from
+        <code>{html.escape(source)}</code>.</p>
       </header>
-      <main>{''.join(cards)}</main>
+      <main>{cards}</main>
       <footer>Source: retail-product-promotion/mSOP-765k (TMLR 01/2026),
       CC BY-NC-ND 4.0.</footer>
       """)

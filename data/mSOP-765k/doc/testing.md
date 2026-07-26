@@ -65,6 +65,13 @@ python convert_msop765k.py --split test \
     --mirror_dir testdata/mirror --output_dir /tmp/out
 ```
 
+To see what the test compares rather than infer it from a binary, render both
+ends to `testdata/visualization/`:
+
+```bash
+scripts/visualize_e2e_test_input_output.sh
+```
+
 Its single row covers the awkward cases in the real data: a multi-valued GTIN
 list, a brand containing a comma (`Nescafé, Dolce Gusto`), a NaN
 `different_types`, a float `relative_discount`, and absent `regular_price` and

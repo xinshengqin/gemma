@@ -1,0 +1,69 @@
+      <title>mSOP-765k test &mdash; pipeline input</title>
+      <style>
+:root{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--ink:#1a1d21;
+  --sub:#5b6570;--line:#e6e9ee;--th:#8a94a0;--code:#eef1f6;--na:#b6bcc4}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1116;--card:#171b21;
+  --ink:#e6e9ee;--sub:#9aa4b0;--line:#262c35;--th:#7a8593;--code:#1f2530;
+  --na:#5a636e}}
+:root[data-theme=dark]{--bg:#0e1116;--card:#171b21;--ink:#e6e9ee;--sub:#9aa4b0;
+  --line:#262c35;--th:#7a8593;--code:#1f2530;--na:#5a636e}
+:root[data-theme=light]{--bg:#f6f7f9;--card:#fff;--ink:#1a1d21;--sub:#5b6570;
+  --line:#e6e9ee;--th:#8a94a0;--code:#eef1f6;--na:#b6bcc4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,
+  sans-serif}
+header{max-width:1080px;margin:0 auto;padding:28px 24px 4px}
+h1{margin:0 0 6px;font-size:21px;letter-spacing:-.01em}
+.lede{margin:0;color:var(--sub)}
+.lede code{background:var(--code);padding:1px 6px;border-radius:5px;
+  font-size:.85em}
+main{max-width:1080px;margin:0 auto;padding:16px 24px 48px;display:grid;
+  gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  overflow:hidden;display:grid;grid-template-columns:300px 1fr}
+@media(max-width:760px){.card{grid-template-columns:1fr}}
+.imgwrap{background:#fff;padding:14px;display:flex;align-items:center;
+  justify-content:center;border-right:1px solid var(--line)}
+.imgwrap img{max-width:100%;height:auto;border-radius:6px}
+.meta{padding:14px 16px;min-width:0}
+.rid{font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--th);margin-bottom:10px}
+.rid code{background:var(--code);color:var(--sub);padding:1px 6px;
+  border-radius:5px;text-transform:none;letter-spacing:0;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:5px 0;vertical-align:top;
+  border-bottom:1px solid var(--line)}
+tr:last-child th,tr:last-child td{border-bottom:0}
+th{color:var(--th);font-weight:500;width:150px;white-space:nowrap;
+  padding-right:12px}
+td{word-break:break-word}
+.na{color:var(--na)}
+pre{background:var(--code);border-radius:8px;padding:10px 12px;margin:10px 0 0;
+  overflow-x:auto;font-size:12.5px;line-height:1.5}
+.sec{margin-top:12px;font-size:11px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--th)}
+footer{max-width:1080px;margin:0 auto;padding:0 24px 40px;color:var(--sub);
+  font-size:13px}
+</style>
+      <header>
+        <h1>mSOP-765k &mdash; pipeline input &middot;
+        <code>test</code></h1>
+        <p class="lede">1 of 1 mirrored row(s) &mdash; 1 in <code>test.parquet</code> overall &mdash; each image read from its label tarball. Fields are the untransformed source values. Sampled with seed 0 from
+        <code>mirror/test.parquet</code>.</p>
+      </header>
+      <main><article class="card">
+  <div class="imgwrap">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAGAAgADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9K6KKKACiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKACiiigAooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigAooooAKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooAKKKKACiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKAPycooor7A+fCiiigAooooAKKKKAP1jooor48+gCiiigAooooAKKKKACiiigAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigD9Y6KKK+PPoAooooAKKKKACiiigD8nKKKK+wPnwooooAKKKKACiiigAooooAKKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA/JyiiivsD58KKKKACiiigAooooA/WOiiivjz6AKKKKACiiigAooooA//9k=" alt="advertisement">
+  </div>
+  <div class="meta">
+    <div class="rid">example 0 &middot;
+      <code>10000/119.jpg</code>
+      &middot; JPEG 512&times;384px &middot;
+      4 KB</div>
+    <table><tr><th>label</th><td>10000</td></tr><tr><th>filename</th><td>119.jpg</td></tr><tr><th>brand</th><td>Nescafé, Dolce Gusto</td></tr><tr><th>price</th><td>1.29</td></tr><tr><th>regular_price</th><td><span class="na">∅ empty</span></td></tr><tr><th>relative_discount</th><td>13.0</td></tr><tr><th>absolute_discount</th><td><span class="na">∅ empty</span></td></tr><tr><th>product_category</th><td>Scombermix, Scomber Mix</td></tr><tr><th>GTINs</th><td>04012839567131, 04012839567148</td></tr><tr><th>product_weight</th><td>120.0 Gramm</td></tr><tr><th>different_types</th><td><span class="na">∅ empty</span></td></tr></table>
+
+  </div>
+</article></main>
+      <footer>Source: retail-product-promotion/mSOP-765k (TMLR 01/2026),
+      CC BY-NC-ND 4.0.</footer>

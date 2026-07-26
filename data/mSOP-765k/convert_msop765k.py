@@ -42,6 +42,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+import layout
+
 ################################################################################
 # MARK: Constants
 ################################################################################
@@ -50,7 +52,7 @@ _HF_BASE = (
     "https://huggingface.co/datasets/retail-product-promotion/mSOP-765k"
     "/resolve/main"
 )
-_IMAGE_DIR = "rpp-765k_512"
+_IMAGE_DIR = layout.IMAGE_DIR
 
 # Prompt wording follows the paper (Section 4, "Prompts and Structured Output
 # Schemata"), except that a missing target is called `null` rather than `NaN`:
@@ -208,7 +210,7 @@ def _download(url: str, path: str) -> None:
 
 
 def ensure_parquet(mirror_dir: str, split: str) -> str:
-  path = os.path.join(mirror_dir, f"{split}.parquet")
+  path = layout.parquet_path(mirror_dir, split)
   if not os.path.exists(path):
     logging.info("Fetching %s.parquet", split)
     _download(f"{_HF_BASE}/{split}.parquet", path)
@@ -254,8 +256,7 @@ def ensure_shards(mirror_dir: str, split: str, labels: list[str]) -> None:
     )
 
 
-def shard_path(mirror_dir: str, split: str, label: str) -> str:
-  return os.path.join(mirror_dir, _IMAGE_DIR, split, f"{label}.tar.gz")
+shard_path = layout.shard_path
 
 
 ################################################################################
