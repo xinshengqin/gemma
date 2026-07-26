@@ -17,7 +17,11 @@
 The test is a production run at the smallest possible scale: it invokes
 `convert.main`, the same entry point the CLI uses, against a mirror holding one
 image shard in the real on-disk layout, and compares the Bagz file that comes
-out against `testdata/golden.bagz` record by record and feature by feature.
+out against `testdata/golden.bagz`.
+
+The comparison is on record content, not bytes: each record must carry the same
+set of features, and each feature the same value. The order features happen to
+be stored in is not part of the contract.
 
 Nothing about the pipeline is stubbed or reimplemented here. The only departure
 from a full run is that the mirror is pre-populated, so `ensure_parquet` and
@@ -30,13 +34,13 @@ order and dtypes, and one image shard in the `{split}/{label}.tar.gz` layout the
 downloader produces. It is synthetic, so the test stays offline and no image
 from the CC BY-NC-ND source dataset is redistributed here.
 
-Because the fixture is a real input, the golden is reproducible straight from
+Because the fixture is a real input, the golden can be reproduced straight from
 the command line:
 
     python convert_msop765k.py --split test \\
         --mirror_dir testdata/mirror --output_dir /tmp/out
 
-That writes a Bagz file matching `testdata/golden.bagz`.
+That writes a Bagz file whose records match `testdata/golden.bagz`.
 
 Its single row exercises the awkward cases in the real data: a multi-valued GTIN
 list (`04012839567131, 04012839567148`), a brand containing a comma
@@ -179,27 +183,6 @@ class GoldenEndToEndTest(absltest.TestCase):
       self.skipTest(f"golden rewritten: {_GOLDEN_PATH}")
 
     self.assertRecordsEqual(self._produced_records(), read_records(_GOLDEN_PATH))
-
-  def test_output_is_byte_identical_to_golden(self):
-    """A run over the fixture reproduces the golden file exactly.
-
-    Holds only because records are serialized deterministically; protobuf
-    otherwise orders the feature map differently in every process. Kept
-    separate from the semantic comparison because it also pins the container,
-    so a bagz or zstd upgrade can move it while the records are unchanged.
-    """
-    with tempfile.TemporaryDirectory() as tmp:
-      with open(self._convert(tmp), "rb") as handle:
-        produced = handle.read()
-    with open(_GOLDEN_PATH, "rb") as handle:
-      expected = handle.read()
-    self.assertEqual(
-        produced,
-        expected,
-        f"output is no longer byte-identical to the golden"
-        f" ({len(produced)} bytes produced, {len(expected)} golden). If the"
-        " records still match, the container or its compression changed.",
-    )
 
   def test_golden_is_readable_by_a_plain_reader(self):
     """Guards the container itself: no reader-side options may be required."""

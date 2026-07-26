@@ -141,11 +141,20 @@ testdata/golden.bagz                              expected output
 testdata/mirror/rpp-765k_512/test/10000.tar.gz    input, real shard layout
 ```
 
-Comparison is **semantic, not byte-wise**: both files are decoded and checked
-record by record for an identical feature set and identical feature values. A
-byte comparison would couple the test to the bagz container, the compression
-setting and protobuf map ordering, and would report only that two binaries
-differ.
+Comparison is **on record content, not bytes**: both files are decoded and
+checked record by record for an identical feature set and identical feature
+values. The order features are stored in is not part of the contract. A byte
+comparison would additionally pin the bagz container and its compression, so a
+dependency upgrade could fail it while the data is unchanged, and it would
+report only that two binaries differ.
+
+Separately, records are serialized with protobuf's deterministic mode, so
+converting the same mirror twice produces identical files. `tf.train.Example`
+holds its features in a map, and protobuf orders map entries differently in
+every process, so without it a re-run of a conversion yields different bytes for
+identical data — which would defeat content-addressing a generated dataset,
+verifying a copy, or diffing two conversions. This is a property of the pipeline
+worth having on its own; the test does not depend on it.
 
 * Nothing is stubbed. `ensure_parquet` and `ensure_shards` run for real and take
   their cache-hit path because the mirror is pre-populated — the same path every
