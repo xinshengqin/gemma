@@ -23,6 +23,12 @@ The comparison is on record content, not bytes: each record must carry the same
 set of features, and each feature the same value. The order features happen to
 be stored in is not part of the contract.
 
+The golden may only be regenerated with human review, so anything it already
+covers needs no second test. The two cases beside it exist because it cannot
+see them: the metadata sidecar is a separate output file, and a constant can
+drift away from the output it is supposed to govern while that output, and so
+the golden, stays unchanged. See `doc/testing.md`.
+
 Nothing about the pipeline is stubbed or reimplemented here. The only departure
 from a full run is that the mirror is pre-populated, so `ensure_parquet` and
 `ensure_shards` take their cache-hit path and no network call is made — which is
@@ -184,12 +190,6 @@ class GoldenEndToEndTest(absltest.TestCase):
 
     self.assertRecordsEqual(self._produced_records(), read_records(_GOLDEN_PATH))
 
-  def test_golden_is_readable_by_a_plain_reader(self):
-    """Guards the container itself: no reader-side options may be required."""
-    reader = bagz.Reader(_GOLDEN_PATH)
-    self.assertLen(reader, 1)
-    self.assertNotEmpty(reader[0])
-
   def test_writes_metadata_alongside_the_shard(self):
     """`main` emits the sidecar describing the run, as production does."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -203,29 +203,17 @@ class GoldenEndToEndTest(absltest.TestCase):
     self.assertEqual(metadata["split"], _SPLIT)
     self.assertEqual(metadata["target_keys"], list(convert._TARGET_KEYS))
 
-  def test_target_json_excludes_lookup_fields(self):
-    """The two fields absent from the image stay out of the answer."""
+  def test_target_json_keys_match_the_declared_constant(self):
+    """`_TARGET_KEYS` must still govern what `target_json` actually contains.
+
+    The golden cannot see this. Both are pinned to today's output, so the
+    constant can be edited while the emitted JSON is left behind — and the
+    metadata sidecar, which reports the same constant, would agree with it.
+    """
     target = json.loads(
         self._produced_records()[0]["target_json"].decode("utf-8")
     )
-    self.assertNotIn("product_category", target)
-    self.assertNotIn("GTINs", target)
     self.assertEqual(tuple(target), convert._TARGET_KEYS)
-
-  def test_lookup_fields_remain_available_as_features(self):
-    """They are still carried per-field, so another view needs no re-convert."""
-    record = self._produced_records()[0]
-    self.assertEqual(record["GTINs"], b"04012839567131, 04012839567148")
-    self.assertEqual(record["product_category"], b"Scombermix, Scomber Mix")
-
-  def test_prompt_and_target_agree_on_missing_values(self):
-    """The prompt names the same sentinel the target actually uses."""
-    record = self._produced_records()[0]
-    prompt = record["prompt"].decode("utf-8")
-    target = json.loads(record["target_json"].decode("utf-8"))
-    self.assertIn("return null", prompt)
-    self.assertNotIn("NaN", prompt)
-    self.assertIsNone(target["regular_price"])
 
 
 if __name__ == "__main__":

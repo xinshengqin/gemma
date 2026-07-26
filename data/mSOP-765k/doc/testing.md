@@ -3,6 +3,22 @@
 Inventory of every test in this directory. **Keep this table in sync when tests
 are added, removed or renamed.**
 
+## Principles
+
+1. **The end-to-end test is the production pipeline, only smaller.** It invokes
+   the real entry point; scale is the sole difference. Nothing is stubbed,
+   mocked or reimplemented.
+2. **Tests overlap as little as possible.** A case earns its place only by
+   covering behaviour no other case does.
+3. **Test data is a complete production input.** Pointing the production CLI at
+   `testdata/mirror` reproduces the golden, so the test constructs nothing.
+4. **Records are compared on content, not bytes** — same feature set, same value
+   per feature. Storage order is not part of the contract, and byte equality
+   would pin the container and its compression as well as the data.
+5. **The golden changes only with human review.** That is what lets principle 2
+   be applied: anything the golden already covers needs no second test, because
+   a regression cannot be laundered by regenerating it.
+
 ## Running them
 
 ```bash
@@ -20,14 +36,17 @@ They need no network and no mirror: everything they read is checked in under
 Each case runs `convert.main`, the same entry point the CLI uses, against the
 checked-in fixture mirror, then inspects what came out.
 
-| Test | Guards | Fails when |
-|---|---|---|
-| `test_matches_golden` | The whole record: every feature the pipeline emits, compared against `testdata/golden.bagz` by feature set and by value | Any change to the record layout, the prompt, a field normalization, or the record count |
-| `test_golden_is_readable_by_a_plain_reader` | The container: the shard opens with a bare `bagz.Reader(path)` | A writer-side option is introduced that readers must mirror — a `CompressionNone` regression is the concrete case |
-| `test_writes_metadata_alongside_the_shard` | The `msop765k_{split}.metadata.json` sidecar `main` writes: record count, shard count, split, target keys | The sidecar stops being written, or its counts or target list drift from the shard |
-| `test_target_json_excludes_lookup_fields` | `target_json` carries exactly `_TARGET_KEYS`, in order | `product_category` or `GTINs` leak back into the answer, or the key order changes |
-| `test_lookup_fields_remain_available_as_features` | The two excluded fields are still present as per-field features | They get dropped from the record, which would force a re-convert to change target view |
-| `test_prompt_and_target_agree_on_missing_values` | The prompt names the same sentinel the target uses (`null`, never `NaN`) | The prompt and the supervised answer disagree about how a missing target is written |
+| Test | Guards | Fails when | Why not covered by the golden |
+|---|---|---|---|
+| `test_matches_golden` | The whole record: every feature the pipeline emits, compared against `testdata/golden.bagz` by feature set and by value | Any change to the record layout, the prompt, a field normalization, or the record count | — it *is* the golden comparison |
+| `test_writes_metadata_alongside_the_shard` | The `msop765k_{split}.metadata.json` sidecar `main` writes: record count, shard count, split, target keys | The sidecar stops being written, or its contents drift from the shard | The golden is the `.bagz` alone; the sidecar is a separate output file it never sees |
+| `test_target_json_keys_match_the_declared_constant` | `_TARGET_KEYS` still governs what `target_json` contains | The constant is edited without the emitted JSON following, or vice versa | Both the golden and the sidecar are pinned to today's output, so a constant can drift while they agree with each other |
+
+Three earlier cases were removed as pure overlap: the prompt/target sentinel
+check, the per-field lookup-field check, and a plain-reader check. Each asserted
+a property of the record that `test_matches_golden` already compares, so under
+principle 5 none could fail while the golden passed. Verified by construction
+before removal.
 
 ## The fixture
 
