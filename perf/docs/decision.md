@@ -2,8 +2,8 @@
 
 Benchmark-defining decisions for the DiffusionGemma batch-1 inference benchmark, in the
 order they were made (2026-08-02). Each entry records the rejected alternatives and the
-trade-off that decided it. Vocabulary: [CONTEXT.md](./CONTEXT.md). Overall plan:
-[PLAN.md](./PLAN.md).
+trade-off that decided it. Vocabulary: [context.md](./context.md). Overall plan:
+[plan.md](./plan.md).
 
 ## 1. Benchmark subject: native `gemma.diffusion.Sampler` + `DIFFUSIONGEMMA_26B_A4B_IT`
 
@@ -13,7 +13,7 @@ The productionized, fully-jitted inference path is the subject; nothing else is 
   It matches the comparison paper's vision-input shape and the ongoing project, but its own
   notebook states it is not optimized for inference speed — benchmarking it measures
   Kauldron/adapter overhead, not the model. Deferred, not abandoned: a future benchmark of
-  this stack is planned, and transferable findings land in `LEARNINGS.md`.
+  this stack is planned, and transferable findings land in `report.md`.
 - **Rejected: benchmarking both now.** Roughly double the work for a secondary number.
 
 ## 2. Comparability via infra calibration, not baseline replication
@@ -64,11 +64,11 @@ shape.
 - **Rejected: 32/64/96 step sweep (the repo's eval values).** Quality-eval territory, not
   a speed reference.
 - EOS ignored to match the gist's `--ignore-eos`; if the native sampler lacks the switch,
-  it gets a minimal local patch (documented in `LEARNINGS.md`).
+  it gets a minimal local patch (documented in `report.md`).
 
 ## 6. Metrics: latency ms/sample, generation tok/s (median), end-to-end tok/s, Tok/Step
 
-Definitions in [CONTEXT.md](./CONTEXT.md); chosen to be the union of what vLLM and
+Definitions in [context.md](./context.md); chosen to be the union of what vLLM and
 Fast-dDrive report, so every row is comparable to at least one published table.
 
 - **Rejected: counting self-conditioning `encode_logits` applies as forward passes in
@@ -120,8 +120,10 @@ every results JSON.
 ## 10. Deliverables: `perf/` at repo top level, docs under `perf/docs/`
 
 Scripts (`bench_native.py`, `bench_vllm.sh`, `setup_vast.sh`) and `results/` live in
-`perf/`; all documents (this file, `PLAN.md`, `CONTEXT.md`, later `LEARNINGS.md`) live in
-`perf/docs/`. Results JSONs are committed (following the repo's existing
+`perf/`; all documents (this file, `plan.md`, `context.md`, `report.md`, `learnings.md`)
+live in `perf/docs/`, lowercase filenames. `report.md` holds the final results;
+`learnings.md` is reserved for major mistakes made and failures recovered during the
+project. Results JSONs are committed (following the repo's existing
 `tools/rampup/measured/` precedent). Commits local-first; nothing pushed without explicit
 request.
 
