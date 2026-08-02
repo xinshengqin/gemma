@@ -19,7 +19,7 @@ hackable_diffusion/vision stack are captured in `report.md`.
 |---|---|---|
 | vLLM blog (2026-06-10) | 1× H100, FP8 checkpoint, batch 1, `vllm bench serve` | 1,008 generation tok/s |
 | vLLM repro gist (LucasWilkinson) | random 1024 in / 1024 out, ignore-EOS, 100 prompts, concurrency 1; canvas 256, 16 denoising steps | protocol source |
-| Fast-dDrive (arXiv 2605.23163) | 1× H100, batch 1, ~280-token structured outputs | latency ms/sample, TPS, Tok/Step; AR baseline 7855 ms / 51.6 TPS → best 665 ms / 608.5 TPS |
+| Fast-dDrive (arXiv 2605.23163) | 1× H100, batch 1, ~280-token structured outputs | latency ms/sample, TPS, "Tok/Step" (our Tok/Forward); AR baseline 7855 ms / 51.6 TPS → best 665 ms / 608.5 TPS |
 
 Every public H100 DiffusionGemma number is an optimized serving stack at FP8; there is no
 published JAX-native or bf16 reference. Our absolute numbers are expected to land below

@@ -15,7 +15,10 @@ forward pass — a step may cost more than one forward.
 _Avoid_: sampling step, iteration
 
 **Forward pass**:
-One `model.apply` on the device. The unit for Tok/Step accounting.
+One full transformer pass (attention stack + logit decode). The unit for Tok/Forward
+accounting. Not every `model.apply` is a forward pass: the self-conditioning
+`encode_logits` apply is an embedder-only op and does not count.
+_Avoid_: model.apply, step
 
 **Generation tok/s**:
 Decode-only tokens per second for a single request, reported as the median across requests
@@ -29,11 +32,14 @@ Total output tokens divided by full wall-clock time including prefill.
 Full wall-clock time per request in milliseconds, prefill included (Fast-dDrive's "latency (ms)").
 _Avoid_: decode time, TTFT
 
-**Tok/Step**:
-Output tokens divided by the number of full-transformer forward passes during decode.
-Lightweight non-transformer applies (e.g. self-conditioning logit encoding) are excluded
-from the denominator and footnoted.
-_Avoid_: tokens per step (ambiguous about what a step is)
+**Tok/Forward**:
+Output tokens divided by the number of full-transformer forward passes during decode
+(denoiser forwards + per-canvas cache-append forward). Non-transformer applies (the
+self-conditioning `encode_logits` embedding op) are excluded from the denominator and
+footnoted. Equivalent to Fast-dDrive's "Tok/Step" ("tokens committed per model forward
+pass").
+_Avoid_: Tok/Step, tokens per step (ambiguous — a denoising step is one transformer
+forward plus one embedder op, so "step" could be read two ways)
 
 **Calibration workload**:
 The gist-exact vLLM benchmark shape: random-token prompts, 1024 in / 1024 out forced,

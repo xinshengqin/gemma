@@ -66,15 +66,21 @@ shape.
 - EOS ignored to match the gist's `--ignore-eos`; if the native sampler lacks the switch,
   it gets a minimal local patch (documented in `report.md`).
 
-## 6. Metrics: latency ms/sample, generation tok/s (median), end-to-end tok/s, Tok/Step
+## 6. Metrics: latency ms/sample, generation tok/s (median), end-to-end tok/s, Tok/Forward
 
 Definitions in [context.md](./context.md); chosen to be the union of what vLLM and
 Fast-dDrive report, so every row is comparable to at least one published table.
 
+- **Rejected: the name "Tok/Step" (Fast-dDrive's label).** In this codebase a denoising
+  step is one transformer forward *plus* one embedder-only `encode_logits` apply
+  (verified: `_sampler.py:568,594`; self-conditioning enters the forward as a single
+  FFW block, `_transformer.py:160`), so "step" is ambiguous between denoising step and
+  forward pass. Renamed **Tok/Forward**; same accounting as the paper's metric.
 - **Rejected: counting self-conditioning `encode_logits` applies as forward passes in
-  Tok/Step.** They are embedding ops, not transformer passes; counting them would be
-  misleading. They are footnoted instead (their cost still shows in wall-clock). Honest
-  accounting: 256 tokens / (16 denoiser + 1 cache-append forwards) ≈ 15.1 nominal.
+  Tok/Forward.** They are embedding ops (softmax × embedding table, ~15–20% of a
+  forward's per-token FLOPs), not transformer passes; counting them would be misleading.
+  They are footnoted instead (their cost still shows in wall-clock). Honest accounting:
+  256 tokens / (16 denoiser + 1 cache-append forwards) ≈ 15.1 nominal.
 - **Rejected: scoring the paper-shaped row on 512 emitted tokens.** A 280-token request
   costs 2 full canvases (512 emitted). Scoring on 512 flatters the model and breaks
   Fast-dDrive's per-sample accounting; the canvas-quantization penalty ("pay for 512 to

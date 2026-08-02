@@ -56,7 +56,7 @@ Verdict: TBD.
 
 All values over 100 timed samples after JIT compile + 3 warmup samples.
 
-| Stack | Workload | Latency ms/sample (median) | Generation tok/s (median) | End-to-end tok/s | Tok/Step |
+| Stack | Workload | Latency ms/sample (median) | Generation tok/s (median) | End-to-end tok/s | Tok/Forward |
 |---|---|---|---|---|---|
 | vLLM FP8 | calibration (1024 in / 1024 out) | TBD | TBD | TBD | 16.0 nominal¹ |
 | JAX native bf16 | calibration (1024 in / 1024 out) | TBD | TBD | TBD | 15.06² |
@@ -67,9 +67,12 @@ Spread (mean / p95) per row: TBD, from `perf/results/*.json`.
 ¹ 256-token canvas / 16 denoising steps; vLLM's internal per-step forward accounting to
 be confirmed from its detailed bench output.
 ² Deterministic given fixed shapes: 1024 tokens / (4 canvases × (16 denoiser + 1
-cache-append) = 68 full-transformer forwards). Excludes prefill and the 64 lightweight
-self-conditioning `encode_logits` applies (embedding ops, not transformer passes — their
-cost appears in wall-clock only). To be confirmed against run logs.
+cache-append) = 68 full-transformer forwards). Excludes prefill and the 64
+self-conditioning `encode_logits` applies — embedding ops (softmax × embedding table,
+`_modules.py:140`), not transformer passes; roughly 15–20% of a forward's per-token
+FLOPs, visible in wall-clock only. Each denoising step is exactly one transformer
+forward (self-conditioning enters it as a single FFW block, `_transformer.py:160`) plus
+one such embedder op. To be confirmed against run logs.
 ³ Scored on 280 delivered tokens over 2 full canvases (512 emitted, 34 forwards) — the
 canvas-quantization penalty is deliberately included. On emitted tokens the figure would
 be 15.06.
@@ -83,13 +86,17 @@ be 15.06.
 
 ## Comparison with published references
 
-| Row | Hardware | Precision | Output | Latency ms | Gen tok/s | Tok/Step |
+| Row | Hardware | Precision | Output | Latency ms | Gen tok/s | Tok/Forward⁴ |
 |---|---|---|---|---|---|---|
 | **Ours: JAX native** | H100 SXM | bf16 | 1024 forced | TBD | TBD | 15.06 |
 | **Ours: JAX native** | H100 SXM | bf16 | 280 forced | TBD | TBD | 8.24 |
 | vLLM blog | H100 | FP8 | 1024 forced | — | 1,008 | ~16 |
 | Fast-dDrive best (+SGLang) | H100 | not stated | ~280 structured | 665 | 608.5 | 4.93 |
 | Fast-dDrive AR baseline | H100 | not stated | ~280 structured | 7,855 | 51.6 | 1 |
+
+⁴ Fast-dDrive calls this "Tok/Step" ("effective tokens committed per model forward
+pass") — same accounting, renamed here because "step" is ambiguous against denoising
+steps (see context.md).
 
 Confounds to keep in mind when reading this table (accepted by decision, see
 [decision.md](./decision.md) §7 and §1):
