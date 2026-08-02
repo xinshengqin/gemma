@@ -45,7 +45,7 @@ Fast-dDrive's per-sample output shape. Fixed shapes only — no variable sequenc
 lengths inside any timed run.
 
 **Sanity run**:
-A single untimed generation on a real prompt whose output text is saved and eyeballed to
+Untimed generations on 5 distinct real prompts whose outputs are saved and eyeballed to
 confirm the checkpoint loaded correctly. Not a benchmark; exists so timed runs can use
 content-free inputs.
 

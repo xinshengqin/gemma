@@ -39,8 +39,18 @@ Pass criterion: within ~10% of vLLM's published 1,008 generation tok/s (H100, FP
 
 ## Sanity run
 
-Untimed generation on a real prompt to confirm the checkpoint loaded correctly.
-Output saved at `perf/results/sanity_output.txt` (TBD). Verdict: TBD.
+Untimed generations on 5 distinct real prompts to confirm the checkpoint loaded
+correctly. Prompts and full outputs recorded at `perf/results/sanity_outputs.md` (TBD).
+
+| # | Prompt (abridged) | Output coherent? |
+|---|---|---|
+| 1 | TBD | TBD |
+| 2 | TBD | TBD |
+| 3 | TBD | TBD |
+| 4 | TBD | TBD |
+| 5 | TBD | TBD |
+
+Verdict: TBD.
 
 ## Results
 

@@ -50,8 +50,8 @@ shape.
   buckets (recompiles, bimodal latency) and — with early stopping off — prompt content
   cannot affect timing anyway. User ruled out variable shapes inside timed runs.
 - **Rejected: relying on the timed runs to catch a misloaded checkpoint.** Split into a
-  separate untimed sanity run (real prompt, output text saved and eyeballed) so timed
-  inputs can stay content-free.
+  separate untimed sanity run (5 distinct real prompts, outputs saved and eyeballed) so
+  timed inputs can stay content-free.
 
 ## 5. Canvas 256, 16 denoising steps, no early stopping, EOS ignored
 
