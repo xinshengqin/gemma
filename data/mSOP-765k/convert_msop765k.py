@@ -206,6 +206,15 @@ def _download(url: str, path: str) -> None:
   with urllib.request.urlopen(url) as response, open(tmp, "wb") as handle:
     while chunk := response.read(1 << 20):
       handle.write(chunk)
+    # A connection dropped mid-body reads as a clean EOF: read(amt) returns
+    # b"" instead of raising (http.client deliberately masks the
+    # IncompleteRead), so without this check a truncated file would be renamed
+    # into the mirror and cached as if complete.
+    expected = response.getheader("Content-Length")
+    if expected is not None and handle.tell() != int(expected):
+      raise urllib.error.ContentTooShortError(
+          f"{url}: got {handle.tell()} of {expected} bytes", b""
+      )
   os.replace(tmp, path)
 
 
