@@ -1,0 +1,277 @@
+[
+    {
+        "question_id": "q00003267_g00251",
+        "group_id": "g00251",
+        "qa_category": "ego_distance_data_4d_t1",
+        "question": "After 1 second, how far (in meters) from the ego vehicle will Region [1] be, and at what bearing angle (using x-forward, y-left, z-up, 0° at x-forward, angles in [-180, 180] that rise leftward) will it be located?",
+        "gt": "After 1 second, the distance is about 9.95 meters, with the direction of -28 degrees.",
+        "pred": "",
+        "gt_value": {
+            "distance": 9.95,
+            "direction": -28.0
+        },
+        "unit": {
+            "distance": "meters",
+            "direction": "degrees"
+        },
+        "object_class": "car",
+        "token_info": {
+            "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+            "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+            "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+            "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+            "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c",
+            "token_info": {
+                "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+                "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+                "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+                "ego": {
+                    "instance_token": null,
+                    "sample_annotation_token": null
+                },
+                "other": {
+                    "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                    "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c"
+                }
+            }
+        },
+        "images": [
+            "images/CAM_FRONT/CAM_FRONT__e707573cb2cc2f88e05d08496080ffd6.jpg",
+            "images/CAM_FRONT/CAM_FRONT__61beb2d9ded796b076abbf0fafe281b2.jpg",
+            "images/CAM_FRONT/CAM_FRONT__19e4ad7783d45ce7ab4e2d4a9724fd94.jpg",
+            "images/CAM_FRONT/CAM_FRONT__4f13b77bc78dc6eabe2bf06d2ad9dc85.jpg"
+        ],
+        "rle": {
+            "current": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "l`^_3`0Zi1g0YO`0G6J5L3M3M3N1N3M2O2M2O1O1O1O1O2N1O1O1O1O100O1O1O1O1O1O100O1O1O100O1N3N2N1N2O1O2N1O1O2O0O2O0O2O0O2O1N1O2O001O0O101O0000001O00000O2O0000000000001O00000001O00O10000000O100000000000000O1000000000000000001O00000O100000000000000O10000000001N100O1O100N2N2M4M2M3K6J5B[YNYMjf1a2`0WOi0M9G<kNWSU2:YljM1gWNo0Rg1]1G7K4M3OO100O1O0010O0001O00002O2M2O2M2O1N2O1N1O1O100O000000001O0000000000001O2N1O1N2O1O000O2O0O1O2N2M2M4J6L4L3E<@`0N2N6I5L4L3JUi\\V1",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "204ddaa1dcbcbcbb7530e5a9c352ae46",
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901"
+            },
+            "prev_1": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "Yfo[3b0Ui1b0E:G7L3M3N1M3M4M2N2O2N1O1O1O2N100O001O100O1O1N2O010O01O2N1L5J6M3M4L4eNSXNORYh1DT`YNc0`VN@eh1[1ZOc0H:aXNcMif1R3G7K4N1O1O101N10000O100000000000000000000000001O0000000000000001O000000000000000000001O000000000000000010O000000000001O000O10001O00001O0O101N2N2M3K5K5K5I7J5M4G9K4M4L3N2M3O2N1O1N2N2O1N2O1O1N2N2N2N2L4G9M4M2O2Mdga]1",
+                "iou_score": 0.8933417797088621,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7ea9adbd80aea7a3eecfe84328cfccbc"
+            },
+            "prev_2": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "XonZ3;fi1:YOh0^O`0G4K5K5K4K6M2N3M2O2M2O101N1O10000O2O000O101O0O101O0O101O00001O00000O10000000000000000000000000O1000001O000000000000O1000O10000000000O101O0O1O100G9B>N2O1O1N2I8J5M3O1N2N2N2N3N1N2O1O100O1O1N2O1N3M200O100O2N101N1O2M2O2M3N>BQRSb1",
+                "iou_score": 0.887001395225524,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7203a6aa5e4ece631f724e40c1176cba"
+            },
+            "prev_3": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "P[fX3>Yi1a0H7K6I7J3M2O2M2O1O2N1O1O2N1O2N1O2O0O101N100O2N1O1O1O2N100O2N100O1O2N100O2O0O1000001N100000000000000O10000000O10000O10000O100O1O1G9\\Od0M3N2O1N3G8N2O1N2O1N2N2N2O1O1O2O0O100O100O100O100O1O101M2N2M3O1O1O1N3N1Nikmd1",
+                "iou_score": 0.888990461826324,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "8d991577f734203134fb3c5944059ada"
+            }
+        },
+        "region_id": 1
+    },
+    {
+        "question_id": "q00003268_g00251",
+        "group_id": "g00251",
+        "qa_category": "ego_speed_data_4d_t1",
+        "question": "What will the ego vehicle's speed be after 1 second (m/s)?",
+        "gt": "The ego vehicle will be moving at 9.89 m/s after 1 second.",
+        "pred": "",
+        "gt_value": {
+            "velocity": 9.89
+        },
+        "unit": {
+            "velocity": "m/s"
+        },
+        "object_class": "car",
+        "token_info": {
+            "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+            "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+            "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+            "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+            "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c",
+            "token_info": {
+                "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+                "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+                "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+                "ego": {
+                    "instance_token": null,
+                    "sample_annotation_token": null
+                },
+                "other": {
+                    "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                    "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c"
+                }
+            }
+        },
+        "images": [
+            "images/CAM_FRONT/CAM_FRONT__e707573cb2cc2f88e05d08496080ffd6.jpg",
+            "images/CAM_FRONT/CAM_FRONT__61beb2d9ded796b076abbf0fafe281b2.jpg",
+            "images/CAM_FRONT/CAM_FRONT__19e4ad7783d45ce7ab4e2d4a9724fd94.jpg",
+            "images/CAM_FRONT/CAM_FRONT__4f13b77bc78dc6eabe2bf06d2ad9dc85.jpg"
+        ],
+        "rle": {
+            "current": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "l`^_3`0Zi1g0YO`0G6J5L3M3M3N1N3M2O2M2O1O1O1O1O2N1O1O1O1O100O1O1O1O1O1O100O1O1O100O1N3N2N1N2O1O2N1O1O2O0O2O0O2O0O2O1N1O2O001O0O101O0000001O00000O2O0000000000001O00000001O00O10000000O100000000000000O1000000000000000001O00000O100000000000000O10000000001N100O1O100N2N2M4M2M3K6J5B[YNYMjf1a2`0WOi0M9G<kNWSU2:YljM1gWNo0Rg1]1G7K4M3OO100O1O0010O0001O00002O2M2O2M2O1N2O1N1O1O100O000000001O0000000000001O2N1O1N2O1O000O2O0O1O2N2M2M4J6L4L3E<@`0N2N6I5L4L3JUi\\V1",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "204ddaa1dcbcbcbb7530e5a9c352ae46",
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901"
+            },
+            "prev_1": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "Yfo[3b0Ui1b0E:G7L3M3N1M3M4M2N2O2N1O1O1O2N100O001O100O1O1N2O010O01O2N1L5J6M3M4L4eNSXNORYh1DT`YNc0`VN@eh1[1ZOc0H:aXNcMif1R3G7K4N1O1O101N10000O100000000000000000000000001O0000000000000001O000000000000000000001O000000000000000010O000000000001O000O10001O00001O0O101N2N2M3K5K5K5I7J5M4G9K4M4L3N2M3O2N1O1N2N2O1N2O1O1N2N2N2N2L4G9M4M2O2Mdga]1",
+                "iou_score": 0.8933417797088621,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7ea9adbd80aea7a3eecfe84328cfccbc"
+            },
+            "prev_2": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "XonZ3;fi1:YOh0^O`0G4K5K5K4K6M2N3M2O2M2O101N1O10000O2O000O101O0O101O0O101O00001O00000O10000000000000000000000000O1000001O000000000000O1000O10000000000O101O0O1O100G9B>N2O1O1N2I8J5M3O1N2N2N2N3N1N2O1O100O1O1N2O1N3M200O100O2N101N1O2M2O2M3N>BQRSb1",
+                "iou_score": 0.887001395225524,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7203a6aa5e4ece631f724e40c1176cba"
+            },
+            "prev_3": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "P[fX3>Yi1a0H7K6I7J3M2O2M2O1O2N1O1O2N1O2N1O2O0O101N100O2N1O1O1O2N100O2N100O1O2N100O2O0O1000001N100000000000000O10000000O10000O10000O100O1O1G9\\Od0M3N2O1N3G8N2O1N2O1N2N2N2O1O1O2O0O100O100O100O100O1O101M2N2M3O1O1O1N3N1Nikmd1",
+                "iou_score": 0.888990461826324,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "8d991577f734203134fb3c5944059ada"
+            }
+        },
+        "region_id": 1
+    },
+    {
+        "question_id": "q00003269_g00251",
+        "group_id": "g00251",
+        "qa_category": "target_speed_data_4d_t1",
+        "question": "State the speed of Region [1] in meters per second after 1 second.",
+        "gt": "The projected velocity of Region [1] after 1 second is 2.48 m/s.",
+        "pred": "",
+        "gt_value": {
+            "velocity": 2.48
+        },
+        "unit": {
+            "velocity": "m/s"
+        },
+        "object_class": "car",
+        "token_info": {
+            "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+            "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+            "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+            "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+            "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c",
+            "token_info": {
+                "scene_token": "de86c84ce99c1c1a4a241232aaec5116",
+                "sample_token": "8d90e8ec0e497e82752be5002b14b98b",
+                "sample_data_token": "f1cd01f758dbda49fd07aa819fd39246",
+                "ego": {
+                    "instance_token": null,
+                    "sample_annotation_token": null
+                },
+                "other": {
+                    "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                    "sample_annotation_token": "a28a22029cf700a8f6de3b5009d2513c"
+                }
+            }
+        },
+        "images": [
+            "images/CAM_FRONT/CAM_FRONT__e707573cb2cc2f88e05d08496080ffd6.jpg",
+            "images/CAM_FRONT/CAM_FRONT__61beb2d9ded796b076abbf0fafe281b2.jpg",
+            "images/CAM_FRONT/CAM_FRONT__19e4ad7783d45ce7ab4e2d4a9724fd94.jpg",
+            "images/CAM_FRONT/CAM_FRONT__4f13b77bc78dc6eabe2bf06d2ad9dc85.jpg"
+        ],
+        "rle": {
+            "current": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "l`^_3`0Zi1g0YO`0G6J5L3M3M3N1N3M2O2M2O1O1O1O1O2N1O1O1O1O100O1O1O1O1O1O100O1O1O100O1N3N2N1N2O1O2N1O1O2O0O2O0O2O0O2O1N1O2O001O0O101O0000001O00000O2O0000000000001O00000001O00O10000000O100000000000000O1000000000000000001O00000O100000000000000O10000000001N100O1O100N2N2M4M2M3K6J5B[YNYMjf1a2`0WOi0M9G<kNWSU2:YljM1gWNo0Rg1]1G7K4M3OO100O1O0010O0001O00002O2M2O2M2O1N2O1N1O1O100O000000001O0000000000001O2N1O1N2O1O000O2O0O1O2N2M2M4J6L4L3E<@`0N2N6I5L4L3JUi\\V1",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "204ddaa1dcbcbcbb7530e5a9c352ae46",
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901"
+            },
+            "prev_1": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "Yfo[3b0Ui1b0E:G7L3M3N1M3M4M2N2O2N1O1O1O2N100O001O100O1O1N2O010O01O2N1L5J6M3M4L4eNSXNORYh1DT`YNc0`VN@eh1[1ZOc0H:aXNcMif1R3G7K4N1O1O101N10000O100000000000000000000000001O0000000000000001O000000000000000000001O000000000000000010O000000000001O000O10001O00001O0O101N2N2M3K5K5K5I7J5M4G9K4M4L3N2M3O2N1O1N2N2O1N2O1O1N2N2N2N2L4G9M4M2O2Mdga]1",
+                "iou_score": 0.8933417797088621,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7ea9adbd80aea7a3eecfe84328cfccbc"
+            },
+            "prev_2": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "XonZ3;fi1:YOh0^O`0G4K5K5K4K6M2N3M2O2M2O101N1O10000O2O000O101O0O101O0O101O00001O00000O10000000000000000000000000O1000001O000000000000O1000O10000000000O101O0O1O100G9B>N2O1O1N2I8J5M3O1N2N2N2N3N1N2O1O100O1O1N2O1N3M200O100O2N101N1O2M2O2M3N>BQRSb1",
+                "iou_score": 0.887001395225524,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "7203a6aa5e4ece631f724e40c1176cba"
+            },
+            "prev_3": {
+                "size": [
+                    1860,
+                    2880
+                ],
+                "counts": "P[fX3>Yi1a0H7K6I7J3M2O2M2O1O2N1O1O2N1O2N1O2O0O101N100O2N1O1O1O2N100O2N100O1O2N100O2O0O1000001N100000000000000O10000000O10000O10000O100O1O1G9\\Od0M3N2O1N3G8N2O1N2O1N2N2N2O1O1O2O0O100O100O100O100O1O101M2N2M3O1O1O1N3N1Nikmd1",
+                "iou_score": 0.888990461826324,
+                "instance_token": "69b1bd40c47bb03861e2315552c4f901",
+                "region_id": 1,
+                "region_tag": "Region [1]",
+                "ann_token": "8d991577f734203134fb3c5944059ada"
+            }
+        },
+        "region_id": 1
+    }
+]

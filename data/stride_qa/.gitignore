@@ -1,0 +1,6 @@
+# Raw source mirror and generated datasets: large, and downloaded rather than
+# authored. Anchored to this directory: an unanchored `mirror/` would also
+# swallow the checked-in test fixture at testdata/mirror/.
+/mirror/
+/out/
+/.venv/
