@@ -49,6 +49,28 @@ in [context.md](./context.md).
 4. Pull results JSONs + sanity output, destroy the instance (destroy, not stop), fill in
    `report.md` (and `learnings.md` if anything went wrong along the way), commit locally.
 
+## Milestones and intermediate reporting
+
+Requirement: at each milestone below, update [status.md](./status.md) and commit (pushed
+to the PR branch) **before** starting the next milestone, so that if work is interrupted
+or diverges, anyone can resume from what has already been achieved without redoing it.
+
+| # | Milestone | Definition of done |
+|---|---|---|
+| M0 | Planning docs approved | this doc set merged-reviewable on the PR |
+| M1 | Harness ready | scripts built; CPU smoke test passing; checkpoint access from outside Google infra verified |
+| M2 | Box bootstrapped | H100 rented; `setup_vast.sh` completed; checkpoints downloaded |
+| M3 | Infra calibrated | vLLM FP8 repro done; gate verdict recorded in report.md |
+| M4 | JAX runs complete | sanity run + calibration + paper-shaped results JSONs pulled and committed |
+| M5 | Wrapped up | instance destroyed; report.md finalized; learnings.md updated if anything went wrong |
+
+Each status.md update records: what was achieved (with artifact paths), any deviation
+from plan/decisions, open blockers, and the exact next step (command-level). Results
+JSONs and partial report.md fills are committed as they are produced at each milestone —
+never held back for the end. A live rental (M2–M4) is the interruption-sensitive window:
+status.md must always contain enough to re-rent a box and resume without repeating
+finished stages.
+
 ## Layout
 
 ```
@@ -58,6 +80,7 @@ perf/
 │   ├── decision.md      # decision log: alternatives rejected and trade-offs
 │   ├── context.md       # metric/workload glossary
 │   ├── report.md        # final results (prefilled with placeholders until runs complete)
+│   ├── status.md        # milestone log: rolling intermediate reports for resumability
 │   └── learnings.md     # major mistakes made / failures recovered during the project
 ├── bench_native.py      # JAX native-sampler benchmark (both workloads → results/*.json)
 ├── bench_vllm.sh        # gist-derived vLLM FP8 repro with the same provenance capture

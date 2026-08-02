@@ -137,3 +137,19 @@ request.
 - **Rejected: ADRs.** None of the decisions above are hard to reverse — they are
   benchmark methodology, cheap to change — so a decision log beats the ceremony of
   one-file-per-decision.
+
+## 11. Milestone-gated intermediate reports (`status.md`)
+
+At every milestone boundary (M0–M5, defined in [plan.md](./plan.md)), `status.md` is
+updated with achievements + artifact paths, deviations, blockers, and the command-level
+next step — then committed and pushed to the PR branch before the next milestone starts.
+Results JSONs and partial report.md fills are committed as produced, never held for the
+end. Purpose: if work is interrupted or diverges, anyone can resume from the last banked
+milestone without repeating finished stages.
+
+- **Rejected: reporting only at the end (report.md alone).** A lost rental or an
+  interrupted session mid-run would leave no committed trace of which runs are banked,
+  forcing paid GPU stages to be repeated.
+- **Rejected: local-only milestone commits.** Resumability "by anyone else" requires the
+  remote to have them; the PR branch is the standing exception to the local-first
+  commit policy (§10), already established as the review flow.
