@@ -19,13 +19,127 @@ redoing finished stages. Newest entry first.
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Planning docs approved | in review (PR #5) |
-| M1 | Harness ready | not started |
-| M2 | Box bootstrapped | not started |
-| M3 | Infra calibrated | not started |
-| M4 | JAX runs complete | not started |
-| M5 | Wrapped up | not started |
+| M1 | Harness ready | done |
+| M2 | Box bootstrapped | done |
+| M3 | Infra calibrated | done |
+| M4 | JAX runs complete | done |
+| M5 | Wrapped up | done |
 
 ## Entries
+
+### 2026-08-03 — M5: wrapped up
+
+- **Achieved**: instance 46665143 **destroyed** (verified: no instances
+  remain); total rental ≈$4.3 (1.49 h). report.md finalized (summary,
+  results, comparison, 9 findings); learnings.md completed with the full
+  cuBLAS/CPU-fallback recovery arc. Headline: JAX native bf16 75.6 generation
+  tok/s (calibration) vs same-box vLLM FP8 1,135 → 15.0× stack+precision gap;
+  paper-shaped 7,163 ms/sample, 41.2 tok/s delivered; ~200 ms/forward
+  invariant across workloads.
+- **Deviations**: none beyond those recorded at M3 (gate passed above
+  reference) and M4 (launch-attempt saga).
+- **Blockers**: none. Project complete on `worktree-perf-exec`; PR #5 review
+  and merge into `worktree-perf` remain with the user/planning session.
+- **Next step**: none — resume here only if the vLLM-bf16 disambiguation run
+  (decision.md §7 fallback) is requested; it would re-rent per decision.md §8
+  and add one `bench_vllm.sh` invocation with the bf16 checkpoint.
+
+### 2026-08-03 — M4: JAX runs complete
+
+- **Achieved**: all three native runs on instance 46665143, artifacts pulled
+  and committed: `perf/results/sanity_outputs.md` (5/5 coherent — verdict
+  pass), `jax_native_calibration.json` (median 14,361 ms/sample, 75.6
+  generation tok/s, 71.3 e2e, prefill 823 ms, compile+first 90 s),
+  `jax_native_paper.json` (median 7,163 ms/sample, 41.2 generation tok/s on
+  280 delivered, prefill 376 ms, compile+first 80 s). p95 within 1% of median
+  on both. Cross-check: per-forward cost is ~200 ms in both workloads
+  (13.54 s/68 fwds vs 6.79 s/34 fwds) — internally consistent, memory-bound.
+- **Deviations**: three failed launch attempts before the clean run — jax's
+  cuda13 plugin version check failed intermittently on the vllm image and fell
+  back to CPU (first attempt silently; later attempts caught by the new gpu
+  assert). Mitigated three ways (env.sh `unset LD_LIBRARY_PATH` +
+  `JAX_SKIP_CUDA_CONSTRAINTS_CHECK=1`, early `jax.devices()` before gemma
+  imports, hard backend assert); root trigger never fully pinned (all isolated
+  repros passed). ~25 min of rental lost; full account in learnings.md.
+- **Blockers**: none.
+- **Next step**: M5 — `vastai destroy instance 46665143` (destroy, not stop),
+  fill report.md summary/findings + total cost, final commit + push.
+
+### 2026-08-02 — M3: infra calibrated
+
+- **Achieved**: vLLM FP8 repro on instance 46665143. Median generation tok/s
+  **1,135.0** vs published 1,008 (ratio 1.126) — measured 12.6% *above*
+  reference; verdict **pass** (gate intent = sound box; see report.md note).
+  Internals verified: 100/100 requests, all `output_len`=1024, 3 ITLs/request
+  (4×256-canvas chunking as the gist formula assumes), TPOT/e2e cross-checks
+  consistent. Artifacts committed: `perf/results/vllm_fp8_calibration.json`
+  (+`_raw.json`). Median TTFT 294.9 ms, median latency 974.5 ms, e2e 977.2
+  tok/s.
+- **Deviations**: scripted symmetric ±10% check printed FAIL on the fast side;
+  interpreted as pass because the surplus is attributable to the current
+  `vllm/vllm-openai:gemma` dev build (0.22.1rc1.dev357) being newer than the
+  2026-06-10 blog build. JAX gap attribution will use the same-box 1,135
+  anchor (conservative).
+- **Blockers**: none.
+- **Next step**: M4 — on the box:
+  `source /workspace/env.sh && /workspace/venv-jax/bin/python
+  /workspace/gemma/perf/bench_native.py sanity|calibration|paper
+  --checkpoint /workspace/ckpt/diffusiongemma-26B-A4B-it
+  --tokenizer /workspace/ckpt/tokenizer_gemma4.model`.
+
+### 2026-08-02 — M2: box bootstrapped
+
+- **Achieved**: vast.ai instance **46665143** (user pre-authorized full M2–M5
+  execution this session). 1× H100 SXM 80GB HBM3, driver 595.71.05 (CUDA 13.2),
+  $2.3507/hr on-demand, 200 GB disk, Czechia, ~8.7 Gbps down; ssh
+  `root@93.91.156.108:43518`. Image `vllm/vllm-openai:gemma` (vllm
+  0.22.1rc1.dev357+g74b5964f0, python 3.12.13). `setup_vast.sh` exit 0 on first
+  run: repo cloned to `/workspace/gemma` (this branch), JAX venv at
+  `/workspace/venv-jax` (jax/jaxlib 0.11.0 + jax-cuda13 0.11.0, flax 0.12.8,
+  orbax-checkpoint 0.12.1; `jax.default_backend()=='gpu'`), checkpoint (32
+  objects) at `/workspace/ckpt/diffusiongemma-26B-A4B-it`, tokenizer alongside,
+  env in `/workspace/env.sh`, provenance in `/workspace/provenance_setup.txt`.
+- **Deviations**: image has no `/workspace` by default — created before launch
+  (setup script unaffected; WORKDIR was already parameterized).
+- **Blockers**: none. Billing live — destroy (not stop) 46665143 at wrap-up.
+- **Next step**: M3 — on the box: `bash /workspace/gemma/perf/bench_vllm.sh`;
+  gate = median generation tok/s within ~10% of 1,008.
+
+### 2026-08-02 — M1: harness ready
+
+- **Achieved**: `perf/bench_native.py` (modes: smoke / sanity / calibration /
+  paper), `perf/bench_vllm.sh`, `perf/setup_vast.sh`, on branch
+  `worktree-perf-exec`.
+  - CPU smoke test passing (venv `/home/xqin/projects/gemma/.venv`): pad-bucket
+    asserts (1024→bucket 1024; 1025→raw length, no error), empirical
+    forward-count verification by counting `model.apply` calls eagerly
+    (denoiser = canvases × steps, plain = 1 prefill + 1 cache-append per
+    canvas, embedder-only `encode_logits` = denoiser count — confirms the
+    Tok/Forward denominator of decision.md §6), jitted timed path + stats +
+    results-JSON plumbing.
+  - Ignore-EOS needs **no repo patch** (plan.md risk retired): `end_tokens=()`
+    makes both the canvas stop-token truncation and the post-loop
+    `_mask_tokens_after_end_tokens` no-ops.
+  - Checkpoint access from outside Google infra **verified**: `gs://gemma-data`
+    is anonymously readable (checkpoint 40.4 GB / 32 objects, orbax ocdbt;
+    Gemma4 tokenizer public too) — `setup_vast.sh` downloads via plain HTTPS,
+    no auth. HF fallback `google/diffusiongemma-26B-A4B-it` is safetensors-only
+    (wrong format for the JAX sampler; emergency only). vLLM FP8 repro
+    checkpoint: `RedHatAI/diffusiongemma-26B-A4B-it-FP8-dynamic` (public,
+    not gated).
+  - Gemma4 tokenizer verified locally: vocab 262144, paper-shaped prompt =
+    30 tokens (fits pad bucket 256).
+- **Deviations**: none from plan. Pre-push adversarial review confirmed and
+  fixed 3 findings: curl HTTP-error bodies could pass as checkpoint shards and
+  the download sentinel was itself a downloaded object (both `setup_vast.sh`);
+  vLLM results JSON lacked the `--hf-overrides` sampler knobs and CUDA version
+  required by decision.md §9 (`bench_vllm.sh`).
+- **Blockers**: PR #5 (M0 docs) still awaiting user review. M2 spends money —
+  wait for user go.
+- **Next step**: M2 — rent 1× H100 SXM 80GB on-demand (decision.md §8,
+  ≥200 GB disk, image `vllm/vllm-openai:gemma`) via `vastai` CLI; on the box:
+  `bash perf/setup_vast.sh`, then M3: `bash perf/bench_vllm.sh` (gate vs
+  1,008 tok/s).
 
 ### 2026-08-02 — M0: planning docs
 
