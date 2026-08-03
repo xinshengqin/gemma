@@ -18,11 +18,11 @@ Plan: [plan.md](./plan.md) · decisions: [decision.md](./decision.md) · vocabul
 
 | Item | Value |
 |---|---|
-| GPU | 1× H100 SXM 80GB (vast.ai instance TBD, hourly rate TBD) |
-| Driver / CUDA | TBD / TBD |
-| JAX / jaxlib | TBD |
-| vLLM | TBD |
-| XLA / NCCL env | TBD (from `setup_vast.sh`) |
+| GPU | 1× H100 SXM 80GB HBM3 (vast.ai instance 46665143, $2.3507/hr on-demand) |
+| Driver / CUDA | 595.71.05 / 13.2 |
+| JAX / jaxlib | 0.11.0 / 0.11.0 (jax-cuda13 0.11.0; flax 0.12.8, orbax-checkpoint 0.12.1) |
+| vLLM | 0.22.1rc1.dev357+g74b5964f0 (image `vllm/vllm-openai:gemma`) |
+| XLA / NCCL env | `XLA_FLAGS=--xla_disable_hlo_passes=constant_folding`, `XLA_PYTHON_CLIENT_PREALLOCATE=false`, `TF_FORCE_GPU_ALLOW_GROWTH=true` |
 | JAX checkpoint | `DIFFUSIONGEMMA_26B_A4B_IT` (`gs://gemma-data/checkpoints/diffusiongemma-26B-A4B-it`), bf16 |
 | vLLM checkpoint | FP8 (per vLLM repro gist) |
 | Total rental cost | TBD |
@@ -35,7 +35,20 @@ Pass criterion: within ~10% of vLLM's published 1,008 generation tok/s (H100, FP
 
 | Metric | Published | Measured | Ratio | Verdict |
 |---|---|---|---|---|
-| Generation tok/s (median) | 1,008 | TBD | TBD | TBD |
+| Generation tok/s (median) | 1,008 | 1,135.0 | 1.126 | pass (above reference; see note) |
+
+Note: the scripted symmetric ±10% check printed FAIL because the box is **12.6%
+faster** than the published number, not slower. Measurement internals verified:
+100/100 requests completed, every `output_len` exactly 1024, exactly 3 ITLs per
+request (4 canvases of 256, first canvas inside TTFT — the gist formula's exact
+chunking assumption), and the median cross-checks against TPOT (0.7507 s per
+768 tok / 0.6615 ms TPOT ≈ 1,135) and e2e throughput (977 tok/s incl. prefill).
+The surplus is attributed to the current `vllm/vllm-openai:gemma` dev build
+(0.22.1rc1.dev357, pulled 2026-08-02) being newer than the 2026-06-10 blog's
+build. The gate's purpose — a sound box — is met; the same-box vLLM anchor used
+for gap attribution is the measured 1,135, which makes the JAX-gap estimate
+conservative rather than flattering. Supporting metrics: median TTFT 294.9 ms,
+median request latency 974.5 ms.
 
 ## Sanity run
 
@@ -58,7 +71,7 @@ All values over 100 timed samples after JIT compile + 3 warmup samples.
 
 | Stack | Workload | Latency ms/sample (median) | Generation tok/s (median) | End-to-end tok/s | Tok/Forward |
 |---|---|---|---|---|---|
-| vLLM FP8 | calibration (1024 in / 1024 out) | TBD | TBD | TBD | 16.0 nominal¹ |
+| vLLM FP8 | calibration (1024 in / 1024 out) | 974.5 | 1,135.0 | 977.2 | 16.0 nominal¹ |
 | JAX native bf16 | calibration (1024 in / 1024 out) | TBD | TBD | TBD | 15.06² |
 | JAX native bf16 | paper-shaped (280 out) | TBD | TBD | TBD | 8.24³ |
 

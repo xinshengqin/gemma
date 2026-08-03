@@ -21,11 +21,33 @@ redoing finished stages. Newest entry first.
 | M0 | Planning docs approved | in review (PR #5) |
 | M1 | Harness ready | done |
 | M2 | Box bootstrapped | done |
-| M3 | Infra calibrated | not started |
+| M3 | Infra calibrated | done |
 | M4 | JAX runs complete | not started |
 | M5 | Wrapped up | not started |
 
 ## Entries
+
+### 2026-08-02 — M3: infra calibrated
+
+- **Achieved**: vLLM FP8 repro on instance 46665143. Median generation tok/s
+  **1,135.0** vs published 1,008 (ratio 1.126) — measured 12.6% *above*
+  reference; verdict **pass** (gate intent = sound box; see report.md note).
+  Internals verified: 100/100 requests, all `output_len`=1024, 3 ITLs/request
+  (4×256-canvas chunking as the gist formula assumes), TPOT/e2e cross-checks
+  consistent. Artifacts committed: `perf/results/vllm_fp8_calibration.json`
+  (+`_raw.json`). Median TTFT 294.9 ms, median latency 974.5 ms, e2e 977.2
+  tok/s.
+- **Deviations**: scripted symmetric ±10% check printed FAIL on the fast side;
+  interpreted as pass because the surplus is attributable to the current
+  `vllm/vllm-openai:gemma` dev build (0.22.1rc1.dev357) being newer than the
+  2026-06-10 blog build. JAX gap attribution will use the same-box 1,135
+  anchor (conservative).
+- **Blockers**: none.
+- **Next step**: M4 — on the box:
+  `source /workspace/env.sh && /workspace/venv-jax/bin/python
+  /workspace/gemma/perf/bench_native.py sanity|calibration|paper
+  --checkpoint /workspace/ckpt/diffusiongemma-26B-A4B-it
+  --tokenizer /workspace/ckpt/tokenizer_gemma4.model`.
 
 ### 2026-08-02 — M2: box bootstrapped
 

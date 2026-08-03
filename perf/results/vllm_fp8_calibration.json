@@ -1,0 +1,45 @@
+{
+  "stack": "vllm_fp8",
+  "workload": "calibration",
+  "config": {
+    "model": "RedHatAI/diffusiongemma-26B-A4B-it-FP8-dynamic",
+    "canvas_length": 256,
+    "max_denoising_steps": 16,
+    "diffusion_sampler": "entropy_bound",
+    "diffusion_entropy_bound": 0.1,
+    "diffusion_confidence_threshold": 0.0,
+    "max_model_len": 8192,
+    "max_num_seqs": 4,
+    "gpu_memory_utilization": 0.85,
+    "generation_config": "vllm",
+    "random_input_len": 1024,
+    "random_output_len": 1024,
+    "ignore_eos": true,
+    "num_prompts": 100,
+    "max_concurrency": 1
+  },
+  "provenance": {
+    "timestamp_utc": "2026-08-03T03:32:06+00:00",
+    "vllm_version": "0.22.1rc1.dev357+g74b5964f0",
+    "gpu": "NVIDIA H100 80GB HBM3, 595.71.05",
+    "cuda_version": "13.2",
+    "git_commit": "0ae1c5d768191bd5df4ec51466d19ad8988599e0",
+    "raw_result": "vllm_fp8_calibration_raw.json"
+  },
+  "metrics": {
+    "generation_tok_s": {
+      "median": 1134.965114895584,
+      "mean": 1147.009404609444,
+      "p95": 1279.922837796512
+    },
+    "output_token_throughput_e2e": 977.2237158552638,
+    "median_ttft_ms": 294.9019435036462,
+    "median_tpot_ms": 0.6614587541586763
+  },
+  "gate": {
+    "reference_tok_s": 1008,
+    "measured_median_tok_s": 1134.965114895584,
+    "ratio": 1.1259574552535556,
+    "pass_within_10pct": false
+  }
+}
