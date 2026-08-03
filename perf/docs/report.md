@@ -57,13 +57,15 @@ correctly. Prompts and full outputs recorded at `perf/results/sanity_outputs.md`
 
 | # | Prompt (abridged) | Output coherent? |
 |---|---|---|
-| 1 | TBD | TBD |
-| 2 | TBD | TBD |
-| 3 | TBD | TBD |
-| 4 | TBD | TBD |
-| 5 | TBD | TBD |
+| 1 | What causes the seasons on Earth? | yes |
+| 2 | Four-line poem about a lighthouse keeper | yes (4 lines) |
+| 3 | Iterative Fibonacci in Python | yes (correct code) |
+| 4 | Train average-speed word problem | yes (84 km/h, correct) |
+| 5 | Two-sentence Great Barrier Reef summary | yes |
 
-Verdict: TBD.
+Verdict: **pass** — checkpoint loaded correctly. Outputs carry raw Gemma4
+channel tokens (`<|channel>thought`…) because the sanity path decodes the raw
+buffer; content itself is coherent and correct.
 
 ## Results
 
@@ -72,10 +74,13 @@ All values over 100 timed samples after JIT compile + 3 warmup samples.
 | Stack | Workload | Latency ms/sample (median) | Generation tok/s (median) | End-to-end tok/s | Tok/Forward |
 |---|---|---|---|---|---|
 | vLLM FP8 | calibration (1024 in / 1024 out) | 974.5 | 1,135.0 | 977.2 | 16.0 nominal¹ |
-| JAX native bf16 | calibration (1024 in / 1024 out) | TBD | TBD | TBD | 15.06² |
-| JAX native bf16 | paper-shaped (280 out) | TBD | TBD | TBD | 8.24³ |
+| JAX native bf16 | calibration (1024 in / 1024 out) | 14,361 | 75.6 | 71.3 | 15.06² |
+| JAX native bf16 | paper-shaped (280 out) | 7,163 | 41.2 | 39.1 | 8.24³ |
 
-Spread (mean / p95) per row: TBD, from `perf/results/*.json`.
+Spread (mean / p95): calibration 14,443 / 14,495 ms; paper 7,188 / 7,206 ms —
+p95 within 1% of median on both (fixed shapes, no recompiles). Median prefill:
+823 ms (calibration, 1024-token prompt), 376 ms (paper, 30-token prompt padded
+to 256). Full distributions in `perf/results/jax_native_*.json`.
 
 ¹ 256-token canvas / 16 denoising steps; vLLM's internal per-step forward accounting to
 be confirmed from its detailed bench output.
@@ -95,15 +100,15 @@ be 15.06.
 
 | Stack × workload | JIT compile + first sample | Notes |
 |---|---|---|
-| JAX native × calibration | TBD | |
-| JAX native × paper-shaped | TBD | |
+| JAX native × calibration | 90 s | prefill forward + decode loop, one shape each |
+| JAX native × paper-shaped | 80 s | separate process; no cross-run compile reuse |
 
 ## Comparison with published references
 
 | Row | Hardware | Precision | Output | Latency ms | Gen tok/s | Tok/Forward⁴ |
 |---|---|---|---|---|---|---|
-| **Ours: JAX native** | H100 SXM | bf16 | 1024 forced | TBD | TBD | 15.06 |
-| **Ours: JAX native** | H100 SXM | bf16 | 280 forced | TBD | TBD | 8.24 |
+| **Ours: JAX native** | H100 SXM | bf16 | 1024 forced | 14,361 | 75.6 | 15.06 |
+| **Ours: JAX native** | H100 SXM | bf16 | 280 forced | 7,163 | 41.2 | 8.24 |
 | vLLM blog | H100 | FP8 | 1024 forced | — | 1,008 | ~16 |
 | Fast-dDrive best (+SGLang) | H100 | not stated | ~280 structured | 665 | 608.5 | 4.93 |
 | Fast-dDrive AR baseline | H100 | not stated | ~280 structured | 7,855 | 51.6 | 1 |

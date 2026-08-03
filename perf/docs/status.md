@@ -22,10 +22,31 @@ redoing finished stages. Newest entry first.
 | M1 | Harness ready | done |
 | M2 | Box bootstrapped | done |
 | M3 | Infra calibrated | done |
-| M4 | JAX runs complete | not started |
+| M4 | JAX runs complete | done |
 | M5 | Wrapped up | not started |
 
 ## Entries
+
+### 2026-08-03 — M4: JAX runs complete
+
+- **Achieved**: all three native runs on instance 46665143, artifacts pulled
+  and committed: `perf/results/sanity_outputs.md` (5/5 coherent — verdict
+  pass), `jax_native_calibration.json` (median 14,361 ms/sample, 75.6
+  generation tok/s, 71.3 e2e, prefill 823 ms, compile+first 90 s),
+  `jax_native_paper.json` (median 7,163 ms/sample, 41.2 generation tok/s on
+  280 delivered, prefill 376 ms, compile+first 80 s). p95 within 1% of median
+  on both. Cross-check: per-forward cost is ~200 ms in both workloads
+  (13.54 s/68 fwds vs 6.79 s/34 fwds) — internally consistent, memory-bound.
+- **Deviations**: three failed launch attempts before the clean run — jax's
+  cuda13 plugin version check failed intermittently on the vllm image and fell
+  back to CPU (first attempt silently; later attempts caught by the new gpu
+  assert). Mitigated three ways (env.sh `unset LD_LIBRARY_PATH` +
+  `JAX_SKIP_CUDA_CONSTRAINTS_CHECK=1`, early `jax.devices()` before gemma
+  imports, hard backend assert); root trigger never fully pinned (all isolated
+  repros passed). ~25 min of rental lost; full account in learnings.md.
+- **Blockers**: none.
+- **Next step**: M5 — `vastai destroy instance 46665143` (destroy, not stop),
+  fill report.md summary/findings + total cost, final commit + push.
 
 ### 2026-08-02 — M3: infra calibrated
 
