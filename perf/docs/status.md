@@ -20,12 +20,30 @@ redoing finished stages. Newest entry first.
 |---|---|---|
 | M0 | Planning docs approved | in review (PR #5) |
 | M1 | Harness ready | done |
-| M2 | Box bootstrapped | not started |
+| M2 | Box bootstrapped | done |
 | M3 | Infra calibrated | not started |
 | M4 | JAX runs complete | not started |
 | M5 | Wrapped up | not started |
 
 ## Entries
+
+### 2026-08-02 — M2: box bootstrapped
+
+- **Achieved**: vast.ai instance **46665143** (user pre-authorized full M2–M5
+  execution this session). 1× H100 SXM 80GB HBM3, driver 595.71.05 (CUDA 13.2),
+  $2.3507/hr on-demand, 200 GB disk, Czechia, ~8.7 Gbps down; ssh
+  `root@93.91.156.108:43518`. Image `vllm/vllm-openai:gemma` (vllm
+  0.22.1rc1.dev357+g74b5964f0, python 3.12.13). `setup_vast.sh` exit 0 on first
+  run: repo cloned to `/workspace/gemma` (this branch), JAX venv at
+  `/workspace/venv-jax` (jax/jaxlib 0.11.0 + jax-cuda13 0.11.0, flax 0.12.8,
+  orbax-checkpoint 0.12.1; `jax.default_backend()=='gpu'`), checkpoint (32
+  objects) at `/workspace/ckpt/diffusiongemma-26B-A4B-it`, tokenizer alongside,
+  env in `/workspace/env.sh`, provenance in `/workspace/provenance_setup.txt`.
+- **Deviations**: image has no `/workspace` by default — created before launch
+  (setup script unaffected; WORKDIR was already parameterized).
+- **Blockers**: none. Billing live — destroy (not stop) 46665143 at wrap-up.
+- **Next step**: M3 — on the box: `bash /workspace/gemma/perf/bench_vllm.sh`;
+  gate = median generation tok/s within ~10% of 1,008.
 
 ### 2026-08-02 — M1: harness ready
 
