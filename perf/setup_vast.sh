@@ -114,6 +114,11 @@ export TF_FORCE_GPU_ALLOW_GROWTH=true
 # check, and silently fall back to CPU. jax's pip wheels bundle their own CUDA
 # libs and the driver's libcuda.so.1 is ldconfig-visible, so drop it entirely.
 unset LD_LIBRARY_PATH
+# The version check also failed intermittently with a clean env (LD_DEBUG
+# confirmed the correct bundled libs resolve, so the check itself is the
+# problem). Skipping it is safe here; bench_native.py's gpu-backend assert
+# remains the hard gate if plugin init genuinely fails.
+export JAX_SKIP_CUDA_CONSTRAINTS_CHECK=1
 EOF
 
 echo "== verify jax sees the GPU =="

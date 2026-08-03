@@ -38,6 +38,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+# Initialize the backend before the gemma/kauldron imports below: on the vllm
+# image the CUDA plugin's version check failed intermittently when heavier
+# imports ran first (loading a system cuBLAS ahead of jax's bundled one), and
+# jax then silently fell back to CPU. See learnings.md 2026-08-02.
+jax.devices()
+
 from gemma import gm
 from gemma import diffusion
 from gemma.diffusion import _early_stopping
