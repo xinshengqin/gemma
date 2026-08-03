@@ -22,15 +22,25 @@ results belong in [report.md](./report.md); decisions and their trade-offs belon
   either way).
 - **How it was caught**: the log watcher tripped on the Traceback ~2 min in;
   `nvidia-smi` showed 0 MiB used while python burned CPU.
-- **Recovery**: killed the chain; verified the driver's `libcuda.so.1` is
-  ldconfig-visible so the variable is unnecessary for jax; added
-  `unset LD_LIBRARY_PATH` to the generated `env.sh` and a hard
-  `jax.default_backend() == 'gpu'` assert to `bench_native.py`'s real-model
-  path; relaunched. Cost: ~10 min of rental.
+- **Recovery**: four launch attempts in total. #1 failed with
+  `LD_LIBRARY_PATH` set (explainable); after `unset LD_LIBRARY_PATH`, #2 and
+  #3 still failed the version check with a **verified-clean child env**
+  (`/proc/<pid>/environ`), while every isolated repro — same env, cwd, import
+  order, detached via nohup, 3× repeats, `LD_DEBUG=libs` showing the correct
+  bundled cuBLAS resolving — passed. The trigger was never reproduced outside
+  the real chain. Final mitigation stack (attempt #4 ran clean): `unset
+  LD_LIBRARY_PATH` + `JAX_SKIP_CUDA_CONSTRAINTS_CHECK=1` in `env.sh` (safe:
+  LD_DEBUG proved the right libs load; the check itself is the flaky part),
+  `jax.devices()` before the gemma imports in `bench_native.py`, and the hard
+  `jax.default_backend() == 'gpu'` assert as the real gate. Cost: ~25 min of
+  rental (~$1).
 - **What to do differently** (esp. for the future HD/vision-stack benchmark):
   assert the accelerator backend at harness startup instead of trusting plugin
   discovery; on serving images, treat inherited env — `LD_LIBRARY_PATH` above
-  all — as hostile to a second ML stack.
+  all — as hostile to a second ML stack; and on a paid meter, stop diagnosing
+  after the second refuted theory and stack cheap mitigations behind a hard
+  assert instead — the assert converts any recurrence from a silent wrong-
+  hardware run into an instant loud abort.
 
 <!-- Entry template:
 ## YYYY-MM-DD — <one-line title>

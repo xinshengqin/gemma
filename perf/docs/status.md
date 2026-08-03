@@ -23,9 +23,26 @@ redoing finished stages. Newest entry first.
 | M2 | Box bootstrapped | done |
 | M3 | Infra calibrated | done |
 | M4 | JAX runs complete | done |
-| M5 | Wrapped up | not started |
+| M5 | Wrapped up | done |
 
 ## Entries
+
+### 2026-08-03 — M5: wrapped up
+
+- **Achieved**: instance 46665143 **destroyed** (verified: no instances
+  remain); total rental ≈$4.3 (1.49 h). report.md finalized (summary,
+  results, comparison, 9 findings); learnings.md completed with the full
+  cuBLAS/CPU-fallback recovery arc. Headline: JAX native bf16 75.6 generation
+  tok/s (calibration) vs same-box vLLM FP8 1,135 → 15.0× stack+precision gap;
+  paper-shaped 7,163 ms/sample, 41.2 tok/s delivered; ~200 ms/forward
+  invariant across workloads.
+- **Deviations**: none beyond those recorded at M3 (gate passed above
+  reference) and M4 (launch-attempt saga).
+- **Blockers**: none. Project complete on `worktree-perf-exec`; PR #5 review
+  and merge into `worktree-perf` remain with the user/planning session.
+- **Next step**: none — resume here only if the vLLM-bf16 disambiguation run
+  (decision.md §7 fallback) is requested; it would re-rent per decision.md §8
+  and add one `bench_vllm.sh` invocation with the bf16 checkpoint.
 
 ### 2026-08-03 — M4: JAX runs complete
 

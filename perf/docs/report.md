@@ -1,6 +1,6 @@
 # DiffusionGemma batch-1 inference benchmark — report
 
-**Status: DRAFT — runs not yet executed; `TBD` marks values pending experiment results.**
+**Status: FINAL — all runs executed 2026-08-02/03 on vast.ai instance 46665143.**
 
 Plan: [plan.md](./plan.md) · decisions: [decision.md](./decision.md) · vocabulary:
 [context.md](./context.md). All timed runs: batch 1, canvas 256, 16 denoising steps,
@@ -8,11 +8,15 @@ Plan: [plan.md](./plan.md) · decisions: [decision.md](./decision.md) · vocabul
 
 ## Summary
 
-> TBD after runs. Template: "The native JAX sampler at bf16 delivers **TBD** generation
-> tok/s (median, calibration workload) vs vLLM's 1,008 at FP8 on the same box — a **TBD×**
-> gap attributable to stack + precision. Infra was validated by reproducing vLLM's
-> published number to within **TBD%**. On the Fast-dDrive-shaped workload (280-token
-> outputs) it delivers **TBD** ms/sample."
+The native JAX sampler at bf16 delivers **75.6** generation tok/s (median,
+calibration workload) vs vLLM's **1,135** measured at FP8 on the same box — a
+**15.0×** gap attributable to stack + precision (vs the published 1,008:
+13.3×). Infra was validated by reproducing vLLM's published number at **+12.6%**
+(faster; newer build — gate passed, see below). On the Fast-dDrive-shaped
+workload (280-token outputs) it delivers **7,163** ms/sample (41.2 generation
+tok/s on delivered tokens). Wall-clock is per-forward-dominated: ~200 ms per
+full-transformer forward in both workloads, which also confirms the Tok/Forward
+accounting at runtime.
 
 ## Setup
 
@@ -25,9 +29,9 @@ Plan: [plan.md](./plan.md) · decisions: [decision.md](./decision.md) · vocabul
 | XLA / NCCL env | `XLA_FLAGS=--xla_disable_hlo_passes=constant_folding`, `XLA_PYTHON_CLIENT_PREALLOCATE=false`, `TF_FORCE_GPU_ALLOW_GROWTH=true` |
 | JAX checkpoint | `DIFFUSIONGEMMA_26B_A4B_IT` (`gs://gemma-data/checkpoints/diffusiongemma-26B-A4B-it`), bf16 |
 | vLLM checkpoint | FP8 (per vLLM repro gist) |
-| Total rental cost | TBD |
+| Total rental cost | ≈$4.3 (1.49 h × $2.51/hr incl. 200 GB disk, + ~$0.6 storage accrual); instance destroyed 2026-08-03 |
 
-Full provenance for every run: `perf/results/*.json` (TBD).
+Full provenance for every run: `perf/results/*.json`.
 
 ## Infra calibration (gate)
 
@@ -82,8 +86,10 @@ p95 within 1% of median on both (fixed shapes, no recompiles). Median prefill:
 823 ms (calibration, 1024-token prompt), 376 ms (paper, 30-token prompt padded
 to 256). Full distributions in `perf/results/jax_native_*.json`.
 
-¹ 256-token canvas / 16 denoising steps; vLLM's internal per-step forward accounting to
-be confirmed from its detailed bench output.
+¹ 256-token canvas / 16 denoising steps. vLLM's internal per-forward count is not
+directly observable from the bench output, but the detailed result confirms the canvas
+structure: every request streamed exactly 4 chunks of 256 (3 inter-token latencies +
+first canvas inside TTFT).
 ² Deterministic given fixed shapes: 1024 tokens / (4 canvases × (16 denoiser + 1
 cache-append) = 68 full-transformer forwards). Excludes prefill and the 64
 self-conditioning `encode_logits` applies — embedding ops (softmax × embedding table,
@@ -91,7 +97,9 @@ self-conditioning `encode_logits` applies — embedding ops (softmax × embeddin
 FLOPs, visible in wall-clock only. Each denoising step is exactly one transformer
 forward (self-conditioning enters it as a single FFW block, `_transformer.py:160`) plus
 one such embedder op. Accounting verified empirically on CPU (bench_native.py smoke
-mode counts `model.apply` calls eagerly); to be re-confirmed against GPU run logs.
+mode counts `model.apply` calls eagerly) and corroborated on GPU: decode wall-clock
+scales exactly with the forward count across workloads (13.54 s / 68 ≈ 6.79 s / 34 ≈
+200 ms per forward).
 ³ Scored on 280 delivered tokens over 2 full canvases (512 emitted, 34 forwards) — the
 canvas-quantization penalty is deliberately included. On emitted tokens the figure would
 be 15.06.
@@ -132,10 +140,47 @@ Confounds to keep in mind when reading this table (accepted by decision, see
 
 ## Findings and implications for the future HD/vision-stack benchmark
 
-> TBD after runs. Expected topics: measured JAX-vs-vLLM gap decomposition; compile-time
-> magnitude; real cost of the `encode_logits` self-conditioning applies; canvas
-> quantization penalty in practice; whether an ignore-EOS patch was needed and what it
-> touched; checkpoint access path from a rental box.
+1. **Gap decomposition**: same-box vLLM FP8 1,135 vs JAX bf16 75.6 generation
+   tok/s → 15.0×. At batch 1 the model is memory-bound, so FP8 weights
+   plausibly account for ~1.5–2×; the residual **~7.5–10× is stack tax**
+   (research-grade JAX loop, unfused kernels, per-step `encode_logits`
+   embedder applies). The pre-agreed vLLM-bf16 disambiguation run
+   (decision.md §7) was not needed for the headline conclusion; it remains
+   the next step if a finer split of precision vs stack is wanted.
+2. **Per-forward cost is the whole story at batch 1**: ~200 ms per
+   full-transformer forward, invariant across workloads (68 vs 34 forwards
+   predicts the latency ratio to <1%). For the HD/vision benchmark, measuring
+   ms/forward first will predict any fixed-shape workload's latency.
+3. **200 ms/forward is roughly an order of magnitude above the ideal
+   weight-streaming floor** (~15–20 ms to read ~52 GB of bf16 weights once at
+   ~3.4 TB/s) — the JAX gap is in the stack, not in arithmetic-vs-bandwidth
+   limits.
+4. **Canvas quantization penalty, measured**: the 280-token request runs 2
+   full canvases (512 emitted). Emitted-basis generation throughput matches
+   calibration (75.4 vs 75.6 tok/s), delivered-basis drops to 41.2 —
+   exactly the Tok/Forward ratio (15.06→8.24, 1.83×). Requests should be
+   sized to canvas multiples where possible.
+5. **Compile cost**: 80–90 s per process per shape (prefill + decode loop).
+   Fixed shapes kept p95 within 1% of median; any variable-shape benchmark
+   must budget one compile per distinct shape.
+6. **No ignore-EOS patch needed**: `end_tokens=()` makes stop-truncation and
+   post-loop masking no-ops (plan.md risk retired).
+7. **Checkpoint access from a rental box**: `gs://gemma-data` is anonymously
+   readable over plain HTTPS (40.4 GB orbax/ocdbt, 32 objects; tokenizer
+   too) — no auth, no gcloud. HF copy is safetensors-only (unusable by the
+   JAX sampler directly).
+8. **Ops hazards on serving images** (full account in learnings.md): jax's
+   cuda13 plugin version check failed intermittently on the
+   `vllm/vllm-openai:gemma` image and silently fell back to CPU. Mitigations
+   that should carry over to any future GPU harness: assert
+   `jax.default_backend() == 'gpu'` at startup, `unset LD_LIBRARY_PATH`,
+   `JAX_SKIP_CUDA_CONSTRAINTS_CHECK=1`, and initialize the backend before
+   heavy imports.
+9. **Metric nuance for cross-stack comparison**: the gist's generation tok/s
+   excludes the first canvas (it lands inside TTFT); ours includes all
+   canvases in the decode window. Under the observed uniform per-canvas
+   times the two definitions coincide, so the 15.0× ratio is not an artifact
+   of the definition difference.
 
 ## Reproduction
 
