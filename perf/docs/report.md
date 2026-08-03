@@ -72,7 +72,8 @@ self-conditioning `encode_logits` applies — embedding ops (softmax × embeddin
 `_modules.py:140`), not transformer passes; roughly 15–20% of a forward's per-token
 FLOPs, visible in wall-clock only. Each denoising step is exactly one transformer
 forward (self-conditioning enters it as a single FFW block, `_transformer.py:160`) plus
-one such embedder op. To be confirmed against run logs.
+one such embedder op. Accounting verified empirically on CPU (bench_native.py smoke
+mode counts `model.apply` calls eagerly); to be re-confirmed against GPU run logs.
 ³ Scored on 280 delivered tokens over 2 full canvases (512 emitted, 34 forwards) — the
 canvas-quantization penalty is deliberately included. On emitted tokens the figure would
 be 15.06.

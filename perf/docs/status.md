@@ -19,13 +19,49 @@ redoing finished stages. Newest entry first.
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Planning docs approved | in review (PR #5) |
-| M1 | Harness ready | not started |
+| M1 | Harness ready | done |
 | M2 | Box bootstrapped | not started |
 | M3 | Infra calibrated | not started |
 | M4 | JAX runs complete | not started |
 | M5 | Wrapped up | not started |
 
 ## Entries
+
+### 2026-08-02 — M1: harness ready
+
+- **Achieved**: `perf/bench_native.py` (modes: smoke / sanity / calibration /
+  paper), `perf/bench_vllm.sh`, `perf/setup_vast.sh`, on branch
+  `worktree-perf-exec`.
+  - CPU smoke test passing (venv `/home/xqin/projects/gemma/.venv`): pad-bucket
+    asserts (1024→bucket 1024; 1025→raw length, no error), empirical
+    forward-count verification by counting `model.apply` calls eagerly
+    (denoiser = canvases × steps, plain = 1 prefill + 1 cache-append per
+    canvas, embedder-only `encode_logits` = denoiser count — confirms the
+    Tok/Forward denominator of decision.md §6), jitted timed path + stats +
+    results-JSON plumbing.
+  - Ignore-EOS needs **no repo patch** (plan.md risk retired): `end_tokens=()`
+    makes both the canvas stop-token truncation and the post-loop
+    `_mask_tokens_after_end_tokens` no-ops.
+  - Checkpoint access from outside Google infra **verified**: `gs://gemma-data`
+    is anonymously readable (checkpoint 40.4 GB / 32 objects, orbax ocdbt;
+    Gemma4 tokenizer public too) — `setup_vast.sh` downloads via plain HTTPS,
+    no auth. HF fallback `google/diffusiongemma-26B-A4B-it` is safetensors-only
+    (wrong format for the JAX sampler; emergency only). vLLM FP8 repro
+    checkpoint: `RedHatAI/diffusiongemma-26B-A4B-it-FP8-dynamic` (public,
+    not gated).
+  - Gemma4 tokenizer verified locally: vocab 262144, paper-shaped prompt =
+    30 tokens (fits pad bucket 256).
+- **Deviations**: none from plan. Pre-push adversarial review confirmed and
+  fixed 3 findings: curl HTTP-error bodies could pass as checkpoint shards and
+  the download sentinel was itself a downloaded object (both `setup_vast.sh`);
+  vLLM results JSON lacked the `--hf-overrides` sampler knobs and CUDA version
+  required by decision.md §9 (`bench_vllm.sh`).
+- **Blockers**: PR #5 (M0 docs) still awaiting user review. M2 spends money —
+  wait for user go.
+- **Next step**: M2 — rent 1× H100 SXM 80GB on-demand (decision.md §8,
+  ≥200 GB disk, image `vllm/vllm-openai:gemma`) via `vastai` CLI; on the box:
+  `bash perf/setup_vast.sh`, then M3: `bash perf/bench_vllm.sh` (gate vs
+  1,008 tok/s).
 
 ### 2026-08-02 — M0: planning docs
 
