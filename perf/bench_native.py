@@ -330,6 +330,14 @@ def _timed_workload(
 
 
 def _load_real_model(checkpoint, tokenizer_path):
+  # A failed CUDA plugin init makes jax fall back to CPU with only a warning,
+  # which would silently benchmark the 26B model on CPU (seen on the vllm
+  # image when its LD_LIBRARY_PATH shadowed jax's bundled cuBLAS).
+  assert jax.default_backend() == 'gpu', (
+      f'refusing to run the real model on backend {jax.default_backend()!r};'
+      ' check the jax plugin error above (on the vllm image: unset'
+      ' LD_LIBRARY_PATH, see setup_vast.sh env.sh)'
+  )
   model = diffusion.DiffusionGemma_26B_A4B()
   params = gm.ckpts.load_params(checkpoint, restore_concurrent_gb=16)
   tokenizer = (

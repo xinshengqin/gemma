@@ -109,6 +109,11 @@ cat > "$WORKDIR/env.sh" <<'EOF'
 export XLA_FLAGS="--xla_disable_hlo_passes=constant_folding"
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 export TF_FORCE_GPU_ALLOW_GROWTH=true
+# The vllm-openai image exports LD_LIBRARY_PATH=/usr/local/cuda/lib64:..., which
+# makes jax's cuda13 plugin dlopen the image's system cuBLAS, fail its version
+# check, and silently fall back to CPU. jax's pip wheels bundle their own CUDA
+# libs and the driver's libcuda.so.1 is ldconfig-visible, so drop it entirely.
+unset LD_LIBRARY_PATH
 EOF
 
 echo "== verify jax sees the GPU =="
